@@ -85,14 +85,47 @@ const CHEMS = [
 ];
 
 const USE_FLOW = [
+  // === 4-21 ===
   { t: '04-21 14:15', who: '李思远', chem: '异丙醇', amount: '100 ml', lab: 'A208', purpose: '清洗 SEM 样品' },
-  { t: '04-21 14:02', who: '张一凡', chem: '冰醋酸', amount: '50 ml', lab: '302', purpose: '电极清洗' },
+  { t: '04-21 14:02', who: '张一凡', chem: '冰醋酸', amount: '50 ml',  lab: '302',  purpose: '电极清洗' },
+  { t: '04-21 09:50', who: '王语嫣', chem: '无水乙醇', amount: '50 ml', lab: '302',  purpose: '玻璃器皿冲洗' },
+  // === 4-20 ===
   { t: '04-20 16:05', who: '陈延松', chem: '无水乙醇', amount: '300 ml', lab: '302', purpose: '通用溶剂' },
-  { t: '04-19 10:30', who: '钱雨桐', chem: '氢氟酸', amount: '500 ml', lab: 'A208', purpose: '硅基底刻蚀', flag: 'critical' },
-  { t: '04-18 10:30', who: '钱雨桐', chem: '丙酮', amount: '50 ml', lab: 'A208', purpose: '色谱柱清洗' },
-  { t: '04-17 15:45', who: '周明', chem: '苯酚', amount: '20 g', lab: 'B105', purpose: '生物样品制备', flag: 'critical' },
-  { t: '04-15 09:40', who: '赵振华', chem: '浓硫酸', amount: '20 ml', lab: '302', purpose: '电化学预处理' },
-  { t: '04-10 11:20', who: '赵振华', chem: '高氯酸', amount: '5 ml', lab: '302', purpose: '消解样品', flag: 'critical' },
+  { t: '04-20 11:32', who: '李思远', chem: '丙酮',     amount: '20 ml',  lab: 'A208', purpose: '试样脱模' },
+  { t: '04-20 10:08', who: '黄志刚', chem: '无水乙醇', amount: '120 ml', lab: '216', purpose: '试件清洁' },
+  // === 4-19 ===
+  { t: '04-19 10:30', who: '钱雨桐', chem: '氢氟酸',   amount: '500 ml', lab: 'A208', purpose: '硅基底刻蚀', flag: 'critical' },
+  { t: '04-19 14:22', who: '孙静怡', chem: '冰醋酸',   amount: '30 ml',  lab: 'A208', purpose: 'pH 调节' },
+  // === 4-18 ===
+  { t: '04-18 16:50', who: '王语嫣', chem: '冰醋酸',   amount: '40 ml',  lab: '302',  purpose: '溶液配制' },
+  { t: '04-18 10:30', who: '钱雨桐', chem: '丙酮',     amount: '50 ml',  lab: 'A208', purpose: '色谱柱清洗' },
+  { t: '04-18 09:15', who: '李思远', chem: '异丙醇',   amount: '60 ml',  lab: 'A208', purpose: 'SEM 镜头清洗' },
+  // === 4-17 ===
+  { t: '04-17 15:45', who: '周明',   chem: '苯酚',     amount: '20 g',   lab: 'B105', purpose: '生物样品制备', flag: 'critical' },
+  { t: '04-17 11:20', who: '赵振华', chem: '异丙醇',   amount: '80 ml',  lab: '312', purpose: '电极脱脂' },
+  // === 4-16 ===
+  { t: '04-16 14:00', who: '赵振华', chem: '无水乙醇', amount: '200 ml', lab: '302', purpose: '电化学清洗' },
+  { t: '04-16 10:35', who: '周明',   chem: '苯酚',     amount: '10 g',   lab: 'B105', purpose: '细胞培养基', flag: 'critical' },
+  // === 4-15 ===
+  { t: '04-15 09:40', who: '赵振华', chem: '浓硫酸',   amount: '20 ml',  lab: '302', purpose: '电化学预处理' },
+  { t: '04-15 11:08', who: '黄志刚', chem: '丙酮',     amount: '30 ml',  lab: '216', purpose: '试件除油' },
+  // === 4-13 ===
+  { t: '04-13 15:22', who: '钱雨桐', chem: '冰醋酸',   amount: '60 ml',  lab: 'A208', purpose: '流动相配制' },
+  { t: '04-13 10:50', who: '陈延松', chem: '丙酮',     amount: '40 ml',  lab: '302', purpose: '基底清洁' },
+  // === 4-12 ===
+  { t: '04-12 14:30', who: '赵振华', chem: '浓硫酸',   amount: '10 ml',  lab: '302', purpose: '酸化处理' },
+  { t: '04-12 09:25', who: '王语嫣', chem: '异丙醇',   amount: '50 ml',  lab: '302', purpose: '玻璃器皿干燥' },
+  // === 4-11 ===
+  { t: '04-11 16:15', who: '黄志刚', chem: '无水乙醇', amount: '80 ml',  lab: '216', purpose: '试样保存' },
+  { t: '04-11 11:00', who: '钱雨桐', chem: '苯酚',     amount: '5 g',    lab: 'A208', purpose: '标准样品', flag: 'critical' },
+  // === 4-10 ===
+  { t: '04-10 11:20', who: '赵振华', chem: '高氯酸',   amount: '5 ml',   lab: '302', purpose: '消解样品', flag: 'critical' },
+  // === 4-08 ===
+  { t: '04-08 15:40', who: '周明',   chem: '无水乙醇', amount: '150 ml', lab: 'B105', purpose: '细胞固定' },
+  { t: '04-08 10:20', who: '李思远', chem: '冰醋酸',   amount: '20 ml',  lab: 'A208', purpose: '色谱缓冲液' },
+  // === 4-05 ===
+  { t: '04-05 13:18', who: '赵振华', chem: '浓硫酸',   amount: '15 ml',  lab: '302', purpose: '清洗电极' },
+  { t: '04-05 09:30', who: '陈延松', chem: '丙酮',     amount: '60 ml',  lab: '302', purpose: '设备清洁' },
 ];
 
 const WASTE = [
