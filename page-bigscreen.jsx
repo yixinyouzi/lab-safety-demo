@@ -348,11 +348,13 @@ function HazardHeatmap({ rows, cols, seed }) {
 function PeopleFlow() {
   const data = [4,5,3,2,1,0,0,3,14,22,28,31,26,18,29,33,27,21,15,8,6,9,5,3];
   const max = Math.max(...data);
+  const maxIdx = data.indexOf(max);
   return (
-    <div>
+    <div className="bs-pf-wrap">
       <div className="bs-pf">
         {data.map((v, i) => (
           <div key={i} className="bs-pf-bar-wrap">
+            {i === maxIdx && <div className="bs-pf-peak">{v}</div>}
             <div className="bs-pf-bar" style={{ height: (v / max) * 100 + '%' }}></div>
           </div>
         ))}

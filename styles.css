@@ -291,6 +291,8 @@ kbd { font-family: var(--font-num); font-size: 10px; color: var(--ink-2); border
   border-radius: 10px;
   position: relative;
   --bs-accent: #6ba4ff;
+  display: flex;
+  flex-direction: column;
 }
 .bs-card::before {
   content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px;
@@ -303,7 +305,7 @@ kbd { font-family: var(--font-num); font-size: 10px; color: var(--ink-2); border
 }
 .bs-card-t { color: #fff; font-size: 13px; font-weight: 600; letter-spacing: 0.02em; display: flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .bs-card-hint { color: #7ca0cc; font-size: 11px; font-family: var(--font-num); }
-.bs-card-b { padding: 14px 16px; }
+.bs-card-b { padding: 14px 16px; flex: 1; min-height: 0; }
 .bs-card-lg .bs-card-b { padding: 16px; }
 
 /* Ring chart */
@@ -642,8 +644,44 @@ kbd { font-family: var(--font-num); font-size: 10px; color: var(--ink-2); border
 .bs-heat-cell:hover { transform: scale(1.08); z-index: 2; }
 
 /* People flow bars */
-.bs-pf { display: flex; gap: 2px; align-items: flex-end; height: 80px; padding: 0 4px; }
-.bs-pf-bar-wrap { flex: 1; height: 100%; display: flex; align-items: flex-end; }
+.bs-pf-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+}
+.bs-pf {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  flex: 1;
+  min-height: 80px;
+  padding: 18px 4px 0;
+}
+.bs-pf-bar-wrap { flex: 1; height: 100%; display: flex; align-items: flex-end; position: relative; }
+.bs-pf-peak {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-num);
+  font-size: 13px;
+  font-weight: 700;
+  color: #bcdcff;
+  white-space: nowrap;
+  text-shadow: 0 0 6px rgba(107, 164, 255, 0.6);
+}
+.bs-pf-peak::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 4px solid #6ba4ff;
+}
 .bs-pf-bar {
   width: 100%; min-height: 2px;
   background: linear-gradient(180deg, #6ba4ff, #1e5eb5);
