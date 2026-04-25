@@ -40,72 +40,93 @@ function BigScreenPage({ onOpenLab }) {
             <div className="bs-ring-wrap">
               <svg className="bs-radar" viewBox="-92 -92 184 184">
                 <defs>
-                  <linearGradient id="bsSweep" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="84" y2="0">
-                    <stop offset="0%" stopColor="#6ba4ff" stopOpacity="0" />
-                    <stop offset="100%" stopColor="#6ba4ff" stopOpacity="0.55" />
-                  </linearGradient>
                   <radialGradient id="bsRadarHalo" cx="0.5" cy="0.5" r="0.5">
-                    <stop offset="0%" stopColor="#6ba4ff" stopOpacity="0.18" />
+                    <stop offset="0%" stopColor="#6ba4ff" stopOpacity="0.16" />
                     <stop offset="60%" stopColor="#6ba4ff" stopOpacity="0.04" />
                     <stop offset="100%" stopColor="#6ba4ff" stopOpacity="0" />
                   </radialGradient>
-                  <filter id="bsRadarGlow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur stdDeviation="1.5" />
-                  </filter>
+                  <linearGradient id="bsRadarFan" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6ba4ff" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="#1e5eb5" stopOpacity="0.08" />
+                  </linearGradient>
                 </defs>
 
                 {/* soft outer halo */}
                 <circle r="92" fill="url(#bsRadarHalo)" />
 
-                {/* outer dashed ring — slow CW rotation */}
+                {/* outer notched gauge — 40 thick bars at 9° each */}
                 <g>
-                  <circle r="84" fill="none" stroke="#6ba4ff" strokeOpacity="0.32"
-                    strokeWidth="0.6" strokeDasharray="2.5 5" />
-                  <animateTransform attributeName="transform" type="rotate"
-                    from="0" to="360" dur="32s" repeatCount="indefinite" />
-                </g>
-
-                {/* mid dashed ring — CCW counter rotation */}
-                <g>
-                  <circle r="76" fill="none" stroke="#6ba4ff" strokeOpacity="0.22"
-                    strokeWidth="0.4" strokeDasharray="1 3.5" />
-                  <animateTransform attributeName="transform" type="rotate"
-                    from="360" to="0" dur="22s" repeatCount="indefinite" />
-                </g>
-
-                {/* 24 tick marks every 15° */}
-                <g stroke="#6ba4ff" strokeOpacity="0.42">
-                  {Array.from({ length: 24 }, (_, i) => {
-                    const a = (i * 15 - 90) * Math.PI / 180;
-                    const major = i % 6 === 0;
-                    const r1 = 71, r2 = major ? 78 : 73.5;
-                    const sw = major ? 1.2 : 0.5;
+                  {Array.from({ length: 40 }, (_, i) => {
+                    const a = (i * 9 - 90) * Math.PI / 180;
+                    const r1 = 78, r2 = 86;
                     return (
-                      <line key={i}
+                      <line key={'n' + i}
                         x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
                         x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
-                        strokeWidth={sw} />
+                        stroke="#6ba4ff"
+                        strokeOpacity={i % 5 === 0 ? 0.65 : 0.28}
+                        strokeWidth={i % 5 === 0 ? 1.6 : 1.0}
+                        strokeLinecap="round" />
                     );
                   })}
                 </g>
 
-                {/* 4 cardinal crosshair brackets */}
-                <g stroke="#6ba4ff" strokeOpacity="0.55" fill="none" strokeWidth="0.8">
-                  <path d="M -88 -3 L -88 3 M -92 0 L -82 0" />
-                  <path d="M  88 -3 L  88 3 M  82 0 L  92 0" />
-                  <path d="M -3 -88 L 3 -88 M 0 -92 L 0 -82" />
-                  <path d="M -3  88 L 3  88 M 0  82 L 0  92" />
-                </g>
-
-                {/* radar sweep arc — fast CW rotation, glowing trail */}
-                <g filter="url(#bsRadarGlow)">
-                  <path d="M 0 0 L 78 0 A 78 78 0 0 1 55.15 55.15 Z"
-                    fill="url(#bsSweep)" opacity="0.6" />
+                {/* chase highlight — 3 bright bars rotating CW slow */}
+                <g>
+                  {[0, 9, 18].map((deg, i) => {
+                    const a = (deg - 90) * Math.PI / 180;
+                    const r1 = 78, r2 = 86;
+                    return (
+                      <line key={'c' + i}
+                        x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
+                        x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
+                        stroke="#bcdcff"
+                        strokeOpacity={1 - i * 0.3}
+                        strokeWidth="1.8"
+                        strokeLinecap="round" />
+                    );
+                  })}
                   <animateTransform attributeName="transform" type="rotate"
-                    from="0" to="360" dur="4.5s" repeatCount="indefinite" />
+                    from="0" to="360" dur="6s" repeatCount="indefinite" />
                 </g>
 
-                {/* === existing donut, untouched === */}
+                {/* inner thin tick ring — 60 fine ticks every 6° */}
+                <g stroke="#6ba4ff" strokeOpacity="0.22">
+                  {Array.from({ length: 60 }, (_, i) => {
+                    const a = (i * 6 - 90) * Math.PI / 180;
+                    const r1 = 70, r2 = 73;
+                    return (
+                      <line key={'t' + i}
+                        x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
+                        x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
+                        strokeWidth="0.5" />
+                    );
+                  })}
+                </g>
+
+                {/* 4 cardinal corner ticks — slightly bolder */}
+                <g stroke="#6ba4ff" strokeOpacity="0.7" fill="none" strokeWidth="1.2">
+                  <path d="M 0 -88 L 0 -78" />
+                  <path d="M 88 0 L 78 0" />
+                  <path d="M 0 88 L 0 78" />
+                  <path d="M -88 0 L -78 0" />
+                </g>
+
+                {/* soft fan — represents 非正常 ratio (warn+rect) on bottom-right quadrant */}
+                {(pctWarn + pctRect) > 0 && (() => {
+                  const arc = (pctWarn + pctRect) * 360;       // degrees of fan
+                  const a1 = -90 * Math.PI / 180;              // start: top
+                  const a2 = (-90 + arc) * Math.PI / 180;      // end CW
+                  const x1 = Math.cos(a1) * 64, y1 = Math.sin(a1) * 64;
+                  const x2 = Math.cos(a2) * 64, y2 = Math.sin(a2) * 64;
+                  const large = arc > 180 ? 1 : 0;
+                  return (
+                    <path d={`M 0 0 L ${x1} ${y1} A 64 64 0 ${large} 1 ${x2} ${y2} Z`}
+                      fill="url(#bsRadarFan)" opacity="0.5" />
+                  );
+                })()}
+
+                {/* === donut, untouched data === */}
                 <circle r={R} fill="none" stroke="#1a2340" strokeWidth="14" />
                 <circle r={R} fill="none" stroke="#16a34a" strokeWidth="14"
                   strokeDasharray={`${C * pctNormal} ${C}`}
@@ -117,8 +138,8 @@ function BigScreenPage({ onOpenLab }) {
                   strokeDasharray={`${C * pctRect} ${C}`}
                   strokeDashoffset={-C * (pctNormal + pctWarn)} transform="rotate(-90)" />
 
-                {/* inner core ring (decoration) */}
-                <circle r="38" fill="none" stroke="#6ba4ff" strokeOpacity="0.18" strokeWidth="0.4" />
+                {/* inner decorative ring */}
+                <circle r="40" fill="none" stroke="#6ba4ff" strokeOpacity="0.22" strokeWidth="0.5" strokeDasharray="2 3" />
 
                 <text textAnchor="middle" y="-4" fill="#fff" fontSize="26" fontWeight="700" fontFamily="var(--font-num)">{labs.length}</text>
                 <text textAnchor="middle" y="16" fill="#7ca0cc" fontSize="10">总间数</text>
