@@ -36,125 +36,107 @@ function BigScreenPage({ onOpenLab }) {
       <div className="bs-grid">
         {/* LEFT COLUMN */}
         <div className="bs-col">
-          <BsCard title="安全实时监控" hint="实时 · LIVE" accent="#6ba4ff">
+          <BsCard title="安全实时监控" hint="实时 · LIVE" accent="#4ade80">
             <div className="bs-safety-monitor">
-              <svg className="bs-radar" viewBox="-92 -92 184 184">
-                <defs>
-                  <radialGradient id="bsRadarHalo" cx="0.5" cy="0.5" r="0.5">
-                    <stop offset="0%" stopColor="#6ba4ff" stopOpacity="0.16" />
-                    <stop offset="60%" stopColor="#6ba4ff" stopOpacity="0.04" />
-                    <stop offset="100%" stopColor="#6ba4ff" stopOpacity="0" />
-                  </radialGradient>
-                  <linearGradient id="bsRadarFan" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6ba4ff" stopOpacity="0.55" />
-                    <stop offset="100%" stopColor="#1e5eb5" stopOpacity="0.08" />
-                  </linearGradient>
-                </defs>
+              {(() => {
+                const riskColor = rectifying > 0 ? '#f87171' : warnCount > 0 ? '#fbbf24' : '#4ade80';
+                const riskLabel = rectifying > 0 ? '高危' : warnCount > 0 ? '中危' : '低危';
+                // 8 个实验室作为雷达上的 blip — 按 status 着色
+                const blips = labs.map((l, i) => {
+                  const a = (i / labs.length) * 2 * Math.PI - Math.PI / 2 + 0.2;
+                  const r = 32 + ((i * 13) % 50);   // pseudo-random distance
+                  return {
+                    cx: Math.cos(a) * r, cy: Math.sin(a) * r,
+                    color: l.status === 'rectifying' ? '#f87171'
+                          : l.status === 'warning' ? '#fbbf24' : '#4ade80',
+                    delay: (i * 0.4) % 4,
+                  };
+                });
+                return (
+                  <div className="bs-ppi">
+                    <svg className="bs-ppi-base" viewBox="-100 -100 200 200">
+                      {/* range rings */}
+                      <circle r="94" fill="none" stroke="#0e3a2a" strokeWidth="0.6" />
+                      <circle r="72" fill="none" stroke="#0e3a2a" strokeWidth="0.5" strokeDasharray="2 3" />
+                      <circle r="48" fill="none" stroke="#0e3a2a" strokeWidth="0.5" strokeDasharray="2 3" />
+                      <circle r="24" fill="none" stroke="#0e3a2a" strokeWidth="0.5" strokeDasharray="2 3" />
 
-                {/* soft outer halo */}
-                <circle r="92" fill="url(#bsRadarHalo)" />
+                      {/* bearing spokes (4 axes) */}
+                      <g stroke="#0e3a2a" strokeWidth="0.4" strokeDasharray="1.5 3">
+                        <line x1="-94" y1="0" x2="94" y2="0" />
+                        <line x1="0" y1="-94" x2="0" y2="94" />
+                        <line x1="-66" y1="-66" x2="66" y2="66" />
+                        <line x1="-66" y1="66" x2="66" y2="-66" />
+                      </g>
 
-                {/* outer notched gauge — 40 thick bars at 9° each */}
-                <g>
-                  {Array.from({ length: 40 }, (_, i) => {
-                    const a = (i * 9 - 90) * Math.PI / 180;
-                    const r1 = 78, r2 = 86;
-                    return (
-                      <line key={'n' + i}
-                        x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
-                        x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
-                        stroke="#6ba4ff"
-                        strokeOpacity={i % 5 === 0 ? 0.65 : 0.28}
-                        strokeWidth={i % 5 === 0 ? 1.6 : 1.0}
-                        strokeLinecap="round" />
-                    );
-                  })}
-                </g>
+                      {/* compass labels */}
+                      <g fill="#2a7a5a" fontSize="6" fontFamily='"JetBrains Mono", monospace' letterSpacing="0.1em">
+                        <text x="0"  y="-86" textAnchor="middle">N</text>
+                        <text x="86" y="2"   textAnchor="end">E</text>
+                        <text x="0"  y="92"  textAnchor="middle">S</text>
+                        <text x="-86" y="2"  textAnchor="start">W</text>
+                      </g>
 
-                {/* chase highlight — 3 bright bars rotating CW slow */}
-                <g>
-                  {[0, 9, 18].map((deg, i) => {
-                    const a = (deg - 90) * Math.PI / 180;
-                    const r1 = 78, r2 = 86;
-                    return (
-                      <line key={'c' + i}
-                        x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
-                        x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
-                        stroke="#bcdcff"
-                        strokeOpacity={1 - i * 0.3}
-                        strokeWidth="1.8"
-                        strokeLinecap="round" />
-                    );
-                  })}
-                  <animateTransform attributeName="transform" type="rotate"
-                    from="0" to="360" dur="6s" repeatCount="indefinite" />
-                </g>
+                      {/* outer tick marks every 30° */}
+                      <g stroke="#1a4d3a" strokeWidth="0.5">
+                        {Array.from({ length: 36 }, (_, i) => {
+                          const a = (i * 10 - 90) * Math.PI / 180;
+                          const r1 = 90, r2 = i % 3 === 0 ? 96 : 93;
+                          return (
+                            <line key={'tk' + i}
+                              x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
+                              x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
+                              strokeOpacity={i % 3 === 0 ? 0.85 : 0.4} />
+                          );
+                        })}
+                      </g>
 
-                {/* inner thin tick ring — 60 fine ticks every 6° */}
-                <g stroke="#6ba4ff" strokeOpacity="0.22">
-                  {Array.from({ length: 60 }, (_, i) => {
-                    const a = (i * 6 - 90) * Math.PI / 180;
-                    const r1 = 70, r2 = 73;
-                    return (
-                      <line key={'t' + i}
-                        x1={Math.cos(a) * r1} y1={Math.sin(a) * r1}
-                        x2={Math.cos(a) * r2} y2={Math.sin(a) * r2}
-                        strokeWidth="0.5" />
-                    );
-                  })}
-                </g>
+                      {/* center crosshair */}
+                      <g stroke="#3a8a6a" strokeWidth="0.6">
+                        <line x1="-6" y1="0" x2="-2" y2="0" />
+                        <line x1="2" y1="0" x2="6" y2="0" />
+                        <line x1="0" y1="-6" x2="0" y2="-2" />
+                        <line x1="0" y1="2" x2="0" y2="6" />
+                      </g>
 
-                {/* 4 cardinal corner ticks — slightly bolder */}
-                <g stroke="#6ba4ff" strokeOpacity="0.7" fill="none" strokeWidth="1.2">
-                  <path d="M 0 -88 L 0 -78" />
-                  <path d="M 88 0 L 78 0" />
-                  <path d="M 0 88 L 0 78" />
-                  <path d="M -88 0 L -78 0" />
-                </g>
+                      {/* blip dots — each lab as a target, pulsing */}
+                      <g>
+                        {blips.map((b, i) => (
+                          <g key={'b' + i}>
+                            <circle cx={b.cx} cy={b.cy} r="2" fill={b.color}>
+                              <animate attributeName="opacity"
+                                values="0.25;1;0.25"
+                                dur="3.4s"
+                                begin={`${b.delay}s`}
+                                repeatCount="indefinite" />
+                            </circle>
+                            <circle cx={b.cx} cy={b.cy} r="3.2" fill="none"
+                              stroke={b.color} strokeWidth="0.6">
+                              <animate attributeName="r"
+                                values="2;6;2" dur="3.4s"
+                                begin={`${b.delay}s`}
+                                repeatCount="indefinite" />
+                              <animate attributeName="opacity"
+                                values="0.6;0;0.6" dur="3.4s"
+                                begin={`${b.delay}s`}
+                                repeatCount="indefinite" />
+                            </circle>
+                          </g>
+                        ))}
+                      </g>
+                    </svg>
 
-                {/* soft fan — represents 非正常 ratio (warn+rect) on bottom-right quadrant */}
-                {(pctWarn + pctRect) > 0 && (() => {
-                  const arc = (pctWarn + pctRect) * 360;       // degrees of fan
-                  const a1 = -90 * Math.PI / 180;              // start: top
-                  const a2 = (-90 + arc) * Math.PI / 180;      // end CW
-                  const x1 = Math.cos(a1) * 64, y1 = Math.sin(a1) * 64;
-                  const x2 = Math.cos(a2) * 64, y2 = Math.sin(a2) * 64;
-                  const large = arc > 180 ? 1 : 0;
-                  return (
-                    <path d={`M 0 0 L ${x1} ${y1} A 64 64 0 ${large} 1 ${x2} ${y2} Z`}
-                      fill="url(#bsRadarFan)" opacity="0.5" />
-                  );
-                })()}
+                    {/* rotating sweep arm with phosphor afterglow */}
+                    <div className="bs-ppi-sweep" />
 
-                {/* === donut, untouched data === */}
-                <circle r={R} fill="none" stroke="#1a2340" strokeWidth="14" />
-                <circle r={R} fill="none" stroke="#16a34a" strokeWidth="14"
-                  strokeDasharray={`${C * pctNormal} ${C}`}
-                  strokeDashoffset="0" transform="rotate(-90)" />
-                <circle r={R} fill="none" stroke="#d97706" strokeWidth="14"
-                  strokeDasharray={`${C * pctWarn} ${C}`}
-                  strokeDashoffset={-C * pctNormal} transform="rotate(-90)" />
-                <circle r={R} fill="none" stroke="#dc2626" strokeWidth="14"
-                  strokeDasharray={`${C * pctRect} ${C}`}
-                  strokeDashoffset={-C * (pctNormal + pctWarn)} transform="rotate(-90)" />
-
-                {/* inner decorative ring */}
-                <circle r="40" fill="none" stroke="#6ba4ff" strokeOpacity="0.22" strokeWidth="0.5" strokeDasharray="2 3" />
-
-                {/* risk level — center reading */}
-                {(() => {
-                  const riskColor = rectifying > 0 ? '#f87171' : warnCount > 0 ? '#fbbf24' : '#4ade80';
-                  const riskLabel = rectifying > 0 ? '高危' : warnCount > 0 ? '中危' : '低危';
-                  return (
-                    <g>
-                      <text textAnchor="middle" y="6" fill={riskColor} fontSize="28" fontWeight="800">{riskLabel}</text>
-                      <text textAnchor="middle" y="26" fill="#7ca0cc" fontSize="9" letterSpacing="2">
-                        {labs.length} 间 · {normalCount}/{warnCount}/{rectifying}
-                      </text>
-                    </g>
-                  );
-                })()}
-              </svg>
+                    {/* center data console */}
+                    <div className="bs-ppi-core">
+                      <div className="bs-ppi-risk" style={{ color: riskColor, textShadow: `0 0 12px ${riskColor}` }}>{riskLabel}</div>
+                      <div className="bs-ppi-sub">{labs.length} 间 · {normalCount} / {warnCount} / {rectifying}</div>
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="bs-sm-stats">
                 {(() => {
                   const alertCount    = MOCK.events.filter(e => e.kind === 'alert' && (e.status === 'active' || e.status === 'pending')).length;
