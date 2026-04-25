@@ -15,7 +15,7 @@
 |---|---|---|
 | `/` | Web 管理控制台 | `index.html` + `page-*.jsx` + `shell.jsx` + `styles.css` |
 | `/mp-demo/` | 微信小程序（H5 模拟，不上微信审核） | `mp-demo/index.html` + `mp-demo/page-*.jsx` + `mp-demo/styles.css` |
-| `/doorplate/` | 电子门牌（1080×1920 竖屏 kiosk） | `doorplate/index.html` + `doorplate/door-display.css`（与 `mp-demo/door-display.html` 同源拷贝） |
+| `/doorplate/` | 电子门牌（1080×1920 竖屏 kiosk） | `doorplate/index.html` + `doorplate/door-display.css`（独立目录，9 状态切换） |
 
 `mock.js` 是 admin 唯一数据源；`mp-demo/mock.js` 是小程序自己的；门牌的 LAB/SCENES 内联在 `doorplate/index.html` 里。
 
