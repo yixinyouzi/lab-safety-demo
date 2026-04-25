@@ -36,8 +36,8 @@ function BigScreenPage({ onOpenLab }) {
       <div className="bs-grid">
         {/* LEFT COLUMN */}
         <div className="bs-col">
-          <BsCard title="实验室分布" hint="当前状态" accent="#6ba4ff">
-            <div className="bs-ring-wrap">
+          <BsCard title="安全实时监控" hint="实时 · LIVE" accent="#6ba4ff">
+            <div className="bs-safety-monitor">
               <svg className="bs-radar" viewBox="-92 -92 184 184">
                 <defs>
                   <radialGradient id="bsRadarHalo" cx="0.5" cy="0.5" r="0.5">
@@ -141,13 +141,42 @@ function BigScreenPage({ onOpenLab }) {
                 {/* inner decorative ring */}
                 <circle r="40" fill="none" stroke="#6ba4ff" strokeOpacity="0.22" strokeWidth="0.5" strokeDasharray="2 3" />
 
-                <text textAnchor="middle" y="-4" fill="#fff" fontSize="26" fontWeight="700" fontFamily="var(--font-num)">{labs.length}</text>
-                <text textAnchor="middle" y="16" fill="#7ca0cc" fontSize="10">总间数</text>
+                {/* risk level — center reading */}
+                {(() => {
+                  const riskColor = rectifying > 0 ? '#f87171' : warnCount > 0 ? '#fbbf24' : '#4ade80';
+                  const riskLabel = rectifying > 0 ? '高危' : warnCount > 0 ? '中危' : '低危';
+                  return (
+                    <g>
+                      <text textAnchor="middle" y="6" fill={riskColor} fontSize="28" fontWeight="800">{riskLabel}</text>
+                      <text textAnchor="middle" y="26" fill="#7ca0cc" fontSize="9" letterSpacing="2">
+                        {labs.length} 间 · {normalCount}/{warnCount}/{rectifying}
+                      </text>
+                    </g>
+                  );
+                })()}
               </svg>
-              <div className="bs-ring-legend">
-                <LegendRow c="#16a34a" label="正常" n={normalCount} total={total} />
-                <LegendRow c="#d97706" label="关注" n={warnCount} total={total} />
-                <LegendRow c="#dc2626" label="整改 / 停用" n={rectifying} total={total} />
+              <div className="bs-sm-stats">
+                {(() => {
+                  const alertCount    = MOCK.events.filter(e => e.kind === 'alert' && (e.status === 'active' || e.status === 'pending')).length;
+                  const violationCount = MOCK.events.filter(e => e.kind === 'violation' && (e.status === 'active' || e.status === 'pending')).length;
+                  const rectifyCount   = MOCK.events.filter(e => e.kind === 'rectify' && (e.status === 'active' || e.status === 'pending')).length;
+                  return (
+                    <>
+                      <div className="bs-sm-stat">
+                        <div className="num" style={{ color: '#fbbf24' }}>{alertCount}</div>
+                        <div className="lbl">预警</div>
+                      </div>
+                      <div className="bs-sm-stat">
+                        <div className="num" style={{ color: '#f87171' }}>{violationCount}</div>
+                        <div className="lbl">违规</div>
+                      </div>
+                      <div className="bs-sm-stat">
+                        <div className="num" style={{ color: '#6ba4ff' }}>{rectifyCount}</div>
+                        <div className="lbl">整改</div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </BsCard>
