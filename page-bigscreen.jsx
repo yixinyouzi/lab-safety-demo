@@ -40,7 +40,7 @@ function BigScreenPage({ onOpenLab }) {
             <div className="bs-safety-monitor">
               {(() => {
                 const riskColor = rectifying > 0 ? '#f87171' : warnCount > 0 ? '#fbbf24' : '#4ade80';
-                const riskLabel = rectifying > 0 ? '高危' : warnCount > 0 ? '中危' : '低危';
+                const riskLabel = rectifying > 0 ? '预警' : warnCount > 0 ? '关注' : '正常';
                 // 8 个实验室作为雷达上的 blip — 按 status 着色
                 const blips = labs.map((l, i) => {
                   const a = (i / labs.length) * 2 * Math.PI - Math.PI / 2 + 0.2;
@@ -131,34 +131,25 @@ function BigScreenPage({ onOpenLab }) {
 
                     {/* center data console */}
                     <div className="bs-ppi-core">
-                      <div className="bs-ppi-risk" style={{ color: riskColor, textShadow: `0 0 12px ${riskColor}` }}>{riskLabel}</div>
-                      <div className="bs-ppi-sub">{labs.length} 间 · {normalCount} / {warnCount} / {rectifying}</div>
+                      <div className="bs-ppi-risk" style={{ color: riskColor, textShadow: `0 0 14px ${riskColor}` }}>{riskLabel}</div>
+                      <div className="bs-ppi-sub">全院 {labs.length} 间</div>
                     </div>
                   </div>
                 );
               })()}
               <div className="bs-sm-stats">
-                {(() => {
-                  const alertCount    = MOCK.events.filter(e => e.kind === 'alert' && (e.status === 'active' || e.status === 'pending')).length;
-                  const violationCount = MOCK.events.filter(e => e.kind === 'violation' && (e.status === 'active' || e.status === 'pending')).length;
-                  const rectifyCount   = MOCK.events.filter(e => e.kind === 'rectify' && (e.status === 'active' || e.status === 'pending')).length;
-                  return (
-                    <>
-                      <div className="bs-sm-stat">
-                        <div className="num" style={{ color: '#fbbf24' }}>{alertCount}</div>
-                        <div className="lbl">预警</div>
-                      </div>
-                      <div className="bs-sm-stat">
-                        <div className="num" style={{ color: '#f87171' }}>{violationCount}</div>
-                        <div className="lbl">违规</div>
-                      </div>
-                      <div className="bs-sm-stat">
-                        <div className="num" style={{ color: '#6ba4ff' }}>{rectifyCount}</div>
-                        <div className="lbl">整改</div>
-                      </div>
-                    </>
-                  );
-                })()}
+                <div className="bs-sm-stat">
+                  <div className="num" style={{ color: '#4ade80' }}>{normalCount}</div>
+                  <div className="lbl">正常</div>
+                </div>
+                <div className="bs-sm-stat">
+                  <div className="num" style={{ color: '#fbbf24' }}>{warnCount}</div>
+                  <div className="lbl">关注</div>
+                </div>
+                <div className="bs-sm-stat">
+                  <div className="num" style={{ color: '#f87171' }}>{rectifying}</div>
+                  <div className="lbl">预警</div>
+                </div>
               </div>
             </div>
           </BsCard>

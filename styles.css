@@ -386,39 +386,42 @@ kbd { font-family: var(--font-num); font-size: 10px; color: var(--ink-2); border
   font-family: -apple-system, "PingFang SC", sans-serif;
 }
 .bs-ppi-risk {
-  font-size: 26px;
+  font-size: 42px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   line-height: 1;
+  font-family: -apple-system, "PingFang SC", sans-serif;
 }
 .bs-ppi-sub {
-  font-size: 10px;
+  font-size: 11px;
   color: #7ca0cc;
-  margin-top: 6px;
-  letter-spacing: 0.18em;
+  margin-top: 10px;
+  letter-spacing: 0.2em;
   font-family: var(--font-num);
+  text-transform: uppercase;
 }
 
 .bs-sm-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
   text-align: center;
   border-left: 1px solid #1a2340;
-  padding-left: 10px;
+  padding-left: 14px;
 }
 .bs-sm-stat .num {
   font-family: var(--font-num);
-  font-size: 30px;
+  font-size: 36px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
 }
 .bs-sm-stat .lbl {
-  font-size: 11px;
-  color: #7ca0cc;
-  margin-top: 6px;
-  letter-spacing: 0.16em;
+  font-size: 13px;
+  color: #cdd6e8;
+  margin-top: 8px;
+  letter-spacing: 0.12em;
+  font-weight: 500;
 }
 .bs-ring-legend { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .bs-legend-row {
