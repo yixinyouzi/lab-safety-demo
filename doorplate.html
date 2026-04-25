@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实验室安全 · 电子门牌</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="doorplate.css">
+</head>
+<body>
+  <!-- 整个门牌外框 -->
+  <div class="doorplate-container">
+    
+    <!-- 顶部：实验室编号与基本状态 -->
+    <header class="header">
+      <div class="header-top">
+        <div class="lab-id">302</div>
+        <div class="lab-status status-normal">
+          <div class="status-dot"></div>
+          <span>状态正常</span>
+        </div>
+      </div>
+      <div class="lab-name">电化学与储能材料实验室</div>
+      <div class="lab-meta">新能源材料系 · 负责人：赵振华</div>
+    </header>
+
+    <!-- 中间：核心数据与人员情况 -->
+    <main class="main-content">
+      
+      <!-- 安全警告与危险类别 -->
+      <section class="card hazard-section">
+        <div class="section-title">危险类别</div>
+        <div class="hazard-tags">
+          <span class="tag hazard-tag">腐蚀</span>
+          <span class="tag hazard-tag">火灾</span>
+          <span class="tag hazard-tag">爆炸</span>
+          <span class="tag hazard-tag">中毒</span>
+          <span class="tag hazard-tag">高压</span>
+        </div>
+      </section>
+
+      <!-- 环境与安全积分指标 -->
+      <section class="kpi-grid">
+        <div class="card kpi-card">
+          <div class="kpi-label">温度</div>
+          <div class="kpi-value"><span class="num">22.2</span><span class="unit">°C</span></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">湿度</div>
+          <div class="kpi-value"><span class="num">59</span><span class="unit">%</span></div>
+        </div>
+        <div class="card kpi-card score-card">
+          <div class="kpi-label">安全积分</div>
+          <div class="kpi-value score-excellent"><span class="num">92</span><span class="unit">分</span></div>
+        </div>
+      </section>
+
+      <!-- 当前在室人员 -->
+      <section class="card people-section">
+        <div class="section-title">
+          <span>当前在室人员</span>
+          <span class="people-count">3 人</span>
+        </div>
+        <div class="people-list">
+          <div class="person">
+            <div class="avatar">王</div>
+            <div class="person-info">
+              <div class="person-name">王语嫣</div>
+              <div class="person-role">学生</div>
+            </div>
+          </div>
+          <div class="person">
+            <div class="avatar">赵</div>
+            <div class="person-info">
+              <div class="person-name">赵振华</div>
+              <div class="person-role">导师</div>
+            </div>
+          </div>
+          <div class="person">
+            <div class="avatar">李</div>
+            <div class="person-info">
+              <div class="person-name">李浩然</div>
+              <div class="person-role">学生</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部：提示或扫码 -->
+    <footer class="footer">
+      <div class="footer-notice">
+        <div class="notice-icon">!</div>
+        <div class="notice-text">请穿戴实验服与护目镜后入内</div>
+      </div>
+      <div class="qrcode-section">
+        <div class="qrcode-placeholder">
+          <!-- 这里使用CSS模拟一个二维码样式 -->
+          <div class="qr-inner"></div>
+        </div>
+        <div class="scan-text">扫码登记</div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- 用于测试切换不同状态的浮动面板（仅供预览使用） -->
+  <div class="demo-controls" style="position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.8); color: white; padding: 15px; border-radius: 8px; z-index: 1000; font-family: sans-serif; font-size: 13px;">
+    <div style="margin-bottom: 10px; font-weight: bold;">门牌状态切换预览</div>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="setStatus('normal')">正常</button>
+      <button onclick="setStatus('busy')">实验中</button>
+      <button onclick="setStatus('warning')">异常警告</button>
+      <button onclick="setStatus('rectifying')">停用整改</button>
+    </div>
+  </div>
+
+  <script>
+    function setStatus(status) {
+      const container = document.querySelector('.doorplate-container');
+      const statusBadge = document.querySelector('.lab-status');
+      
+      // 重置所有状态类
+      container.className = 'doorplate-container';
+      statusBadge.className = 'lab-status';
+      
+      container.classList.add(`state-${status}`);
+      statusBadge.classList.add(`status-${status}`);
+      
+      const statusText = statusBadge.querySelector('span');
+      if (status === 'normal') statusText.innerText = '状态正常';
+      else if (status === 'busy') statusText.innerText = '高危实验中';
+      else if (status === 'warning') statusText.innerText = '异常警告';
+      else if (status === 'rectifying') statusText.innerText = '停用整改';
+    }
+    
+    // 初始化
+    setStatus('normal');
+  </script>
+</body>
+</html>

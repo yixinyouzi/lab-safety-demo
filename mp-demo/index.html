@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>实验室安全 · 微信小程序</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=2">
+<style>
+  /* —— 单机模式下的舞台 —— */
+  .solo-stage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 40px;
+    gap: 20px;
+  }
+  .solo-head {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .solo-title-box h1 {
+    font-size: 20px; font-weight: 600; color: #111; margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .solo-title-box p {
+    font-size: 12px; color: #6b7280; margin: 4px 0 0;
+  }
+  .solo-role-chips {
+    display: flex; gap: 6px;
+    background: #fff; border-radius: 10px; padding: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .solo-role-chips button {
+    border: none; background: transparent;
+    padding: 7px 12px; font-size: 12.5px; color: #555;
+    border-radius: 7px; cursor: pointer; font-family: inherit;
+    white-space: nowrap; display: flex; align-items: center; gap: 6px;
+  }
+  .solo-role-chips button.active {
+    background: #003f88; color: #fff; font-weight: 500;
+  }
+  .solo-role-chips button.active.gold { background: #c9a961; }
+  .solo-role-chips button.active.blue { background: #4a6fa5; }
+  .solo-mode-switch {
+    font-size: 12px; color: #4a6fa5; cursor: pointer;
+    padding: 6px 10px; border: 1px solid #d4dae3; border-radius: 6px;
+    background: #fff;
+  }
+  .solo-mode-switch:hover { background: #f0f4fa; border-color: #003f88; color: #003f88; }
+
+  .solo-phone-wrap {
+    position: relative;
+    margin-top: 8px;
+  }
+  .solo-breadcrumb {
+    text-align: center;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 8px;
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: 0.03em;
+  }
+  .solo-reset {
+    display: inline-block;
+    margin-left: 8px;
+    color: #003f88;
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px dashed #003f88;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="mock.js"></script>
+<script type="text/babel" src="components.jsx"></script>
+<script type="text/babel" src="page-login.jsx"></script>
+<script type="text/babel" src="page-student.jsx"></script>
+<script type="text/babel" src="page-student-detail.jsx"></script>
+<script type="text/babel" src="page-teacher.jsx"></script>
+<script type="text/babel" src="page-patrol.jsx"></script>
+
+<script type="text/babel">
+// ============================================================
+// 单机模式：完整小程序导航
+//   - 从登录进入
+//   - 角色 top-level：student / teacher / patrol
+//   - 根据角色决定默认页、tab 归属、页面白名单
+// ============================================================
+
+// 每个角色的默认起始页
+const ROLE_DEFAULT_PAGE = {
+  student: 'home',
+  teacher: 't-home',
+  patrol:  'p-tasks',
+};
+
+const ROLE_LABEL = {
+  student: { cn: '学生', icon: '👤' },
+  teacher: { cn: '教师 / 导师', icon: '🎓' },
+  patrol:  { cn: '巡查员', icon: '📋' },
+};
+
+function SoloPhone() {
+  // 登录态 & 当前角色 & 当前页面栈
+  const [role, setRole] = React.useState(() => localStorage.getItem('mp-role') || null);
+  const [page, setPage] = React.useState(() => localStorage.getItem('mp-page') || 'login');
+  const [pendingItem, setPendingItem] = React.useState(null);
+
+  React.useEffect(() => {
+    if (role) localStorage.setItem('mp-role', role); else localStorage.removeItem('mp-role');
+    localStorage.setItem('mp-page', page);
+  }, [role, page]);
+
+  const onLogin = (r) => {
+    setRole(r);
+    setPage(ROLE_DEFAULT_PAGE[r]);
+  };
+
+  const nav = (p) => {
+    if (p === 'login') {
+      setRole(null);
+      setPage('login');
+      return;
+    }
+    setPage(p);
+  };
+
+  // 顶部切换角色（开发者/demo 专用）
+  const switchRole = (r) => {
+    if (r === role) return;
+    setRole(r);
+    setPage(ROLE_DEFAULT_PAGE[r]);
+  };
+
+  const reset = () => {
+    setRole(null);
+    setPage('login');
+    setPendingItem(null);
+  };
+
+  // 教师 → 审批项传递
+  const goPending = (item) => {
+    setPendingItem(item);
+    setPage('t-review');
+  };
+
+  // ========== 渲染当前页 ==========
+  let phone;
+  if (page === 'login') {
+    phone = <LoginPage onLogin={onLogin} />;
+  } else if (role === 'student') {
+    phone = (
+      <>
+        {page === 'home' && <StuHomePage onNav={nav} />}
+        {page === 'book' && <StuBookPage onNav={nav} />}
+        {page === 'train' && <StuTrainPage onNav={nav} />}
+        {page === 'msg' && <StuMsgPage onNav={nav} />}
+        {page === 'me' && <StuMePage onNav={nav} />}
+        {page === 'scan' && <StuScanPage onNav={nav} />}
+        {page === 'scan-result' && <StuScanResultPage onNav={nav} />}
+        {page === 'violation' && <StuViolationPage onNav={nav} />}
+        {page === 'appeal' && <StuAppealPage onNav={nav} />}
+        {page === 'appeal-sent' && <StuAppealSentPage onNav={nav} />}
+        {page === 'rectify' && <StuRectifyPage onNav={nav} />}
+        {page === 'rectify-done' && <StuRectifyDonePage onNav={nav} />}
+        {page === 'course-detail' && <StuCourseDetailPage onNav={nav} />}
+        {page === 'quiz' && <StuQuizPage onNav={nav} />}
+      </>
+    );
+  } else if (role === 'teacher') {
+    phone = (
+      <>
+        {page === 't-home' && <TeaHomePage onNav={nav} goPending={goPending} />}
+        {page === 't-pending' && <TeaPendingListPage onNav={nav} goPending={goPending} />}
+        {page === 't-review' && <TeaReviewPage onNav={nav} item={pendingItem} />}
+        {page === 't-students' && <TeaStudentsPage onNav={nav} />}
+        {page === 't-msg' && <TeaMsgPage onNav={nav} goPending={goPending} />}
+        {page === 't-me' && <TeaMePage onNav={nav} />}
+        {/* 教师复用学生的 book / scan / train */}
+        {page === 'book' && <StuBookPage onNav={nav} />}
+        {page === 'scan' && <StuScanPage onNav={nav} />}
+        {page === 'scan-result' && <StuScanResultPage onNav={nav} />}
+        {page === 'train' && <StuTrainPage onNav={nav} />}
+        {page === 'course-detail' && <StuCourseDetailPage onNav={nav} />}
+      </>
+    );
+  } else if (role === 'patrol') {
+    phone = (
+      <>
+        {page === 'p-tasks' && <PatTasksPage onNav={nav} />}
+        {page === 'p-log' && <PatLogPage onNav={nav} />}
+        {page === 'p-log-done' && <PatLogDonePage onNav={nav} />}
+        {page === 'p-history' && <PatHistoryPage onNav={nav} />}
+        {page === 'p-me' && <PatMePage onNav={nav} />}
+        {page === 'violation' && <StuViolationPage onNav={nav} />}
+      </>
+    );
+  }
+
+  const bc = [
+    role ? ROLE_LABEL[role].cn : '未登录',
+    page,
+  ].join(' · ');
+
+  return (
+    <div className="solo-phone-wrap">
+      <div className="solo-breadcrumb">
+        {bc}
+        <span className="solo-reset" onClick={reset}>重置到登录页</span>
+      </div>
+      {phone}
+    </div>
+  );
+}
+
+function MultiPreview({ onExit }) {
+  // 原多机预览，保留给一眼多屏的场景
+  const Phone = ({ initial, role, label }) => {
+    const [page, setPage] = React.useState(initial);
+    const [pendingItem, setPendingItem] = React.useState(null);
+    const nav = (p) => setPage(p);
+    const goPending = (item) => { setPendingItem(item); setPage('t-review'); };
+    let body;
+    if (page === 'login') body = <LoginPage onLogin={() => {}} />;
+    else if (role === 'student') body = (
+      <>
+        {page === 'home' && <StuHomePage onNav={nav} />}
+        {page === 'book' && <StuBookPage onNav={nav} />}
+        {page === 'train' && <StuTrainPage onNav={nav} />}
+        {page === 'msg' && <StuMsgPage onNav={nav} />}
+        {page === 'me' && <StuMePage onNav={nav} />}
+        {page === 'scan' && <StuScanPage onNav={nav} />}
+        {page === 'scan-result' && <StuScanResultPage onNav={nav} />}
+        {page === 'violation' && <StuViolationPage onNav={nav} />}
+        {page === 'appeal' && <StuAppealPage onNav={nav} />}
+        {page === 'appeal-sent' && <StuAppealSentPage onNav={nav} />}
+        {page === 'rectify' && <StuRectifyPage onNav={nav} />}
+        {page === 'rectify-done' && <StuRectifyDonePage onNav={nav} />}
+        {page === 'course-detail' && <StuCourseDetailPage onNav={nav} />}
+        {page === 'quiz' && <StuQuizPage onNav={nav} />}
+      </>
+    );
+    else if (role === 'teacher') body = (
+      <>
+        {page === 't-home' && <TeaHomePage onNav={nav} goPending={goPending} />}
+        {page === 't-pending' && <TeaPendingListPage onNav={nav} goPending={goPending} />}
+        {page === 't-review' && <TeaReviewPage onNav={nav} item={pendingItem} />}
+        {page === 't-students' && <TeaStudentsPage onNav={nav} />}
+        {page === 't-msg' && <TeaMsgPage onNav={nav} goPending={goPending} />}
+        {page === 't-me' && <TeaMePage onNav={nav} />}
+      </>
+    );
+    else if (role === 'patrol') body = (
+      <>
+        {page === 'p-tasks' && <PatTasksPage onNav={nav} />}
+        {page === 'p-log' && <PatLogPage onNav={nav} />}
+        {page === 'p-log-done' && <PatLogDonePage onNav={nav} />}
+        {page === 'p-history' && <PatHistoryPage onNav={nav} />}
+        {page === 'p-me' && <PatMePage onNav={nav} />}
+      </>
+    );
+    return (
+      <div>
+        {body}
+        <div className="demo-caption">{label}</div>
+      </div>
+    );
+  };
+
+  const [view, setView] = React.useState('story');
+  const views = {
+    story: [
+      { initial: 'login', role: 'student', label: '① 登录 · 3 角色选择' },
+      { initial: 'home', role: 'student', label: '② 学生首页 · 挂黄牌' },
+      { initial: 'msg', role: 'student', label: '③ 消息中心 · 违规通知' },
+      { initial: 'violation', role: 'student', label: '④ 违规详情 + 申诉入口' },
+      { initial: 't-home', role: 'teacher', label: '⑤ 导师首页 · 待审工作台' },
+      { initial: 't-review', role: 'teacher', label: '⑥ 导师复核申诉 · 驳回' },
+      { initial: 'course-detail', role: 'student', label: '⑦ 安全培训 · 课程详情' },
+      { initial: 'quiz', role: 'student', label: '⑧ 课后考试' },
+      { initial: 'rectify', role: 'student', label: '⑨ 整改拍照上传' },
+      { initial: 'rectify-done', role: 'student', label: '⑩ 恢复权限流程' },
+    ],
+    student: [
+      { initial: 'home', role: 'student', label: '首页' },
+      { initial: 'book', role: 'student', label: '实验预约' },
+      { initial: 'scan', role: 'student', label: '扫码进门' },
+      { initial: 'scan-result', role: 'student', label: '进门核验拦截' },
+      { initial: 'train', role: 'student', label: '培训中心' },
+      { initial: 'me', role: 'student', label: '我的' },
+    ],
+    teacher: [
+      { initial: 't-home', role: 'teacher', label: '教师首页' },
+      { initial: 't-pending', role: 'teacher', label: '待审工作台' },
+      { initial: 't-review', role: 'teacher', label: '复核申诉' },
+      { initial: 't-students', role: 'teacher', label: '我的学生' },
+      { initial: 't-msg', role: 'teacher', label: '消息中心' },
+      { initial: 't-me', role: 'teacher', label: '我的' },
+    ],
+    patrol: [
+      { initial: 'p-tasks', role: 'patrol', label: '巡查任务' },
+      { initial: 'p-log', role: 'patrol', label: '现场登记违规' },
+      { initial: 'p-log-done', role: 'patrol', label: '登记完成 · 自动流转' },
+      { initial: 'p-history', role: 'patrol', label: '巡查记录' },
+      { initial: 'p-me', role: 'patrol', label: '我的' },
+    ],
+  };
+  const items = views[view];
+  return (
+    <div className="demo-root">
+      <div className="demo-head">
+        <div>
+          <h1 className="demo-title">实验室安全 · 微信小程序 · 多机预览</h1>
+          <div className="demo-sub">中国地质大学（北京）· 材料学院 · 学生 / 教师 / 巡查员</div>
+        </div>
+        <div className="demo-nav">
+          <button className={view === 'story' ? 'active' : ''} onClick={() => setView('story')}>主线故事（10 屏）</button>
+          <button className={view === 'student' ? 'active' : ''} onClick={() => setView('student')}>学生端</button>
+          <button className={view === 'teacher' ? 'active' : ''} onClick={() => setView('teacher')}>教师端</button>
+          <button className={view === 'patrol' ? 'active' : ''} onClick={() => setView('patrol')}>巡查员端</button>
+          <button onClick={onExit} style={{ background: '#f0f4fa', color: '#003f88', fontWeight: 500 }}>
+            ← 返回单机模式
+          </button>
+        </div>
+      </div>
+      <div className="demo-stage">
+        {items.map((it, i) => (
+          <Phone key={view + i} initial={it.initial} role={it.role} label={it.label} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [mode, setMode] = React.useState(() => localStorage.getItem('mp-mode') || 'solo');
+  React.useEffect(() => { localStorage.setItem('mp-mode', mode); }, [mode]);
+
+  if (mode === 'multi') {
+    return <MultiPreview onExit={() => setMode('solo')} />;
+  }
+
+  return (
+    <div className="solo-stage" style={{ background: 'radial-gradient(1200px 600px at 10% 0%, #f5f5f7 0%, transparent 60%), radial-gradient(900px 500px at 90% 100%, #eef3ff 0%, transparent 60%), #e8eaef' }}>
+      <div className="solo-head">
+        <div className="solo-title-box">
+          <h1>实验室安全 · 微信小程序</h1>
+          <p>中国地质大学（北京）· 材料学院 · 真实交互（登录 → 切角色 → tab / 路由）</p>
+        </div>
+        <div className="solo-role-chips">
+          {/* 这个 chips 只是 demo 快捷切角色，实际登录走登录页 */}
+          <SoloRoleBtn roleKey="student" />
+          <SoloRoleBtn roleKey="teacher" />
+          <SoloRoleBtn roleKey="patrol" />
+        </div>
+        <button className="solo-mode-switch" onClick={() => setMode('multi')}>
+          多机预览 →
+        </button>
+      </div>
+      <SoloPhone />
+    </div>
+  );
+}
+
+function SoloRoleBtn({ roleKey }) {
+  // 从 App 里拿 state 不方便，这里用 localStorage + 自定义事件
+  const [curRole, setCurRole] = React.useState(() => localStorage.getItem('mp-role'));
+  React.useEffect(() => {
+    const h = () => setCurRole(localStorage.getItem('mp-role'));
+    window.addEventListener('mp-role-changed', h);
+    return () => window.removeEventListener('mp-role-changed', h);
+  }, []);
+
+  const click = () => {
+    localStorage.setItem('mp-role', roleKey);
+    localStorage.setItem('mp-page', ROLE_DEFAULT_PAGE[roleKey]);
+    window.location.reload();  // 简单粗暴，演示够用
+  };
+
+  const cls = ['', 'gold', 'blue'];
+  const clsMap = { student: '', teacher: 'gold', patrol: 'blue' };
+
+  return (
+    <button
+      className={(curRole === roleKey ? 'active ' : '') + clsMap[roleKey]}
+      onClick={click}
+    >
+      {ROLE_LABEL[roleKey].icon} {ROLE_LABEL[roleKey].cn}
+    </button>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
