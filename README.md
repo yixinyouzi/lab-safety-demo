@@ -4,11 +4,13 @@
 
 3 个端联动展示：
 
-| 端 | URL |
-|---|---|
-| **Web 管理控制台** (学院 HSE) | https://yaron9.github.io/lab-safety-demo/ |
-| **微信小程序** (师生 / 巡查员) | https://yaron9.github.io/lab-safety-demo/mp-demo/ |
-| **电子门牌** (实验室门口 1080×1920) | https://yaron9.github.io/lab-safety-demo/doorplate/ |
+| 端 | 国内镜像（推荐甲方使用） | 海外/兜底 |
+|---|---|---|
+| **Web 管理控制台** (学院 HSE) | _EdgeOne 开通后回填_ `/` | https://yaron9.github.io/lab-safety-demo/ |
+| **微信小程序** (师生 / 巡查员) | _EdgeOne 开通后回填_ `/mp-demo/` | https://yaron9.github.io/lab-safety-demo/mp-demo/ |
+| **电子门牌** (实验室门口 1080×1920) | _EdgeOne 开通后回填_ `/doorplate/` | https://yaron9.github.io/lab-safety-demo/doorplate/ |
+
+> 国内访问优先用 EdgeOne Pages 镜像（`*.edgeone.app` 默认子域名免备案）。GitHub Pages 永久保留作为海外兜底。镜像运维见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
 
 ## 各端能力
 

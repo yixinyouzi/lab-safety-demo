@@ -33,8 +33,17 @@
 
 ## 部署
 
-GitHub repo: https://github.com/Yaron9/lab-safety-demo  · GitHub Pages 部署（main 分支根目录）。
-Push 自动触发 `.github/workflows/pages.yml`，~17s 完成。
+GitHub repo: https://github.com/Yaron9/lab-safety-demo
+
+三镜像同时从 main 自动部署（push 一次，三处都更新）：
+
+| 镜像 | 角色 | URL | 触发 |
+|---|---|---|---|
+| GitHub Pages | 海外兜底（永久保留） | https://yaron9.github.io/lab-safety-demo/ | `.github/workflows/pages.yml` ~17s |
+| EdgeOne Pages | **国内主力（甲方走这个）** | `https://<project>.edgeone.app/` | EdgeOne 控制台连 GitHub，~30s |
+| Cloudflare Pages | 二级兜底 | `https://<project>.pages.dev/` | Cloudflare Pages 控制台连 GitHub，~30s |
+
+**国内访问只能走 EdgeOne**——GitHub Pages、Cloudflare Pages 默认域名都被 GFW 处理了。三处自动部署都是 GitHub OAuth 授权，仓库里没有任何 token。完整运维步骤、首次开通、回滚见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
 
 ```sh
 # 本地预览
