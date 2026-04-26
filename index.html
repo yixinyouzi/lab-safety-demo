@@ -1,141 +1,241 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh-Hans">
 <head>
-<meta charset="UTF-8">
-<title>实验室安全 · 管理控制台</title>
+<meta charset="utf-8">
+<title>实验室安全管理系统 · Demo · 中国地质大学（北京）材料科学与工程学院</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0c1f3a">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23faf9f6'/%3E%3Crect x='3' y='3' width='10' height='10' fill='%230c1f3a'/%3E%3Crect x='5.5' y='5.5' width='5' height='5' fill='%232f7d3b'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=10">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf9f6;
+    --ink: #0c1f3a;
+    --ink-2: #4a586d;
+    --ink-3: #8a93a3;
+    --rule: #d9d6cd;
+    --rule-strong: #0c1f3a;
+    --led-on: #2f7d3b;
+    --hi: rgba(12, 31, 58, 0.04);
+    --font-sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
+
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 72px 32px 56px;
+  }
+
+  /* head */
+  .head { padding-bottom: 28px; }
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 14px;
+  }
+  .title {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    line-height: 1.2;
+  }
+  .subtitle {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin: 0;
+  }
+  .meta {
+    margin-top: 22px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.10em;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    text-transform: uppercase;
+  }
+  .meta span { display: inline-flex; align-items: center; }
+  .meta span + span::before {
+    content: '';
+    width: 3px; height: 3px;
+    background: var(--rule);
+    border-radius: 50%;
+    margin-right: 14px;
+  }
+
+  /* rule */
+  .rule { height: 1px; background: var(--rule-strong); margin: 0; }
+  .rule.soft { background: var(--rule); }
+
+  /* entries */
+  .entries { display: block; }
+  a.entry {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    column-gap: 28px;
+    align-items: start;
+    padding: 28px 0;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+    transition: background 0.14s linear;
+  }
+  a.entry:hover { background: var(--hi); }
+  a.entry:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+  a.entry:last-child { border-bottom: 0; }
+
+  .num {
+    font-family: var(--font-mono);
+    font-size: 34px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+    padding-top: 6px;
+    font-feature-settings: "tnum";
+  }
+  .body { min-width: 0; }
+  .entry-kicker {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 6px;
+  }
+  .entry-title {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    margin: 0 0 8px;
+    line-height: 1.25;
+  }
+  .entry-desc {
+    color: var(--ink-2);
+    font-size: 13.5px;
+    margin: 0;
+    line-height: 1.55;
+  }
+  .arrow {
+    align-self: center;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--ink);
+    transition: transform 0.20s cubic-bezier(.2,.8,.2,1);
+    padding-left: 12px;
+  }
+  a.entry:hover .arrow { transform: translateX(6px); }
+
+  /* footer */
+  footer {
+    padding-top: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .status { display: inline-flex; align-items: center; gap: 10px; }
+  .led {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--led-on);
+    box-shadow: 0 0 0 1px rgba(47, 125, 59, 0.18);
+  }
+  .notice {
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 520px) {
+    main { padding: 48px 22px 40px; }
+    .title { font-size: 24px; }
+    a.entry { grid-template-columns: 44px 1fr auto; column-gap: 18px; padding: 22px 0; }
+    .num { font-size: 26px; padding-top: 4px; }
+    .entry-title { font-size: 18px; }
+    .meta { gap: 10px; font-size: 10px; }
+    footer { font-size: 9px; }
+  }
+</style>
 </head>
 <body>
-<div id="root"></div>
-
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-
-<script src="mock.js?v=10"></script>
-<script type="text/babel" src="shell.jsx?v=10"></script>
-<script type="text/babel" src="page-inbox.jsx?v=10"></script>
-<script type="text/babel" src="page-events.jsx?v=10"></script>
-<script type="text/babel" src="page-labs.jsx?v=10"></script>
-<script type="text/babel" src="page-other.jsx?v=10"></script>
-<script type="text/babel" src="page-bigscreen.jsx?v=10"></script>
-<script type="text/babel" src="page-training.jsx?v=10"></script>
-<script type="text/babel" src="page-chems.jsx?v=10"></script>
-<script type="text/babel" src="page-reports.jsx?v=10"></script>
-<script type="text/babel" src="page-sysmap.jsx?v=10"></script>
-
-<script type="text/babel">
-const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "density": "comfortable",
-  "showAvatars": true,
-  "accent": "blue"
-}/*EDITMODE-END*/;
-
-function App() {
-  const [page, setPage] = React.useState(() => localStorage.getItem('lab-admin-page') || 'inbox');
-  const [labOpen, setLabOpen] = React.useState(null);
-  const [evOpen, setEvOpen] = React.useState(null);
-  const [tweakOpen, setTweakOpen] = React.useState(false);
-  const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
-
-  React.useEffect(() => { localStorage.setItem('lab-admin-page', page); }, [page]);
-
-  // Tweak protocol
-  React.useEffect(() => {
-    const handler = (ev) => {
-      if (!ev.data) return;
-      if (ev.data.type === '__activate_edit_mode') setTweakOpen(true);
-      if (ev.data.type === '__deactivate_edit_mode') setTweakOpen(false);
-    };
-    window.addEventListener('message', handler);
-    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
-    return () => window.removeEventListener('message', handler);
-  }, []);
-
-  const counts = {
-    inbox: MOCK.events.filter(e => e.status === 'active' || e.status === 'pending').length,
-    events: MOCK.events.filter(e => e.status === 'active').length || null,
-  };
-
-  const crumbs = {
-    inbox: ['工作台', '今日待办'],
-    events: ['工作台', '事件中心'],
-    labs: ['台账', '实验室'],
-    people: ['台账', '人员'],
-    training: ['台账', '安全培训'],
-    chems: ['台账', '危化品'],
-    bigscreen: ['工作台', '指挥大屏'],
-    reports: ['系统', '统计报表'],
-    settings: ['系统', '规则设置'],
-    sysmap: ['系统', '关于系统'],
-  }[page] || ['工作台'];
-
-  return (
-    <div className="shell">
-      <Sidebar page={page} setPage={setPage} counts={counts} />
-      <div className="main">
-        {page !== 'bigscreen' && <Topbar crumbs={crumbs} />}
-        <div className="content">
-          {page === 'inbox' && <InboxPage onOpenEvent={setEvOpen} onOpenLab={setLabOpen} />}
-          {page === 'events' && <EventsPage onOpenEvent={setEvOpen} />}
-          {page === 'labs' && <LabsPage onOpenLab={setLabOpen} />}
-          {page === 'people' && <PeoplePage />}
-          {page === 'training' && <TrainingPage />}
-          {page === 'bigscreen' && <BigScreenPage />}
-          {page === 'chems' && <ChemsPage />}
-          {page === 'reports' && <ReportsPage />}
-          {page === 'sysmap' && <SysMapPage />}
-          {page === 'settings' && <PlaceholderPage
-            title="规则与设置"
-            desc="扣分规则、培训要求、告警阈值、通知模板等系统级配置"
-            features={[
-              '扣分规则模板（按违规类型）',
-              '告警阈值（温度 / 单人时长 / 人数）',
-              '培训课程配置',
-              '通知渠道（短信 / 企微 / 邮件）',
-            ]}
-          />}
-        </div>
-      </div>
-
-      {labOpen && <LabPanel lab={labOpen} onClose={() => setLabOpen(null)} />}
-      {evOpen && <EventPanel ev={evOpen} onClose={() => setEvOpen(null)} />}
-
-      {tweakOpen && (
-        <div className="tweaks-panel">
-          <h4>Tweaks <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>原型可调项</span></h4>
-          <div className="tweak-row">
-            <span>密度</span>
-            <select value={tweaks.density} onChange={e => setTweaks({...tweaks, density: e.target.value})}>
-              <option value="comfortable">舒适</option>
-              <option value="compact">紧凑</option>
-            </select>
-          </div>
-          <div className="tweak-row">
-            <span>强调色</span>
-            <select value={tweaks.accent} onChange={e => setTweaks({...tweaks, accent: e.target.value})}>
-              <option value="blue">学院蓝（默认）</option>
-              <option value="teal">薄荷青</option>
-              <option value="slate">石墨灰</option>
-            </select>
-          </div>
-          <div className="tweak-row">
-            <span>显示头像</span>
-            <input type="checkbox" checked={tweaks.showAvatars} onChange={e => setTweaks({...tweaks, showAvatars: e.target.checked})} />
-          </div>
-          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)', fontSize: 11, color: 'var(--ink-3)' }}>
-            页面跳转用侧边栏 · 点击卡片/行打开详情 · 数据均为示意
-          </div>
-        </div>
-      )}
+<main>
+  <header class="head">
+    <div class="kicker">DEMO PORTAL · LAB SAFETY MGMT SYSTEM</div>
+    <h1 class="title">实验室安全管理系统</h1>
+    <p class="subtitle">中国地质大学（北京）· 材料科学与工程学院</p>
+    <div class="meta">
+      <span>BUILD 2026.04</span>
+      <span>3 ENDPOINTS</span>
+      <span>DATA · MOCK</span>
     </div>
-  );
-}
+  </header>
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
+  <div class="rule"></div>
+
+  <nav class="entries" aria-label="三端入口">
+    <a class="entry" href="admin/">
+      <div class="num">01</div>
+      <div class="body">
+        <div class="entry-kicker">WEB ADMIN CONSOLE · DESKTOP</div>
+        <h2 class="entry-title">Web 管理控制台</h2>
+        <p class="entry-desc">学院 HSE · 今日待办 / 事件中心 / 指挥大屏 / 实验室台账 / 人员档案 / 统计报表 / 系统全貌</p>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a class="entry" href="mp-demo/">
+      <div class="num">02</div>
+      <div class="body">
+        <div class="entry-kicker">WECHAT MINI PROGRAM · H5 SIM</div>
+        <h2 class="entry-title">微信小程序</h2>
+        <p class="entry-desc">师生 / 巡查员 · 预约 / 扫码进门 / 培训 / 违规申诉 / 整改 · 三角色分端</p>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+
+    <a class="entry" href="doorplate/">
+      <div class="num">03</div>
+      <div class="body">
+        <div class="entry-kicker">ELECTRONIC DOORPLATE · KIOSK 1080×1920</div>
+        <h2 class="entry-title">电子门牌</h2>
+        <p class="entry-desc">实验室门口 · 竖屏 Android 一体机 · 9 状态切换（含人脸识别 / QR 扫码 / 紧急事件）</p>
+      </div>
+      <span class="arrow" aria-hidden="true">→</span>
+    </a>
+  </nav>
+
+  <div class="rule soft"></div>
+
+  <footer>
+    <span class="status"><span class="led" aria-hidden="true"></span>SYSTEM NORMAL</span>
+    <span class="notice">PREVIEW LINK · 3H WINDOW · ALL DATA IS MOCK</span>
+  </footer>
+</main>
 </body>
 </html>

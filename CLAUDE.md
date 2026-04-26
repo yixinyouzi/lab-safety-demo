@@ -13,11 +13,14 @@
 
 | 路径 | 端 | 入口文件 |
 |---|---|---|
-| `/` | Web 管理控制台 | `index.html` + `page-*.jsx` + `shell.jsx` + `styles.css` |
+| `/` | **Portal 导航页**（三端入口） | `index.html`（纯 HTML/CSS，无 JS，~200 行 inline style，按 `.impeccable.md` 调性） |
+| `/admin/` | Web 管理控制台 | `admin/index.html` + `admin/page-*.jsx` + `admin/shell.jsx` + `admin/styles.css` + `admin/mock.js` |
 | `/mp-demo/` | 微信小程序（H5 模拟，不上微信审核） | `mp-demo/index.html` + `mp-demo/page-*.jsx` + `mp-demo/styles.css` |
 | `/doorplate/` | 电子门牌（1080×1920 竖屏 kiosk） | `doorplate/index.html` + `doorplate/door-display.css`（独立目录，9 状态切换） |
 
-`mock.js` 是 admin 唯一数据源；`mp-demo/mock.js` 是小程序自己的；门牌的 LAB/SCENES 内联在 `doorplate/index.html` 里。
+`admin/mock.js` 是 admin 唯一数据源；`mp-demo/mock.js` 是小程序自己的；门牌的 LAB/SCENES 内联在 `doorplate/index.html` 里。
+
+> Portal 存在的原因：EdgeOne 国内默认域名是 3 小时 token 预览链接，给甲方一个唯一入口最干净。Cookie 落到 `*.edgeone.cool` 域名后，三端在 3 小时内任意切换都不用重新认证。
 
 ## 硬约束（违反会被骂）
 
@@ -35,14 +38,12 @@
 
 GitHub repo: https://github.com/Yaron9/lab-safety-demo
 
-三镜像同时从 main 自动部署（push 一次，三处都更新）：
-
 | 镜像 | 角色 | URL | 触发 |
 |---|---|---|---|
 | GitHub Pages | 海外兜底（永久保留） | https://yaron9.github.io/lab-safety-demo/ | `.github/workflows/pages.yml` ~17s |
-| EdgeOne Pages | **国内主力（甲方走这个）** | `https://<project>.edgeone.app/` | `.github/workflows/edgeone.yml` 用 `EDGEONE_API_TOKEN` secret，~30s |
+| EdgeOne Pages | **国内主力 · 演示前手动跑** | `https://lab-safety-demo-<slug>.edgeone.cool?eo_token=...&eo_time=...`（每次部署新 URL · 3 小时窗口） | `.github/workflows/edgeone.yml` push 触发；演示前本地手跑 `npx edgeone pages deploy` 拿新预览 URL |
 
-**国内访问只能走 EdgeOne**——GitHub Pages 默认域名被 GFW 处理。完整运维步骤、首次开通、回滚见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
+**国内只能走 EdgeOne 预览链接**——GitHub Pages 默认域名被 GFW 处理；EdgeOne 国内合规要求默认域名只发 3 小时 token 链接（不绑自定义域名 + 备案就这样）。完整运维步骤、演示前 SOP、回滚见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
 
 ### 本地凭证（macOS Keychain）
 

@@ -2,55 +2,55 @@
 
 ## 部署矩阵
 
-| 镜像 | URL | 用途 | 触发 |
+| 镜像 | URL 形态 | 用途 | 触发 |
 |---|---|---|---|
-| **GitHub Pages**（兜底） | https://yaron9.github.io/lab-safety-demo/ | 海外访问；EdgeOne 故障时甲方退路 | `.github/workflows/pages.yml` push 到 main，~17s |
-| **EdgeOne Pages**（国内主力） | `https://<project>.edgeone.app/`（开通后回填） | 国内甲方访问 | `.github/workflows/edgeone.yml` push 到 main，调 EdgeOne CLI，~30s |
+| **GitHub Pages**（兜底，永久保留） | https://yaron9.github.io/lab-safety-demo/ | 海外访问；EdgeOne 故障时甲方退路 | `.github/workflows/pages.yml` push 到 main，~17s |
+| **EdgeOne Pages**（国内主力 · 演示前手动跑） | `https://lab-safety-demo-<slug>.edgeone.cool?eo_token=...&eo_time=...`（每次部署新 URL · 3 小时窗口） | 国内甲方演示 | `.github/workflows/edgeone.yml` push 触发；**演示前本地再手跑一次** 拿到鲜活 URL |
 
-两份产物完全一致，都是仓库根目录原样发布。三个子路径 `/`、`/mp-demo/`、`/doorplate/` 同时可用。
+两份产物完全一致（仓库根目录原样发布），portal `/` + 三端 `/admin/` `/mp-demo/` `/doorplate/` 共用同一个 cookie，从 portal 点进去任何一端在 3 小时内都不重新认证。
 
-> Cloudflare Pages 暂未启用——EdgeOne 公测期如果出大故障，先靠 GitHub Pages 兜底；要再加一份镜像随时可以加。
+## 演示前重新部署（30 秒 SOP）
 
-## 首次开通（一次性）
-
-EdgeOne 部署不走控制台 OAuth，走 **EdgeOne CLI + GitHub Actions**。第一次需要人工做的两件事：
-
-1. **开通 EdgeOne Pages 服务**（API 不开放代点）：
-   - 浏览器登录 https://console.cloud.tencent.com/edgeone/pages
-   - 第一次进会弹"开通"或服务条款，勾同意 → **开通**（公测期免费）
-2. **生成 API Token**：
-   - 同一控制台 → 左侧菜单 **API Token** → **新建** → 描述/有效期随意 → **提交** → 复制
-   - Token 加到 GitHub Secrets：
-     ```sh
-     gh secret set EDGEONE_API_TOKEN -R Yaron9/lab-safety-demo --body "<paste-token>"
-     ```
-   - Token 同时存进本地 macOS Keychain（开发机本地 deploy 用）：
-     ```sh
-     security add-generic-password -a EDGEONE_API_TOKEN -s tencent-cloud-cli -w "<paste-token>" -U
-     ```
-
-## 日常重部署
-
-`git push origin main` —— GitHub Pages 和 EdgeOne 同时自动跑，~30s 内两处都更新。
+EdgeOne 国内默认域名是 3 小时合规预览链接 —— 每次给甲方演示前重新跑一次 deploy 拿新 URL：
 
 ```sh
-# 验证两处都更新到最新 commit
-curl -sI https://yaron9.github.io/lab-safety-demo/ | head -1
-curl -sI https://<project>.edgeone.app/ | head -1
+cd /Users/yaron/AGI/lab-safety-demo
+TOKEN=$(security find-generic-password -a EDGEONE_API_TOKEN -s tencent-cloud-cli -w)
+yes "" | npx -y edgeone pages deploy . -n lab-safety-demo -t "$TOKEN" -e production -a global
+```
 
+部署完成（~30s）后，从输出找这一行：
+```
+EDGEONE_DEPLOY_URL=https://lab-safety-demo-XXXXXXXX.edgeone.cool?eo_token=...&eo_time=...
+```
+
+把这个完整 URL（必须含 `?eo_token=...&eo_time=...` query string）发给甲方 / 打成二维码即可。第一次访问会落 cookie，之后 3 小时内甲方在 portal 上点任何一端都直接通。
+
+## 首次开通（已完成，做记录）
+
+第一次需要人工做的两件事（API 不开放代点）：
+
+1. **开通 EdgeOne Pages 服务**：浏览器登录 https://console.cloud.tencent.com/edgeone/pages → 同意服务条款 → 开通
+2. **生成 API Token**：同控制台左侧菜单 **API Token** → **新建** → 复制
+3. Token 入仓 + 入本地：
+   ```sh
+   gh secret set EDGEONE_API_TOKEN -R Yaron9/lab-safety-demo --body "<paste-token>"
+   security add-generic-password -a EDGEONE_API_TOKEN -s tencent-cloud-cli -w "<paste-token>" -U
+   ```
+
+## 日常 push 自动部署
+
+`git push origin main` —— GitHub Pages 和 EdgeOne 同时自动跑。
+
+```sh
 # GitHub Pages 日志
 gh run list -R Yaron9/lab-safety-demo --workflow=pages.yml --limit 1
-# EdgeOne 日志（GitHub Action 跑）
+# EdgeOne 日志
 gh run list -R Yaron9/lab-safety-demo --workflow=edgeone.yml --limit 1
-# EdgeOne 历史部署列表（含每次的临时预览 URL）也在 EdgeOne 控制台 Deployments 页
+# EdgeOne 历史部署列表（含每次的预览 URL）也在 EdgeOne 控制台 Deployments 页
 ```
 
-## 本地手动部署（debug 用）
-
-```sh
-TOKEN=$(security find-generic-password -a EDGEONE_API_TOKEN -s tencent-cloud-cli -w)
-npx -y edgeone pages deploy . -n lab-safety-demo -t "$TOKEN" -e production -a global
-```
+> **注意**：push 触发的 EdgeOne 自动部署也会生成新预览 URL，但只在 GitHub Action 日志里能看到，不会自动通知甲方。**演示前一定要本地再手跑一次** —— 这样可以从终端立刻拿到 URL，且时间戳是新的（3 小时窗口从这一刻起算）。
 
 ## 凭据放哪
 
@@ -64,9 +64,9 @@ npx -y edgeone pages deploy . -n lab-safety-demo -t "$TOKEN" -e production -a gl
 
 ## 故障回滚
 
-1. **EdgeOne 部署失败/挂了** → README 顶部把"国内镜像"那行临时换成 GitHub Pages URL，让甲方走兜底。EdgeOne 控制台 Deployments 页可以一键回滚到上一个 production 版本。
+1. **EdgeOne 部署失败/挂了** → 给甲方 GitHub Pages URL 当备用（如果他能科学上网）；或者换一个时间点重跑 deploy。EdgeOne 控制台 Deployments 页可以一键回滚到上一个 production 部署。
 2. **代码本身写坏** → `git revert <bad-sha> && git push`，两处同时回滚。
-3. **EdgeOne 公测期长期出大故障** → 不动 workflow，去 https://dash.cloudflare.com 加一份 Cloudflare Pages 作为第二镜像（步骤本文件之前 git history 里有，需要时找回）。
+3. **EdgeOne 长期出大故障** → 不动 workflow，临时改 README 把"国内主力"行换成"暂用 GitHub Pages 兜底"；同时考虑加 Cloudflare Pages 作为第二镜像（不在本仓库当前部署中）。
 
 ## 凭据轮换 / 撤销
 
@@ -85,5 +85,6 @@ security delete-generic-password -a TENCENTCLOUD_SECRET_KEY -s tencent-cloud-cli
 ## 别做的
 
 - 不要替换 `.github/workflows/pages.yml`，GitHub Pages 是兜底，永远保留。
-- 不要在 EdgeOne 国内版上绑自定义域名（要 ICP 备案）。默认 `*.edgeone.app` 子域名免备案，demo 用足够。
+- 不要在 EdgeOne 国内版上绑自定义域名（要 ICP 备案）。当前的「3 小时 portal + cookie 全域」方案对 demo 场景完全够用。
 - 不要把 EdgeOne API Token 写进任何 commit、CLAUDE.md、README 或文档示例——只通过 keychain / GitHub Secret 引用。
+- 不要把 portal 的 `/` 改回 admin —— portal 是给甲方第一眼看的简洁入口，admin 留在 `/admin/`。

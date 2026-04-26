@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>实验室安全 · 管理控制台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css?v=10">
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="mock.js?v=10"></script>
+<script type="text/babel" src="shell.jsx?v=10"></script>
+<script type="text/babel" src="page-inbox.jsx?v=10"></script>
+<script type="text/babel" src="page-events.jsx?v=10"></script>
+<script type="text/babel" src="page-labs.jsx?v=10"></script>
+<script type="text/babel" src="page-other.jsx?v=10"></script>
+<script type="text/babel" src="page-bigscreen.jsx?v=10"></script>
+<script type="text/babel" src="page-training.jsx?v=10"></script>
+<script type="text/babel" src="page-chems.jsx?v=10"></script>
+<script type="text/babel" src="page-reports.jsx?v=10"></script>
+<script type="text/babel" src="page-sysmap.jsx?v=10"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "density": "comfortable",
+  "showAvatars": true,
+  "accent": "blue"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [page, setPage] = React.useState(() => localStorage.getItem('lab-admin-page') || 'inbox');
+  const [labOpen, setLabOpen] = React.useState(null);
+  const [evOpen, setEvOpen] = React.useState(null);
+  const [tweakOpen, setTweakOpen] = React.useState(false);
+  const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
+
+  React.useEffect(() => { localStorage.setItem('lab-admin-page', page); }, [page]);
+
+  // Tweak protocol
+  React.useEffect(() => {
+    const handler = (ev) => {
+      if (!ev.data) return;
+      if (ev.data.type === '__activate_edit_mode') setTweakOpen(true);
+      if (ev.data.type === '__deactivate_edit_mode') setTweakOpen(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  const counts = {
+    inbox: MOCK.events.filter(e => e.status === 'active' || e.status === 'pending').length,
+    events: MOCK.events.filter(e => e.status === 'active').length || null,
+  };
+
+  const crumbs = {
+    inbox: ['工作台', '今日待办'],
+    events: ['工作台', '事件中心'],
+    labs: ['台账', '实验室'],
+    people: ['台账', '人员'],
+    training: ['台账', '安全培训'],
+    chems: ['台账', '危化品'],
+    bigscreen: ['工作台', '指挥大屏'],
+    reports: ['系统', '统计报表'],
+    settings: ['系统', '规则设置'],
+    sysmap: ['系统', '关于系统'],
+  }[page] || ['工作台'];
+
+  return (
+    <div className="shell">
+      <Sidebar page={page} setPage={setPage} counts={counts} />
+      <div className="main">
+        {page !== 'bigscreen' && <Topbar crumbs={crumbs} />}
+        <div className="content">
+          {page === 'inbox' && <InboxPage onOpenEvent={setEvOpen} onOpenLab={setLabOpen} />}
+          {page === 'events' && <EventsPage onOpenEvent={setEvOpen} />}
+          {page === 'labs' && <LabsPage onOpenLab={setLabOpen} />}
+          {page === 'people' && <PeoplePage />}
+          {page === 'training' && <TrainingPage />}
+          {page === 'bigscreen' && <BigScreenPage />}
+          {page === 'chems' && <ChemsPage />}
+          {page === 'reports' && <ReportsPage />}
+          {page === 'sysmap' && <SysMapPage />}
+          {page === 'settings' && <PlaceholderPage
+            title="规则与设置"
+            desc="扣分规则、培训要求、告警阈值、通知模板等系统级配置"
+            features={[
+              '扣分规则模板（按违规类型）',
+              '告警阈值（温度 / 单人时长 / 人数）',
+              '培训课程配置',
+              '通知渠道（短信 / 企微 / 邮件）',
+            ]}
+          />}
+        </div>
+      </div>
+
+      {labOpen && <LabPanel lab={labOpen} onClose={() => setLabOpen(null)} />}
+      {evOpen && <EventPanel ev={evOpen} onClose={() => setEvOpen(null)} />}
+
+      {tweakOpen && (
+        <div className="tweaks-panel">
+          <h4>Tweaks <span className="muted" style={{ fontWeight: 400, fontSize: 11 }}>原型可调项</span></h4>
+          <div className="tweak-row">
+            <span>密度</span>
+            <select value={tweaks.density} onChange={e => setTweaks({...tweaks, density: e.target.value})}>
+              <option value="comfortable">舒适</option>
+              <option value="compact">紧凑</option>
+            </select>
+          </div>
+          <div className="tweak-row">
+            <span>强调色</span>
+            <select value={tweaks.accent} onChange={e => setTweaks({...tweaks, accent: e.target.value})}>
+              <option value="blue">学院蓝（默认）</option>
+              <option value="teal">薄荷青</option>
+              <option value="slate">石墨灰</option>
+            </select>
+          </div>
+          <div className="tweak-row">
+            <span>显示头像</span>
+            <input type="checkbox" checked={tweaks.showAvatars} onChange={e => setTweaks({...tweaks, showAvatars: e.target.checked})} />
+          </div>
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--line)', fontSize: 11, color: 'var(--ink-3)' }}>
+            页面跳转用侧边栏 · 点击卡片/行打开详情 · 数据均为示意
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
