@@ -5,3 +5,8 @@ node_modules/
 .tmp/
 .claude/
 .tmp/
+
+# Tencent Cloud EdgeOne (本地 CLI 副产物，不进仓库)
+.env
+.edgeone/
+.tef_dist/

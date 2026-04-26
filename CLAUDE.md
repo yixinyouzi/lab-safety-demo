@@ -40,10 +40,27 @@ GitHub repo: https://github.com/Yaron9/lab-safety-demo
 | 镜像 | 角色 | URL | 触发 |
 |---|---|---|---|
 | GitHub Pages | 海外兜底（永久保留） | https://yaron9.github.io/lab-safety-demo/ | `.github/workflows/pages.yml` ~17s |
-| EdgeOne Pages | **国内主力（甲方走这个）** | `https://<project>.edgeone.app/` | EdgeOne 控制台连 GitHub，~30s |
-| Cloudflare Pages | 二级兜底 | `https://<project>.pages.dev/` | Cloudflare Pages 控制台连 GitHub，~30s |
+| EdgeOne Pages | **国内主力（甲方走这个）** | `https://<project>.edgeone.app/` | `.github/workflows/edgeone.yml` 用 `EDGEONE_API_TOKEN` secret，~30s |
 
-**国内访问只能走 EdgeOne**——GitHub Pages、Cloudflare Pages 默认域名都被 GFW 处理了。三处自动部署都是 GitHub OAuth 授权，仓库里没有任何 token。完整运维步骤、首次开通、回滚见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
+**国内访问只能走 EdgeOne**——GitHub Pages 默认域名被 GFW 处理。完整运维步骤、首次开通、回滚见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
+
+### 本地凭证（macOS Keychain）
+
+`~/.claude` 不存任何密钥；以下 secrets 都在 macOS Keychain，按 service `tencent-cloud-cli` 检索：
+
+```sh
+# 取 EdgeOne Pages API Token（CI/CD 用，控制台 → Pages → API Token 生成）
+security find-generic-password -a EDGEONE_API_TOKEN -s tencent-cloud-cli -w
+
+# 取腾讯云 CAM 凭证（如果以后接 COS/CDN 等）
+security find-generic-password -a TENCENTCLOUD_SECRET_ID -s tencent-cloud-cli -w
+security find-generic-password -a TENCENTCLOUD_SECRET_KEY -s tencent-cloud-cli -w
+
+# 写入新值
+security add-generic-password -a <KEY> -s tencent-cloud-cli -w "<value>" -U
+```
+
+> ⚠️ 本仓库当前的 CAM 凭证（SecretId/Key）是主账号 root 权限，仅供一次性测试。**Demo 跑通后去 https://console.cloud.tencent.com/cam/capi 把这对禁用/删除**，避免聊天 transcript 泄露。EdgeOne API Token 才是 CI/CD 长期用的那个。
 
 ```sh
 # 本地预览

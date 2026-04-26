@@ -1,0 +1,39 @@
+name: Deploy to EdgeOne Pages
+
+# 国内镜像：push 到 main 自动部署 lab-safety-demo 到 EdgeOne Pages。
+# 与 pages.yml（GitHub Pages）并行跑，互不影响。
+# 凭证：repo Secrets → EDGEONE_API_TOKEN（在 https://console.cloud.tencent.com/edgeone/pages 控制台 → API Token 生成）
+# 详见 docs/deploy-mirror.md
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: edgeone-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy to EdgeOne Pages (production, global area)
+        env:
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+        run: |
+          if [ -z "$EDGEONE_API_TOKEN" ]; then
+            echo "::error::EDGEONE_API_TOKEN secret is not set. See docs/deploy-mirror.md"
+            exit 1
+          fi
+          npx -y edgeone pages deploy . \
+            --name lab-safety-demo \
+            --token "$EDGEONE_API_TOKEN" \
+            --env production \
+            --area global
