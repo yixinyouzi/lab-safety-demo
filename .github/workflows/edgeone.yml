@@ -1,13 +1,12 @@
 name: Deploy to EdgeOne Pages
 
-# 国内镜像：push 到 main 自动部署 lab-safety-demo 到 EdgeOne Pages。
-# 与 pages.yml（GitHub Pages）并行跑，互不影响。
-# 凭证：repo Secrets → EDGEONE_API_TOKEN（在 https://console.cloud.tencent.com/edgeone/pages 控制台 → API Token 生成）
-# 详见 docs/deploy-mirror.md
+# 国内镜像 manual trigger：演示前用 docs/deploy-mirror.md 的 30s SOP 本地 deploy 才是
+# 主路径（甲方拿到的链接需要鲜活的 3 小时窗口）。这里只留 workflow_dispatch 给 CI 兜底
+# 用：万一本地不方便，可以从 GitHub Actions 页点 Run 触发，再去 EdgeOne 控制台拿
+# preview URL（控制台 → Deployments → 点最新一次部署）。
+# 凭证：repo Secrets → EDGEONE_API_TOKEN（控制台 → API Token 生成；用前先 set）
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
