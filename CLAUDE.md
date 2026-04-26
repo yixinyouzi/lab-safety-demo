@@ -45,6 +45,18 @@ GitHub repo: https://github.com/Yaron9/lab-safety-demo
 
 **国内只能走 EdgeOne 预览链接**——GitHub Pages 默认域名被 GFW 处理；EdgeOne 国内合规要求默认域名只发 3 小时 token 链接（不绑自定义域名 + 备案就这样）。完整运维步骤、演示前 SOP、回滚见 [docs/deploy-mirror.md](docs/deploy-mirror.md)。
 
+### 给甲方拿新 URL（用户说"拿新链接 / 重新部署 / 演示前 / 给甲方"时直接跑，不要问）
+
+凭证已在 macOS Keychain（`-s tencent-cloud-cli -a EDGEONE_API_TOKEN`），以下命令一气呵成：
+
+```sh
+cd /Users/yaron/AGI/lab-safety-demo && \
+  TOKEN=$(security find-generic-password -a EDGEONE_API_TOKEN -s tencent-cloud-cli -w) && \
+  yes "" | npx -y edgeone pages deploy . -n lab-safety-demo -t "$TOKEN" -e production -a global 2>&1 | tail -5
+```
+
+输出末尾的 `EDGEONE_DEPLOY_URL=https://lab-safety-demo-XXXXXXXX.edgeone.cool?eo_token=...&eo_time=...` 就是新链接（带完整 query string，3 小时窗口）。直接发给用户，让他转给甲方/打二维码。
+
 ### 本地凭证（macOS Keychain）
 
 `~/.claude` 不存任何密钥；以下 secrets 都在 macOS Keychain，按 service `tencent-cloud-cli` 检索：
