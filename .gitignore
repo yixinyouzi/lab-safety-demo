@@ -10,3 +10,31 @@ node_modules/
 .env
 .edgeone/
 .tef_dist/
+
+# 演示自审截图（Playwright / 手动截图，仅本地）
+step1-*.png
+admin-after-mv.png
+portal-*.png
+sysmap.png
+
+# PPT 生成器与产物（一次性脚本，不入仓库）
+generate_pdf_slides.js
+generate_slides.js
+lab_safety_presentation.pdf
+lab_safety_presentation.pptx
+lab_safety_training_2026.json
+
+# 甲方反馈原始文档（docx/pdf 保留本地参考，不入仓库；摘要见 docs/upgrade-plan-v2.md）
+docs/*.docx
+docs/*.pdf
+
+# Office 临时锁文件
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Codex / Agent 工具自动产物
+AGENTS.md
+
+# 用户本地草稿
+docs/系统改进建议.md
