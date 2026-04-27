@@ -93,6 +93,12 @@ const StuHomePage = ({ onNav }) => {
             </div>
             安全培训
           </div>
+          <div className="quick-item" onClick={() => onNav('project')}>
+            <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#10b981,#003f88)' }}>
+              <Icon name="flask" size={20} color="#fff" />
+            </div>
+            项目报备
+          </div>
         </div>
       </div>
 

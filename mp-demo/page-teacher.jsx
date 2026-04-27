@@ -48,6 +48,16 @@ const TEA_PENDING = [
     tag: '整改签字',
     tagCls: 'gold',
   },
+  {
+    id: 'AP-PROJ-2026-04',
+    kind: 'project',
+    title: '张一凡 · 聚合物固态电解质制备',
+    sub: '中风险 · 涉及锂金属（手套箱内）· 312 实验室',
+    time: '12 分钟前',
+    tag: '项目审核',
+    tagCls: 'blue',
+    projectId: 'proj-2026-04',
+  },
 ];
 
 const TEA_STUDENTS = [
@@ -606,7 +616,167 @@ const TeaMePage = ({ onNav }) => {
   );
 };
 
+// ---------- 项目审核页（导师端 · 反馈 3b 第二级审批） ----------
+const TeaProjectPage = ({ onNav, item }) => {
+  const projects = MP.projects || [];
+  const proj = projects.find(p => p.id === item?.projectId) || projects.find(p => p.status === 'advisor-review') || projects[0];
+  const [decision, setDecision] = React.useState(null);   // 'approve' | 'reject'
+  const [reason, setReason] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const RISK = { high: { l: '高风险', cls: 'red' }, medium: { l: '中风险', cls: 'orange' }, low: { l: '低风险', cls: 'green' } };
+  const risk = RISK[proj?.riskLevel] || { l: '—', cls: 'gray' };
+
+  if (submitted) {
+    return (
+      <MiniProgram navTitle="审核完成" showBack onBack={() => onNav('t-home')} hideTabBar>
+        <div className="scan-result-card" style={{ marginTop: 32 }}>
+          <div className={'scan-result-icon ok'}
+            style={{ background: decision === 'approve' ? '#e5f5e9' : '#fbe9e7',
+                     color: decision === 'approve' ? '#2e7d32' : '#d4453a' }}>
+            <Icon name={decision === 'approve' ? 'check' : 'x-circle'} size={30} stroke={3}/>
+          </div>
+          <div className="scan-result-title">
+            {decision === 'approve' ? '已通过审核 · 进入下一级' : '已驳回 · 通知学生修订'}
+          </div>
+          <div className="scan-result-sub" style={{ marginTop: 8 }}>
+            {decision === 'approve'
+              ? (proj?.riskLevel === 'low' ? '低风险走快速通道 · 准予立项' : (proj?.riskLevel === 'medium' ? '推送至 实验中心 备案' : '推送至 实验中心 + 学院终审'))
+              : '学生小程序消息已通知 · 等待修订重提'}
+          </div>
+          <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
+            系统将自动同步至：<br/>
+            · 学生{proj?.applicant}（小程序消息）<br/>
+            · {decision === 'approve' && proj?.riskLevel !== 'low' ? '实验中心王玉鸿（待复核队列）' : '管理控制台事件中心'}
+          </div>
+        </div>
+        <div style={{ padding: 16 }}>
+          <button className="wx-btn block" onClick={() => onNav('t-home')}>返回首页</button>
+        </div>
+      </MiniProgram>
+    );
+  }
+
+  if (!proj) {
+    return (
+      <MiniProgram navTitle="项目审核" showBack onBack={() => onNav('t-home')} hideTabBar>
+        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待审项目</div>
+      </MiniProgram>
+    );
+  }
+
+  return (
+    <MiniProgram navTitle="项目报备审核" showBack onBack={() => onNav('t-pending')} hideTabBar>
+      <div style={{ padding: '10px 16px 0', background: '#fff' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span className={'wx-tag ' + risk.cls}>{risk.l}</span>
+          <span className="wx-tag blue">导师审核 · 第二级</span>
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#000' }}>{proj.title}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
+          编号 {proj.id} · 申请人 {proj.applicant} · 实验室 {proj.lab}
+        </div>
+      </div>
+
+      <div className="wx-card" style={{ marginTop: 8 }}>
+        <div className="wx-card-title">SOP 摘要</div>
+        <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>
+          {proj.sop}
+        </div>
+        {proj.estimatedEnd && (
+          <div style={{ padding: '0 16px 14px', fontSize: 12, color: 'var(--text-2)' }}>
+            预计结束：{proj.estimatedEnd}
+          </div>
+        )}
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">涉及危险源 ({proj.hazardSourcesEmbed?.length || 0})</div>
+        <div className="wx-list">
+          {(proj.hazardSourcesEmbed || []).map((h, i) => (
+            <div key={i} className="wx-cell">
+              <div className="wx-cell-bd">
+                <div className="wx-cell-bd-title" style={{ fontSize: 13 }}>{h.name}</div>
+                <div className="wx-cell-bd-desc">
+                  <span className={'wx-tag ' + (h.severity === 'critical' ? 'red' : h.severity === 'warning' ? 'orange' : 'gray')}>
+                    {h.severity === 'critical' ? '严重' : h.severity === 'warning' ? '关注' : '一般'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">审核意见</div>
+        <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
+          <div
+            onClick={() => setDecision('approve')}
+            style={{
+              flex: 1, textAlign: 'center', padding: '12px 0',
+              border: '1.5px solid ' + (decision === 'approve' ? '#2e7d32' : 'var(--line)'),
+              background: decision === 'approve' ? '#e5f5e9' : '#fff',
+              color: decision === 'approve' ? '#2e7d32' : '#333',
+              borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+            }}>
+            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#2e7d32' : '#999'}/> 通过
+          </div>
+          <div
+            onClick={() => setDecision('reject')}
+            style={{
+              flex: 1, textAlign: 'center', padding: '12px 0',
+              border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+              background: decision === 'reject' ? '#fbe9e7' : '#fff',
+              color: decision === 'reject' ? '#d4453a' : '#333',
+              borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+            }}>
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回
+          </div>
+        </div>
+        <div style={{ padding: '8px 16px 16px' }}>
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder={
+              decision === 'reject'
+                ? '请说明驳回原因（学生会看到，作为修订依据）...'
+                : '通过 · 可补充建议（选填，如「请双人在场」）...'
+            }
+            style={{
+              width: '100%', minHeight: 90, border: '1px solid var(--line)',
+              borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit',
+              outline: 'none', resize: 'none',
+            }}
+          />
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
+            {decision === 'approve' && (proj.riskLevel === 'low'
+              ? '低风险项目导师签字即生效，无需上报。'
+              : (proj.riskLevel === 'medium'
+                ? '中风险项目通过后会推送至实验中心备案。'
+                : '高风险项目通过后会推送至实验中心 + 学院终审。'))}
+            {decision === 'reject' && '驳回后学生需修订 SOP / 危险源说明后重新提交。'}
+            {!decision && '请先选择通过或驳回。'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mp-bottom-bar">
+        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
+        <button
+          className={'wx-btn ' + (decision === 'reject' ? 'danger' : '')}
+          style={{ flex: 2 }}
+          disabled={!decision || (decision === 'reject' && !reason.trim())}
+          onClick={() => setSubmitted(true)}
+        >
+          提交审核
+        </button>
+      </div>
+    </MiniProgram>
+  );
+};
+
 Object.assign(window, {
   TEA_TABS, TEA_PENDING, TEA_STUDENTS,
-  TeaHomePage, TeaPendingListPage, TeaReviewPage, TeaStudentsPage, TeaMsgPage, TeaMePage,
+  TeaHomePage, TeaPendingListPage, TeaReviewPage, TeaStudentsPage, TeaMsgPage, TeaMePage, TeaProjectPage,
 });

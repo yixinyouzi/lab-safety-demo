@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="door-display.css">
+<link rel="stylesheet" href="door-display.css?v=2">
 <style>
   body {
     margin: 0;
@@ -89,7 +89,29 @@ const LAB = {
     { role: '负责人', name: '赵振华', phone: '·· 6602' },
     { role: '安全员', name: '王玉鸿', phone: '·· 6688' },
   ],
+  // 当前在跑的高风险项目（用于 SCENES.high 数据驱动 banner）
+  // riskLevel === 'high' 时门牌切到 high 状态显示项目名 + 涉及危险源 + 预计结束
+  // 项目结束后置空（或 riskLevel 改为 medium/low），banner 自动回落兜底文案
+  activeProject: {
+    id: 'proj-2026-01',
+    name: '钠离子电池正极材料 · 高温烧结合成',
+    riskLevel: 'high',
+    advisor: '赵振华',
+    estimatedEnd: '今日 16:30',
+    hazardSources: ['浓硫酸', '锂金属', '管式炉 800°C'],
+  },
 };
+
+// SCENES.high 的 notice 由 LAB.activeProject 数据驱动，避免写死「高温烧结 800°C」文案
+function buildHighNotice(lab) {
+  const ap = lab.activeProject;
+  if (!ap || ap.riskLevel !== 'high') {
+    return { tone: 'red', ico: '!', text: '高风险作业进行中 · 严禁无关人员进入' };
+  }
+  const sources = (ap.hazardSources || []).join(' · ');
+  const tail = ap.estimatedEnd ? ` · 预计 ${ap.estimatedEnd} 结束` : '';
+  return { tone: 'red', ico: '!', text: `${ap.name}${sources ? ' · ' + sources : ''}${tail}` };
+}
 
 const PRESENCE = [
   { name: '陈延松', role: '导师', gold: true },
@@ -119,10 +141,10 @@ const SCENES = [
   },
   {
     k: 'high', label: '高风险作业', state: 'crit', chipDot: '#dc2626',
-    statusLabel: '高风险作业',
+    statusLabel: '高风险项目进行中',
     temp: 36.8, humidity: 42, score: 88, scoreCls: 'score-good', tempAlert: true,
     presence: PRESENCE.slice(0, 2),
-    notice: { tone: 'red', ico: '!', text: '高温烧结 800°C · 严禁无关人员进入 · 预计 16:30 结束' },
+    notice: buildHighNotice(LAB),
     qr: 'disabled', cam: 'idle', haztape: true,
     safetyTag: { tone: 'amber', label: '安全状态 · 关注' },
   },

@@ -128,6 +128,13 @@ function LabPanel({ lab, onClose }) {
             <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
               {lab.hazards.map(h => <span key={h} className="chip chip-amber">⚠ {h}</span>)}
             </div>
+            {lab.hazardSources && lab.hazardSources.length > 0 && (
+              <div className="meta" style={{ marginTop: 10, fontSize: 12 }}>
+                🔬 已登记危险源 <strong style={{ color: 'var(--ink)' }}>{lab.hazardSources.length}</strong> 项
+                （{lab.hazardSources.filter(h => h.severity === 'critical').length} 项严重）
+                · 详情见侧栏「危险源台账」
+              </div>
+            )}
           </div>
 
           {/* Door preview */}

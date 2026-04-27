@@ -3,6 +3,7 @@ const { useState, useEffect, useMemo } = React;
 
 const ICONS = {
   inbox: '📥', events: '⚠', labs: '🏛', people: '👥', training: '🎓', chems: '🧪', reports: '📊', settings: '⚙', bigscreen: '📺', sysmap: '🗺',
+  hazards: '⚠️', projects: '🧬',
   search: '🔍', bell: '🔔', help: '?', dark: '◐',
 };
 
@@ -14,6 +15,8 @@ function Sidebar({ page, setPage, counts }) {
   ];
   const nav2 = [
     { k: 'labs', label: '实验室台账', ico: ICONS.labs },
+    { k: 'hazards', label: '危险源台账', ico: ICONS.hazards },
+    { k: 'projects', label: '实验项目', ico: ICONS.projects },
     { k: 'people', label: '人员档案', ico: ICONS.people },
     { k: 'training', label: '安全培训', ico: ICONS.training },
     { k: 'chems', label: '危化品 · 资产', ico: ICONS.chems },

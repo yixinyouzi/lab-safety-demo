@@ -6,8 +6,13 @@
 // violation.timeline[i]: { time, title, desc, done?, current? }
 //   靠 done / current 标识完成 / 进行中（互斥）；array index 即步序
 // TEA_PENDING[i]: { id, kind, title, sub, time, tag, tagCls, urgent }
-//   kind: 'appeal' | 'booking' | 'chem' | 'rectify'
-//   注：本 Step 1 不收窄 TEA_PENDING.kind（推到 Step 2）
+//   kind: 'appeal' | 'booking' | 'chem' | 'rectify' | 'project'
+//   注：本 Step 2 加入 'project'；其他收窄推到 Step 3
+// labs[i]:    精简版（id/name/dept/lead/hazards/hazardSources），仅学生只读视图需要的字段
+//             hazardSources 字段名与 admin 一致，但 mp 端只取 ppe/severity/kind/name 子集
+// projects[i]:核心字段（id/title/lab/applicant/advisor/riskLevel/status/currentStep/timeline/sop/estimatedEnd）与 admin 一致；
+//             但「涉及危险源」用 `hazardSourcesEmbed: [{name,kind,severity}]` 嵌入式对象数组（避免跨 admin/mp 解引用 hs-id）；
+//             admin 端用 `hazardSources: ['hs-id']` id 引用 + lab.hazardSources.find(id)。两端命名故意不同以表明语义差异。
 // ============================================================
 
 window.MP = {
@@ -301,5 +306,95 @@ window.MP = {
     { id: 'messy', label: '台面凌乱' },
     { id: 'door-open', label: '安全门长开' },
     { id: 'other', label: '其他' },
+  ],
+
+  // 实验室精简版（仅学生只读视图字段；与 admin/labs 字段子集一致）
+  labs: [
+    { id: '302', name: '电化学与储能材料实验室', dept: '材料化学系', lead: '赵振华',
+      hazards: ['腐蚀','火灾','爆炸','中毒','高压'],
+      hazardSources: [
+        { id: 'hs-302-01', kind: 'chemical', name: '浓硫酸 1 L', severity: 'critical', ppe: ['丁腈手套','防护面屏'] },
+        { id: 'hs-302-02', kind: 'chemical', name: '锂金属箔 50 g', severity: 'critical', ppe: ['防护眼镜','阻燃实验服'] },
+        { id: 'hs-302-03', kind: 'electrical', name: '电化学工作站 CHI760E', severity: 'warning', ppe: ['绝缘鞋'] },
+      ] },
+    { id: '410', name: '功能材料合成实验室', dept: '材料物理系', lead: '周景明',
+      hazards: ['火灾','爆炸','高温','中毒'],
+      hazardSources: [
+        { id: 'hs-410-01', kind: 'physical', name: '管式炉 GSL-1700X', severity: 'critical', ppe: ['耐高温手套','防护面屏'] },
+        { id: 'hs-410-02', kind: 'gas', name: '氢气钢瓶 40 L', severity: 'critical', ppe: ['静电手环'] },
+        { id: 'hs-410-03', kind: 'chemical', name: '三氯化磷 500 mL', severity: 'critical', ppe: ['全面型防毒面具'] },
+      ] },
+    { id: 'A208', name: '色质联用与有机分析室', dept: '测试中心', lead: '钱雨桐',
+      hazards: ['火灾','中毒','高温'],
+      hazardSources: [
+        { id: 'hs-A208-01', kind: 'chemical', name: '氢氟酸 500 mL', severity: 'critical', ppe: ['HF 专用手套','全面型防毒面具'] },
+        { id: 'hs-A208-02', kind: 'chemical', name: '乙腈 4 L', severity: 'warning', ppe: ['丁腈手套'] },
+      ] },
+    { id: '105', name: 'X 射线衍射分析室', dept: '测试中心', lead: '孙学明',
+      hazards: ['辐射','高压'],
+      hazardSources: [
+        { id: 'hs-105-01', kind: 'radiation', name: 'X 射线源 (Cu Kα)', severity: 'critical', ppe: ['辐射剂量计'] },
+      ] },
+    { id: '207', name: '扫描电镜测试室', dept: '测试中心', lead: '李雪茹',
+      hazards: ['高压','辐射'],
+      hazardSources: [
+        { id: 'hs-207-01', kind: 'electrical', name: 'SEM 加速电压 30 kV', severity: 'warning', ppe: ['绝缘鞋'] },
+      ] },
+    { id: '312', name: '手套箱与惰性气氛实验室', dept: '材料化学系', lead: '赵振华',
+      hazards: ['爆炸','低温','缺氧'],
+      hazardSources: [
+        { id: 'hs-312-01', kind: 'chemical', name: '锂金属（手套箱内）', severity: 'critical', ppe: ['丁腈手套'] },
+        { id: 'hs-312-02', kind: 'physical', name: '液氮杜瓦瓶 50 L', severity: 'warning', ppe: ['低温手套','防护面屏'] },
+      ] },
+    { id: '216', name: '材料力学性能测试室', dept: '材料工程系', lead: '黄志刚',
+      hazards: ['机械','噪声','高压'],
+      hazardSources: [
+        { id: 'hs-216-01', kind: 'mechanical', name: '万能试验机 100 kN', severity: 'warning', ppe: ['防护眼镜','安全鞋'] },
+      ] },
+    { id: 'B105', name: '生物材料细胞培养室', dept: '材料化学系', lead: '周明',
+      hazards: ['生物','腐蚀'],
+      hazardSources: [
+        { id: 'hs-B105-01', kind: 'biological', name: '大肠杆菌 K-12（BSL-1）', severity: 'warning', ppe: ['一次性手套','实验服','口罩'] },
+      ] },
+  ],
+
+  // 学生「我的项目」（与 admin MOCK.projects 同 schema · timeline 字段对齐）
+  projects: [
+    {
+      id: 'proj-2026-01', title: '钠离子电池正极材料 · 高温烧结合成',
+      lab: '302', applicant: '张一凡', advisor: '赵振华',
+      riskLevel: 'high', status: 'active', currentStep: 4,
+      hazardSourcesEmbed: [
+        { name: '浓硫酸 1 L', kind: 'chemical', severity: 'critical' },
+        { name: '锂金属箔 50 g', kind: 'chemical', severity: 'critical' },
+        { name: '管式炉 GSL-1700X', kind: 'physical', severity: 'critical' },
+      ],
+      sop: '高温炉 800°C 烧结 6h · 真空环境 · 单批次 ≤ 5 g · 必须双人在场',
+      estimatedEnd: '2026-04-28 16:30',
+      timeline: [
+        { time: '03-15 09:00', title: '学生申请',     desc: '已提交项目申请书 + SOP v3.2', done: true },
+        { time: '03-16 11:20', title: '导师审核',     desc: '赵振华 已签字 · 危险源核实通过', done: true },
+        { time: '03-18 14:30', title: '实验中心审核', desc: '王玉鸿 现场核对危化品库存与 PPE', done: true },
+        { time: '03-20 10:00', title: '学院终审',     desc: '安全副院长签字 · 准予立项', done: true },
+        { time: '04-21 14:00', title: '项目进行中',   desc: '当前在 302 · 实验阶段 4/6', current: true },
+        { time: '—',           title: '项目结束 · 归档', desc: '关闭门禁高风险标识 · 三废清单交接' },
+      ],
+    },
+    {
+      id: 'proj-2026-04', title: '聚合物固态电解质制备',
+      lab: '312', applicant: '张一凡', advisor: '赵振华',
+      riskLevel: 'medium', status: 'rejected', currentStep: 1,
+      hazardSourcesEmbed: [
+        { name: '锂金属（手套箱内）', kind: 'chemical', severity: 'critical' },
+      ],
+      sop: '手套箱内合成 · 单次 < 30 g · 含氟添加剂 ≤ 5%',
+      estimatedEnd: '2026-06-15',
+      rejectReason: 'SOP 中未说明氟系添加剂应急处置流程，请补充后重新提交。',
+      timeline: [
+        { time: '04-10 14:30', title: '学生申请',     desc: '提交申请书 v0.9', done: true },
+        { time: '04-11 09:00', title: '导师审核 · 驳回', desc: '赵振华 · SOP 缺少氟系应急处置', done: true },
+        { time: '—',           title: '修订重提',     desc: '请补充 SOP 后重新发起', current: true },
+      ],
+    },
   ],
 };
