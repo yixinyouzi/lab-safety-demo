@@ -218,8 +218,13 @@ const PatHistoryPage = ({ onNav }) => (
             closed: { cls: 'green', label: '已结案' },
           };
           const st = statusMap[h.status];
+          const onClick = () => {
+            if (h.id !== 'V20250307-018') return alert('记录详情 · ' + h.title);
+            // 申诉中 → 巡查员终审页；其它状态 → 仅查看
+            return onNav(h.status === 'appealed' ? 'p-appeal' : 'violation');
+          };
           return (
-            <div key={h.id} className="task-item" onClick={() => h.id === 'V20250307-018' ? onNav('violation') : alert('记录详情 · ' + h.title)}>
+            <div key={h.id} className="task-item" onClick={onClick}>
               <div className="task-num routine">{h.time}</div>
               <div className="task-body">
                 <div className="title" style={{ fontSize: 14 }}>{h.title}</div>
@@ -237,6 +242,136 @@ const PatHistoryPage = ({ onNav }) => (
     </div>
   </MiniProgram>
 );
+
+// 申诉复核 · 终审（巡查员/实验中心）
+// 反馈 8：驳回权归此页。导师只做事实补充，最终决定由巡查员做。
+const PatAppealPage = ({ onNav }) => {
+  const v = MP.violation;
+  const [decision, setDecision] = React.useState(null);   // 'support' | 'reject'
+  const [reason, setReason] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+
+  if (submitted) {
+    return (
+      <MiniProgram navTitle="终审完成" showBack onBack={() => onNav('p-history')} hideTabBar>
+        <div className="scan-result-card" style={{ marginTop: 32 }}>
+          <div className={'scan-result-icon ok'} style={{ background: decision === 'support' ? '#e5f5e9' : '#fbe9e7', color: decision === 'support' ? '#2e7d32' : '#d4453a' }}>
+            <Icon name={decision === 'support' ? 'check' : 'x'} size={30} stroke={3}/>
+          </div>
+          <div className="scan-result-title">{decision === 'support' ? '已支持申诉 · 撤销扣分' : '已驳回申诉 · 进入整改'}</div>
+          <div className="scan-result-sub" style={{ marginTop: 8 }}>
+            实验中心终审结论已生成
+          </div>
+          <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
+            系统将自动同步至：<br/>
+            · 学生张一凡（小程序消息 · {decision === 'support' ? '权限恢复' : '触发整改流程'}）<br/>
+            · 导师李建国（结论已抄送）<br/>
+            · 管理控制台事件中心
+          </div>
+        </div>
+        <div style={{ padding: 16 }}>
+          <button className="wx-btn block" onClick={() => onNav('p-history')}>返回记录</button>
+        </div>
+      </MiniProgram>
+    );
+  }
+
+  return (
+    <MiniProgram navTitle="申诉复核 · 终审" showBack onBack={() => onNav('p-history')} hideTabBar>
+      <div style={{ padding: '10px 16px 0', background: '#fff' }}>
+        <div className="wx-tag red" style={{ marginBottom: 8 }}>扣 {v.deducted} 分 · 夜间单人作业</div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#000' }}>{v.title.split(' · ')[0]} · 申诉终审</div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
+          违规编号 {v.id} · 申请人 张一凡 · 当前等待您裁定
+        </div>
+      </div>
+
+      <div className="wx-card" style={{ marginTop: 8 }}>
+        <div className="wx-card-title">违规事实</div>
+        <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.6 }}>
+          {v.description}
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">学生申诉</div>
+        <div style={{ padding: '4px 16px 14px' }}>
+          <div style={{ padding: 12, background: '#f7f7f7', borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: '#333' }}>
+            {v.studentAppeal}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>提交于 3月8日 10:30</div>
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">导师事实补充</div>
+        <div style={{ padding: '4px 16px 14px' }}>
+          <div style={{ padding: 12, background: '#fff8e1', border: '1px solid #f5d97a', borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: '#5b4500' }}>
+            {v.advisorClarify}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>提交于 3月8日 14:20 · 导师不参与判决</div>
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">终审决定</div>
+        <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
+          <div
+            onClick={() => setDecision('support')}
+            style={{
+              flex: 1, textAlign: 'center', padding: '12px 0',
+              border: '1.5px solid ' + (decision === 'support' ? '#2e7d32' : 'var(--line)'),
+              background: decision === 'support' ? '#e5f5e9' : '#fff',
+              color: decision === 'support' ? '#2e7d32' : '#333',
+              borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer'
+            }}>
+            <Icon name="check-circle" size={18} color={decision === 'support' ? '#2e7d32' : '#999'}/> 支持申诉
+          </div>
+          <div
+            onClick={() => setDecision('reject')}
+            style={{
+              flex: 1, textAlign: 'center', padding: '12px 0',
+              border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+              background: decision === 'reject' ? '#fbe9e7' : '#fff',
+              color: decision === 'reject' ? '#d4453a' : '#333',
+              borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer'
+            }}>
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回申诉
+          </div>
+        </div>
+        <div style={{ padding: '8px 16px 16px' }}>
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder="请简述终审理由（学生与导师都会看到，作为最终结论存档）..."
+            style={{
+              width: '100%', minHeight: 100, border: '1px solid var(--line)',
+              borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit',
+              outline: 'none', resize: 'none',
+            }}
+          />
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
+            {decision === 'reject' && '驳回后学生需完成培训 + 考试 + 整改拍照，巡查员复检通过后恢复权限。'}
+            {decision === 'support' && '支持申诉将撤销本次扣分、恢复门禁权限，本案归档。'}
+            {!decision && '本页是申诉的终审节点，提交后不可撤销。'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mp-bottom-bar">
+        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('p-history')}>稍后再处理</button>
+        <button
+          className={'wx-btn ' + (decision === 'reject' ? 'danger' : '')}
+          style={{ flex: 2 }}
+          disabled={!decision || !reason.trim()}
+          onClick={() => setSubmitted(true)}
+        >
+          提交终审结论
+        </button>
+      </div>
+    </MiniProgram>
+  );
+};
 
 // 我的
 const PatMePage = ({ onNav }) => {
@@ -294,5 +429,5 @@ const PatMePage = ({ onNav }) => {
 };
 
 Object.assign(window, {
-  PAT_TABS, PatTasksPage, PatLogPage, PatLogDonePage, PatHistoryPage, PatMePage,
+  PAT_TABS, PatTasksPage, PatLogPage, PatLogDonePage, PatHistoryPage, PatAppealPage, PatMePage,
 });

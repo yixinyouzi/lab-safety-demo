@@ -27,12 +27,11 @@ function Kpi({ label, value, meta, color, trend }) {
 
 function EventRow({ ev, onClick }) {
   const sev = ev.severity;
-  const kindLabel = { alert: '🚨 实时告警', violation: '⚖ 违规登记', rectify: '🔧 整改跟进' }[ev.kind];
-  const kindColor = { alert: 'var(--red)', violation: 'var(--amber)', rectify: 'var(--brand)' }[ev.kind];
+  const meta = EVENT_KIND_META[ev.kind] || { label: ev.kind, color: 'var(--ink-2)' };
   return (
     <div className={`ev ev-${sev} ${ev.status === 'done' || ev.status === 'handled' ? 'ev-done' : ''}`} onClick={() => onClick && onClick(ev)}>
       <div className="ev-t-time">
-        <div className="ev-t-kind" style={{ color: kindColor }}>{kindLabel.split(' ')[0]}</div>
+        <div className="ev-t-kind" style={{ color: meta.color }}>{meta.label.split(' ')[0]}</div>
         <div>{ev.time}</div>
       </div>
       <div>
@@ -62,6 +61,13 @@ function InboxPage({ onOpenEvent, onOpenLab }) {
   const labs = MOCK.labs;
   const totalInRoom = labs.reduce((s, l) => s + l.inRoom, 0);
   const totalToday = labs.reduce((s, l) => s + l.today, 0);
+  const criticalPending = pending.filter(e => e.severity === 'critical').length;
+  const todayScoring = MOCK.events.filter(e => e.time.startsWith('今日') && EVENT_KIND_META[e.kind]?.scoring).length;
+  const trend = MOCK.trend7d;
+  const trendAvg = Math.round(trend.reduce((s, n) => s + n, 0) / trend.length);
+  const trendToday = trend[trend.length - 1];
+  const trendDelta = trendAvg ? Math.round((trendToday - trendAvg) / trendAvg * 100) : 0;
+  const trendArrow = trendDelta > 0 ? '↑' : trendDelta < 0 ? '↓' : '→';
 
   return (
     <div>
@@ -77,10 +83,10 @@ function InboxPage({ onOpenEvent, onOpenLab }) {
       </div>
 
       <div className="kpi-row">
-        <Kpi label="待处理事项" value={pending.length} meta="其中 1 件严重告警" color="var(--red)" />
+        <Kpi label="待处理事项" value={pending.length} meta={`其中 ${criticalPending} 件严重告警`} color="var(--red)" />
         <Kpi label="当前在实验室人数" value={totalInRoom} meta={`今日累计出入 ${totalToday} 人次`} />
-        <Kpi label="今日违规登记" value="3" meta="学院均值 5.2 / 日" color="var(--amber)" />
-        <Kpi label="近 7 日事件趋势" value={MOCK.trend7d[6]} meta="日均 26 · 下降 12%" trend={MOCK.trend7d} />
+        <Kpi label="今日扣分事件" value={todayScoring} meta="仅检查 + 重大违规计入" color="var(--amber)" />
+        <Kpi label="近 7 日事件趋势" value={trendToday} meta={`日均 ${trendAvg} · 较均值 ${trendArrow}${Math.abs(trendDelta)}%`} trend={trend} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16 }}>

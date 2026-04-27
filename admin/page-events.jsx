@@ -1,4 +1,4 @@
-/* ② Events center — 违规 + 告警 + 整改 统一时间流 */
+/* ② Events center — 6 类事件统一时间流（kind 元数据见 EVENT_KIND_META） */
 function EventsPage({ onOpenEvent }) {
   const [kind, setKind] = React.useState('all');
   const [status, setStatus] = React.useState('all');
@@ -8,19 +8,14 @@ function EventsPage({ onOpenEvent }) {
     if (status === 'done' && !(e.status === 'done' || e.status === 'handled')) return false;
     return true;
   });
-  const counts = {
-    all: MOCK.events.length,
-    alert: MOCK.events.filter(e => e.kind === 'alert').length,
-    violation: MOCK.events.filter(e => e.kind === 'violation').length,
-    rectify: MOCK.events.filter(e => e.kind === 'rectify').length,
-  };
+  const countOf = k => MOCK.events.filter(e => e.kind === k).length;
 
   return (
     <div>
       <div className="page-h">
         <div>
           <div className="page-title">事件中心</div>
-          <div className="page-sub">告警、违规、整改三类事件的统一时间流。所有处理动作都留痕。</div>
+          <div className="page-sub">实时告警 · 重大违规 · 检查扣分 · 巡查记录 · 整改跟进 · 无人值守 — 统一时间流，所有处理动作留痕。</div>
         </div>
         <div className="row">
           <button className="btn">批量导出</button>
@@ -30,14 +25,10 @@ function EventsPage({ onOpenEvent }) {
 
       <div className="filters">
         <span className="muted" style={{ fontSize: 12 }}>类型</span>
-        {[
-          { k: 'all', l: '全部', c: counts.all },
-          { k: 'alert', l: '🚨 实时告警', c: counts.alert },
-          { k: 'violation', l: '⚖ 违规登记', c: counts.violation },
-          { k: 'rectify', l: '🔧 整改跟进', c: counts.rectify },
-        ].map(f => (
-          <button key={f.k} className={'pill ' + (kind === f.k ? 'active' : '')} onClick={() => setKind(f.k)}>
-            {f.l} · {f.c}
+        <button className={'pill ' + (kind === 'all' ? 'active' : '')} onClick={() => setKind('all')}>全部 · {MOCK.events.length}</button>
+        {EVENT_KINDS_ORDER.map(k => (
+          <button key={k} className={'pill ' + (kind === k ? 'active' : '')} onClick={() => setKind(k)}>
+            {EVENT_KIND_META[k].label} · {countOf(k)}
           </button>
         ))}
         <span style={{ width: 1, height: 18, background: 'var(--line)', margin: '0 4px' }}></span>

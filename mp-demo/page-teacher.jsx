@@ -299,29 +299,32 @@ const TeaPendingListPage = ({ onNav, goPending }) => (
   </MiniProgram>
 );
 
-// ---------- 申诉复核详情页（导师端） ----------
+// ---------- 申诉复核详情页（导师端 · 仅事实补充，无判决权） ----------
+// 反馈 8：驳回权移交巡查员/实验中心。导师只做事实核实，提交后移交巡查员终审。
 const TeaReviewPage = ({ onNav, item }) => {
-  const [decision, setDecision] = React.useState(null);
   const [reason, setReason] = React.useState('');
   const [submitted, setSubmitted] = React.useState(false);
   const v = MP.violation;
 
   if (submitted) {
     return (
-      <MiniProgram navTitle="复核完成" showBack onBack={() => onNav('t-home')} hideTabBar>
+      <MiniProgram navTitle="补充已提交" showBack onBack={() => onNav('t-home')} hideTabBar>
         <div className="scan-result-card" style={{ marginTop: 32 }}>
           <div className="scan-result-icon ok" style={{ background: '#e5ecf5', color: '#003f88' }}>
             <Icon name="check" size={30} stroke={3}/>
           </div>
-          <div className="scan-result-title">复核意见已提交</div>
+          <div className="scan-result-title">事实补充已提交</div>
           <div className="scan-result-sub" style={{ marginTop: 8 }}>
-            {decision === 'reject' ? '驳回申诉，要求整改' : '支持申诉，撤销扣分'}
+            已移交实验中心巡查员终审
           </div>
           <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
             系统将自动同步至：<br/>
-            · 学生张一凡（小程序消息）<br/>
-            · 巡查员王玉鸿（派单复检）<br/>
+            · 学生张一凡（小程序消息 · 待终审）<br/>
+            · 巡查员王玉鸿（待复核队列）<br/>
             · 管理控制台事件中心
+          </div>
+          <div style={{ marginTop: 12, padding: 10, background: '#fff8e1', border: '1px solid #f5d97a', borderRadius: 8, fontSize: 12, color: '#7a5c00', lineHeight: 1.6 }}>
+            说明：导师仅核实事实 / 补充情况，<strong>支持或驳回的最终决定由实验中心巡查员做出</strong>。
           </div>
         </div>
         <div style={{ padding: 16 }}>
@@ -332,7 +335,7 @@ const TeaReviewPage = ({ onNav, item }) => {
   }
 
   return (
-    <MiniProgram navTitle="申诉复核" showBack onBack={() => onNav('t-pending')} hideTabBar>
+    <MiniProgram navTitle="申诉事实补充" showBack onBack={() => onNav('t-pending')} hideTabBar>
       <div style={{ padding: '10px 16px 0', background: '#fff' }}>
         <div className="wx-tag red" style={{ marginBottom: 8 }}>扣 2 分 · 夜间单人作业</div>
         <div style={{ fontSize: 17, fontWeight: 600, color: '#000' }}>张一凡 · 材料楼 303 违规申诉</div>
@@ -361,8 +364,7 @@ const TeaReviewPage = ({ onNav, item }) => {
         <div style={{ padding: '4px 16px 14px' }}>
           <div style={{ padding: 12, background: '#f7f7f7', borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: '#333' }}>
             老师您好：<br/>
-            3月7日晚我独自做烧结实验是因为样品已经进入降温阶段，实验过程中我全程在场监控，并且通过门禁验证过。
-            当时电话联系不上师兄，未及时报备，请老师考虑撤销处罚。
+            {v.studentAppeal}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>
             提交于 3月8日 10:30 · 附申诉理由 1 份
@@ -371,45 +373,20 @@ const TeaReviewPage = ({ onNav, item }) => {
       </div>
 
       <div className="wx-card">
-        <div className="wx-card-title">我的意见</div>
-        <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
-          <div
-            onClick={() => setDecision('accept')}
-            style={{
-              flex: 1, textAlign: 'center', padding: '12px 0',
-              border: '1.5px solid ' + (decision === 'accept' ? '#003f88' : 'var(--line)'),
-              background: decision === 'accept' ? '#e5ecf5' : '#fff',
-              color: decision === 'accept' ? '#003f88' : '#333',
-              borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer'
-            }}>
-            <Icon name="check-circle" size={18} color={decision === 'accept' ? '#003f88' : '#999'}/> 支持申诉
-          </div>
-          <div
-            onClick={() => setDecision('reject')}
-            style={{
-              flex: 1, textAlign: 'center', padding: '12px 0',
-              border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
-              background: decision === 'reject' ? '#fbe9e7' : '#fff',
-              color: decision === 'reject' ? '#d4453a' : '#333',
-              borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer'
-            }}>
-            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回申诉
-          </div>
-        </div>
-        <div style={{ padding: '8px 16px 16px' }}>
+        <div className="wx-card-title">事实补充 · 仅核实，不判决</div>
+        <div style={{ padding: '4px 16px 16px' }}>
           <textarea
             value={reason}
             onChange={e => setReason(e.target.value)}
-            placeholder="请简述复核理由（学生会看到）..."
+            placeholder="请补充您所了解的事实情况（如：实验性质、当晚同组人员、平时表现等）。最终是否撤销由实验中心巡查员裁定。"
             style={{
-              width: '100%', minHeight: 90, border: '1px solid var(--line)',
+              width: '100%', minHeight: 110, border: '1px solid var(--line)',
               borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit',
               outline: 'none', resize: 'none',
             }}
           />
-          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6 }}>
-            {decision === 'reject' && '驳回后学生需完成培训 + 考试 + 整改拍照，巡查员复检通过后恢复权限。'}
-            {decision === 'accept' && '支持申诉将撤销本次扣分、恢复门禁权限，本案归档。'}
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
+            提交后会作为终审参考材料推送给巡查员王玉鸿；学生会同步看到您的补充内容。
           </div>
         </div>
       </div>
@@ -417,12 +394,12 @@ const TeaReviewPage = ({ onNav, item }) => {
       <div className="mp-bottom-bar">
         <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
         <button
-          className={'wx-btn ' + (decision === 'reject' ? 'danger' : '')}
+          className="wx-btn"
           style={{ flex: 2 }}
-          disabled={!decision}
+          disabled={!reason.trim()}
           onClick={() => setSubmitted(true)}
         >
-          提交复核意见
+          提交补充 → 移交巡查员
         </button>
       </div>
     </MiniProgram>

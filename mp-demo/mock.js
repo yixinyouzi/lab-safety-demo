@@ -1,6 +1,13 @@
 // ============================================================
 // 微信小程序 demo · 模拟数据
 // 围绕主线故事：张一凡 · 材料楼 303 · 单人超时违规
+//
+// === Schema 同构 · mp-demo 与 admin 共用语义 ===
+// violation.timeline[i]: { time, title, desc, done?, current? }
+//   靠 done / current 标识完成 / 进行中（互斥）；array index 即步序
+// TEA_PENDING[i]: { id, kind, title, sub, time, tag, tagCls, urgent }
+//   kind: 'appeal' | 'booking' | 'chem' | 'rectify'
+//   注：本 Step 1 不收窄 TEA_PENDING.kind（推到 Step 2）
 // ============================================================
 
 window.MP = {
@@ -112,6 +119,8 @@ window.MP = {
   ],
 
   // 当前违规详情
+  // timeline 是动态切片：当前是「学生已申诉 · 导师待补充事实」
+  // 实际生产中 current 由后端按节点推进，本 demo 静态展示
   violation: {
     id: 'V20250307-018',
     title: '夜间单人作业超时 · 未报备',
@@ -128,13 +137,17 @@ window.MP = {
       { label: '门禁日志截图' },
       { label: '设备状态照片' },
     ],
+    studentAppeal: '当晚 22:00 后实验已基本结束，仅在等待样品冷却期间取出过一次。同组同学 21:55 离开前已确认设备状态，未感觉存在风险，未及时申报夜间作业。',
+    advisorClarify: '李建国 · 经核实学生当晚确为单人作业，但实验性质（烧结炉冷却阶段）并非高温危险，建议综合考虑情节从轻处理。',
     timeline: [
-      { time: '03-07 22:40', title: '系统告警', desc: '门禁识别：单人作业超时 2h40min', done: true },
-      { time: '03-07 22:55', title: '巡查员到场', desc: '王玉鸿 现场核实、拍照取证', done: true },
-      { time: '03-08 09:12', title: '违规登记', desc: '评定扣 2 分 · 挂黄牌 · 暂停门禁权限', done: true },
-      { time: '—', title: '待申诉 / 接受', desc: '请在 48 小时内处理；未处理视为接受', current: true },
-      { time: '—', title: '导师核实', desc: '李建国 老师 · 复核申诉或签字归档' },
-      { time: '—', title: '完成整改 + 培训', desc: '触发权限恢复' },
+      { time: '03-07 22:40', title: '系统告警',     desc: '门禁识别：单人作业超时 2h40min', done: true },
+      { time: '03-07 22:55', title: '巡查员到场',   desc: '王玉鸿 现场核实、拍照取证', done: true },
+      { time: '03-08 09:12', title: '违规登记',     desc: '评定扣 2 分 · 挂黄牌 · 暂停门禁权限', done: true },
+      { time: '03-08 10:05', title: '学生申诉',     desc: '张一凡 已提交申诉理由及证据（48h 内）', done: true },
+      { time: '—',           title: '导师事实补充', desc: '李建国 老师 · 仅核实事实 / 补充情况，不判决', current: true },
+      { time: '—',           title: '巡查员复核',   desc: '实验中心王玉鸿 · 终审：支持申诉 / 驳回申诉' },
+      { time: '—',           title: '终审结论',     desc: '支持 → 撤销违规；驳回 → 进入整改' },
+      { time: '—',           title: '完成整改 + 培训', desc: '触发权限恢复' },
     ],
   },
 
