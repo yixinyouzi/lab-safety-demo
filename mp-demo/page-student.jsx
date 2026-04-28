@@ -68,50 +68,50 @@ const StuHomePage = ({ onNav }) => {
 
         {/* 快捷入口 */}
         <div className="quick-grid" style={{ marginTop: 14, borderTop: '1px solid var(--line-weak)', paddingTop: 14 }}>
-          <div className="quick-item" onClick={() => onNav('scan')}>
+          <div className="quick-item" {...clickable(() => onNav('scan'), '扫码进门')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#003f88,#002d66)' }}>
               <Icon name="qr" size={20} color="#fff" />
             </div>
             扫码进门
           </div>
-          <div className="quick-item" onClick={() => onNav('book')}>
+          <div className="quick-item" {...clickable(() => onNav('book'), '实验预约')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#4a90e2,#357abd)' }}>
               <Icon name="calendar" size={20} color="#fff" />
             </div>
             实验预约
           </div>
-          <div className="quick-item" onClick={() => onNav('violation')}>
+          <div className="quick-item" {...clickable(() => onNav('violation'), '我的违规')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#e8882b,#b8661a)' }}>
               <Icon name="warn" size={20} color="#fff" />
             </div>
             我的违规
             <span className="quick-badge">1</span>
           </div>
-          <div className="quick-item" onClick={() => onNav('train')}>
+          <div className="quick-item" {...clickable(() => onNav('train'), '安全培训')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#c9a961,#003f88)' }}>
               <Icon name="book" size={20} color="#fff" />
             </div>
             安全培训
           </div>
-          <div className="quick-item" onClick={() => onNav('project')}>
+          <div className="quick-item" {...clickable(() => onNav('project'), '项目报备')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#10b981,#003f88)' }}>
               <Icon name="flask" size={20} color="#fff" />
             </div>
             项目报备
           </div>
-          <div className="quick-item" onClick={() => onNav('waste')}>
+          <div className="quick-item" {...clickable(() => onNav('waste'), '废液报备')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#06b6d4,#0369a1)' }}>
               <Icon name="shield" size={20} color="#fff" />
             </div>
             废液报备
           </div>
-          <div className="quick-item" onClick={() => onNav('purchase')}>
+          <div className="quick-item" {...clickable(() => onNav('purchase'), '危化品采购')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#f97316,#9a3412)' }}>
               <Icon name="flask" size={20} color="#fff" />
             </div>
             危化品采购
           </div>
-          <div className="quick-item" onClick={() => onNav('night')}>
+          <div className="quick-item" {...clickable(() => onNav('night'), '过夜申请')}>
             <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#7c3aed,#1e1b4b)' }}>
               <Icon name="bell" size={20} color="#fff" />
             </div>

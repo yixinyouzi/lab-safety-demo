@@ -148,6 +148,26 @@ const MiniProgram = ({
 );
 
 // ============================================================
+// === clickable · 给 <div onClick> 补 a11y（键盘可达）=========
+// 用法：<div {...clickable(fn)} className="..."> ... </div>
+// 输出 role="button" + tabIndex 0 + Enter/Space 键盘事件
+// 仅高频可点击 div 使用（quick-item、决策按钮等关键路径），
+// 详情面板内嵌区域沿用原 onClick 即可
+// ============================================================
+const clickable = (onClick, ariaLabel) => ({
+  role: 'button',
+  tabIndex: 0,
+  onClick,
+  ...(ariaLabel ? { 'aria-label': ariaLabel } : {}),
+  onKeyDown: (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick && onClick(e);
+    }
+  },
+});
+
+// ============================================================
 // === MP 端 UI 元数据字典（单一真相源 · 各页面只读不改） =======
 // 与 admin/MOCK 的 PROJECT_STATUS_META / PROJECT_RISK_META 语义对齐，
 // 但 cls 字段使用 mp 端的 wx-tag 颜色系（red/orange/green/blue/gold/gray）
@@ -328,6 +348,6 @@ const LabRealtimeCard = ({ lab }) => {
 
 // 导出到 window
 Object.assign(window, {
-  Icon, StatusBar, NavBar, TabBar, MiniProgram, TeaSubmittedView, LabRealtimeCard,
+  Icon, StatusBar, NavBar, TabBar, MiniProgram, TeaSubmittedView, LabRealtimeCard, clickable,
   MP_PROJECT_STATUS_META, MP_PROJECT_RISK_META, MP_PENDING_KIND_META,
 });

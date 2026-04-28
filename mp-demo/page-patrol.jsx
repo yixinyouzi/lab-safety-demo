@@ -313,7 +313,7 @@ const PatAppealPage = ({ onNav }) => {
         <div className="wx-card-title">终审决定</div>
         <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
           <div
-            onClick={() => setDecision('support')}
+            {...clickable(() => setDecision('support'), '支持申诉')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
               border: '1.5px solid ' + (decision === 'support' ? '#2e7d32' : 'var(--line)'),
@@ -324,7 +324,7 @@ const PatAppealPage = ({ onNav }) => {
             <Icon name="check-circle" size={18} color={decision === 'support' ? '#2e7d32' : '#999'}/> 支持申诉
           </div>
           <div
-            onClick={() => setDecision('reject')}
+            {...clickable(() => setDecision('reject'), '驳回申诉')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
               border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),

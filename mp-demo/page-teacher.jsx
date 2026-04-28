@@ -756,7 +756,7 @@ const TeaProjectPage = ({ onNav, item }) => {
         <div className="wx-card-title">审核意见</div>
         <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
           <div
-            onClick={() => setDecision('approve')}
+            {...clickable(() => setDecision('approve'), '通过')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
               border: '1.5px solid ' + (decision === 'approve' ? '#2e7d32' : 'var(--line)'),
@@ -767,7 +767,7 @@ const TeaProjectPage = ({ onNav, item }) => {
             <Icon name="check-circle" size={18} color={decision === 'approve' ? '#2e7d32' : '#999'}/> 通过
           </div>
           <div
-            onClick={() => setDecision('reject')}
+            {...clickable(() => setDecision('reject'), '驳回')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
               border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
@@ -979,7 +979,7 @@ const TeaPurchasePage = ({ onNav, item }) => {
       <div className="wx-card">
         <div className="wx-card-title">终审决定</div>
         <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
-          <div onClick={() => setDecision('approve')} style={{
+          <div {...clickable(() => setDecision('approve'), '批准')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
             border: '1.5px solid ' + (decision === 'approve' ? '#2e7d32' : 'var(--line)'),
             background: decision === 'approve' ? '#e5f5e9' : '#fff',
@@ -988,7 +988,7 @@ const TeaPurchasePage = ({ onNav, item }) => {
           }}>
             <Icon name="check-circle" size={18} color={decision === 'approve' ? '#2e7d32' : '#999'}/> 批准采购
           </div>
-          <div onClick={() => setDecision('reject')} style={{
+          <div {...clickable(() => setDecision('reject'), '驳回')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
             border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
             background: decision === 'reject' ? '#fbe9e7' : '#fff',
@@ -1127,7 +1127,7 @@ const TeaNightPage = ({ onNav, item }) => {
       <div className="wx-card">
         <div className="wx-card-title">审批决定</div>
         <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
-          <div onClick={() => setDecision('approve')} style={{
+          <div {...clickable(() => setDecision('approve'), '批准')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
             border: '1.5px solid ' + (decision === 'approve' ? '#5b21b6' : 'var(--line)'),
             background: decision === 'approve' ? '#ede9fe' : '#fff',
@@ -1136,7 +1136,7 @@ const TeaNightPage = ({ onNav, item }) => {
           }}>
             <Icon name="check-circle" size={18} color={decision === 'approve' ? '#5b21b6' : '#999'}/> 通过
           </div>
-          <div onClick={() => setDecision('reject')} style={{
+          <div {...clickable(() => setDecision('reject'), '驳回')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
             border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
             background: decision === 'reject' ? '#fbe9e7' : '#fff',
