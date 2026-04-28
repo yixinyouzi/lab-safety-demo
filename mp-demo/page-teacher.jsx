@@ -58,6 +58,26 @@ const TEA_PENDING = [
     tagCls: 'blue',
     projectId: 'proj-2026-04',
   },
+  {
+    id: 'AP-WR-2026-02',
+    kind: 'waste',
+    title: '张一凡 · 剧毒废液 (含氟) 0.5 L',
+    sub: 'A208 · 硅基底刻蚀剩余 HF · 须双人交接',
+    time: '20 分钟前',
+    tag: '废液接收',
+    tagCls: 'green',
+    wasteId: 'wr-2026-02',
+  },
+  {
+    id: 'AP-PR-2026-01',
+    kind: 'purchase',
+    title: '张一凡 · 浓硫酸 + 无水乙醇 采购',
+    sub: '中风险 · 302 · 已通过导师 · 待学院终审',
+    time: '昨天 14:30',
+    tag: '采购终审',
+    tagCls: 'orange',
+    purchaseId: 'pr-2026-01',
+  },
 ];
 
 const TEA_STUDENTS = [
@@ -784,7 +804,210 @@ const TeaProjectPage = ({ onNav, item }) => {
   );
 };
 
+// ---------- 废液接收页（HSE / 巡查员视角 · 反馈 13） ----------
+// 单按钮模式（仅接收登记，不审核 — HSE 必须接收所有废液）
+const TeaWastePage = ({ onNav, item }) => {
+  const reports = MP.wasteReports || [];
+  const w = reports.find(r => r.id === item?.wasteId) || reports.find(r => r.status === 'pending') || reports[0];
+  const [note, setNote] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+
+  if (submitted) {
+    return (
+      <TeaSubmittedView
+        navTitle="接收完成"
+        icon="check" iconBg="#e5f5e9" iconColor="#2e7d32"
+        title="已接收 · 安排回收"
+        subtitle="第三方回收公司将在 24h 内对接"
+        syncList={[
+          `学生${w?.submittedBy}（小程序消息 · 已接收）`,
+          '北京京环 / 环保部直派（按废液类型自动分配）',
+          '管理控制台 危化品 · 三废处置 队列',
+        ]}
+        onBack={() => onNav('t-home')}
+      />
+    );
+  }
+
+  if (!w) {
+    return (
+      <MiniProgram navTitle="废液接收" showBack onBack={() => onNav('t-home')} hideTabBar>
+        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待接收报备</div>
+      </MiniProgram>
+    );
+  }
+
+  return (
+    <MiniProgram navTitle="废液固废接收" showBack onBack={() => onNav('t-pending')} hideTabBar>
+      <div style={{ padding: '10px 16px 0', background: '#fff' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span className="wx-tag red">{w.kind}</span>
+          <span className="wx-tag green">HSE 接收</span>
+          <span className="wx-tag gray">{w.vol}</span>
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#000' }}>{w.source}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
+          编号 {w.id} · 学生 {w.submittedBy} · 实验室 {w.lab} · 提交于 {w.submittedAt}
+        </div>
+      </div>
+
+      {w.note && (
+        <div className="wx-card" style={{ marginTop: 8 }}>
+          <div className="wx-card-title">学生备注</div>
+          <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>{w.note}</div>
+        </div>
+      )}
+
+      <div className="wx-card">
+        <div className="wx-card-title">现场照片 ({w.photos.length})</div>
+        <div className="photo-grid" style={{ paddingTop: 8 }}>
+          {w.photos.map((p, i) => (
+            <div key={i} className="photo-cell">
+              <Icon name="camera" size={22}/>
+              <div className="ph-label">{p}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">接收备注（选填）</div>
+        <div style={{ padding: '4px 16px 16px' }}>
+          <textarea value={note} onChange={e => setNote(e.target.value)}
+            placeholder="如：双人交接已完成、容器密封符合规范、需指定第三方回收公司等。"
+            style={{ width: '100%', minHeight: 70, border: '1px solid var(--line)', borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit', outline: 'none', resize: 'none' }} />
+        </div>
+      </div>
+
+      <div className="mp-bottom-bar">
+        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
+        <button className="wx-btn block" style={{ flex: 2 }} onClick={() => setSubmitted(true)}>
+          确认接收 · 安排回收
+        </button>
+      </div>
+    </MiniProgram>
+  );
+};
+
+// ---------- 危化品采购终审页（学院安全负责人视角 · 反馈 12） ----------
+const TeaPurchasePage = ({ onNav, item }) => {
+  const list = MP.purchaseRequests || [];
+  const p = list.find(x => x.id === item?.purchaseId) || list.find(x => x.status === 'college-review') || list[0];
+  const [decision, setDecision] = React.useState(null);
+  const [reason, setReason] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+
+  if (submitted) {
+    const isApprove = decision === 'approve';
+    return (
+      <TeaSubmittedView
+        navTitle="终审完成"
+        icon={isApprove ? 'check' : 'x-circle'}
+        iconBg={isApprove ? '#e5f5e9' : '#fbe9e7'}
+        iconColor={isApprove ? '#2e7d32' : '#d4453a'}
+        title={isApprove ? '已批准 · 推送至学院招采' : '已驳回 · 通知学生修订'}
+        subtitle={isApprove ? '24h 内挂学院招采系统' : '导师已抄送 · 等待修订重提'}
+        syncList={[
+          `学生${p?.applicant}（小程序消息）`,
+          `导师${p?.advisor}（结论已抄送）`,
+          isApprove ? '学院招采系统（自动下单队列）' : '管理控制台 危化品 · 采购队列',
+        ]}
+        onBack={() => onNav('t-home')}
+      />
+    );
+  }
+
+  if (!p) {
+    return (
+      <MiniProgram navTitle="采购终审" showBack onBack={() => onNav('t-home')} hideTabBar>
+        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待终审申请</div>
+      </MiniProgram>
+    );
+  }
+
+  return (
+    <MiniProgram navTitle="危化品采购 · 终审" showBack onBack={() => onNav('t-pending')} hideTabBar>
+      <div style={{ padding: '10px 16px 0', background: '#fff' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span className="wx-tag orange">学院终审 · 第三级</span>
+          <span className="wx-tag gray">已通过导师审核</span>
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>{p.title}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
+          编号 {p.id} · 申请人 {p.applicant} · 导师 {p.advisor} · 实验室 {p.lab}
+        </div>
+      </div>
+
+      <div className="wx-card" style={{ marginTop: 8 }}>
+        <div className="wx-card-title">采购清单 ({p.items.length} 项)</div>
+        <div className="wx-list">
+          {p.items.map((it, i) => (
+            <div key={i} className="wx-cell">
+              <div className="wx-cell-bd">
+                <div className="wx-cell-bd-title" style={{ fontSize: 14 }}>{it.name}</div>
+                <div className="wx-cell-bd-desc">
+                  <span className="mono" style={{ fontSize: 11, color: '#999' }}>CAS {it.cas}</span>
+                  <span style={{ marginLeft: 6, fontSize: 13, fontWeight: 600, color: '#003f88' }}>{it.qty} {it.unit}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">采购用途</div>
+        <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>{p.purpose}</div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">终审决定</div>
+        <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
+          <div onClick={() => setDecision('approve')} style={{
+            flex: 1, textAlign: 'center', padding: '12px 0',
+            border: '1.5px solid ' + (decision === 'approve' ? '#2e7d32' : 'var(--line)'),
+            background: decision === 'approve' ? '#e5f5e9' : '#fff',
+            color: decision === 'approve' ? '#2e7d32' : '#333',
+            borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+          }}>
+            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#2e7d32' : '#999'}/> 批准采购
+          </div>
+          <div onClick={() => setDecision('reject')} style={{
+            flex: 1, textAlign: 'center', padding: '12px 0',
+            border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+            background: decision === 'reject' ? '#fbe9e7' : '#fff',
+            color: decision === 'reject' ? '#d4453a' : '#333',
+            borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+          }}>
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回
+          </div>
+        </div>
+        <div style={{ padding: '8px 16px 16px' }}>
+          <textarea value={reason} onChange={e => setReason(e.target.value)}
+            placeholder={decision === 'reject' ? '请说明驳回原因（如「数量过大」「需提供应急预案」）...' : '批准 · 可补充建议（如「分批领用」）...'}
+            style={{ width: '100%', minHeight: 80, border: '1px solid var(--line)', borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit', outline: 'none', resize: 'none' }} />
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
+            {decision === 'approve' && '批准后自动推送学院招采系统，到货由 HSE 验收入双锁柜。'}
+            {decision === 'reject' && '驳回后导师 + 学生同步收到通知，须修订后重新发起。'}
+            {!decision && '请先选择批准或驳回。'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mp-bottom-bar">
+        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
+        <button className={'wx-btn ' + (decision === 'reject' ? 'danger' : '')} style={{ flex: 2 }}
+          disabled={!decision || (decision === 'reject' && !reason.trim())}
+          onClick={() => setSubmitted(true)}>
+          提交终审
+        </button>
+      </div>
+    </MiniProgram>
+  );
+};
+
 Object.assign(window, {
   TEA_TABS, TEA_PENDING, TEA_STUDENTS,
-  TeaHomePage, TeaPendingListPage, TeaReviewPage, TeaStudentsPage, TeaMsgPage, TeaMePage, TeaProjectPage,
+  TeaHomePage, TeaPendingListPage, TeaReviewPage, TeaStudentsPage, TeaMsgPage, TeaMePage,
+  TeaProjectPage, TeaWastePage, TeaPurchasePage,
 });

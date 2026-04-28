@@ -13,6 +13,12 @@
 // projects[i]:核心字段（id/title/lab/applicant/advisor/riskLevel/status/currentStep/timeline/sop/estimatedEnd）与 admin 一致；
 //             但「涉及危险源」用 `hazardSourcesEmbed: [{name,kind,severity}]` 嵌入式对象数组（避免跨 admin/mp 解引用 hs-id）；
 //             admin 端用 `hazardSources: ['hs-id']` id 引用 + lab.hazardSources.find(id)。两端命名故意不同以表明语义差异。
+// wasteReports[i]: 学生废液固废报备（反馈 13）
+//   { id, kind, vol, lab, source, note?, photos[], status, submittedBy, submittedAt, timeline[] }
+//   status: 'pending' | 'accepted' | 'collecting' | 'closed'
+// purchaseRequests[i]: 学生危化品采购申请（反馈 12 · 学生→导师→学院 三级审批）
+//   { id, title, applicant, advisor, lab, items[], purpose, status, currentStep, timeline[] }
+//   status: 'advisor-review' | 'college-review' | 'approved' | 'rejected' | 'delivered'
 // ============================================================
 
 window.MP = {
@@ -356,6 +362,69 @@ window.MP = {
       hazardSources: [
         { id: 'hs-B105-01', kind: 'biological', name: '大肠杆菌 K-12（BSL-1）', severity: 'warning', ppe: ['一次性手套','实验服','口罩'] },
       ] },
+  ],
+
+  // 学生废液固废报备（反馈 13 · timeline 与 violation 同 schema）
+  wasteReports: [
+    {
+      id: 'wr-2026-01', kind: '酸性废液', vol: '5 L', lab: '302',
+      source: '电化学合成实验 · 项目 proj-2026-01', note: '已用专用 PE 瓶密封 · 双层标签',
+      photos: ['现场照片 1', '密封容器'],
+      status: 'collecting', submittedBy: '张一凡', submittedAt: '2026-04-19 16:30',
+      timeline: [
+        { time: '04-19 16:30', title: '学生报备',     desc: '张一凡 提交报备 + 2 张现场照片', done: true },
+        { time: '04-20 09:15', title: 'HSE 接收',     desc: '王玉鸿 已接收 · 安排北京京环回收', done: true },
+        { time: '04-25 14:00', title: '第三方上门',   desc: '北京京环 计划上门回收', current: true },
+        { time: '—',           title: '完成回收 · 归档', desc: '凭证扫描入档' },
+      ],
+    },
+    {
+      id: 'wr-2026-02', kind: '剧毒废液 (含氟)', vol: '0.5 L', lab: 'A208',
+      source: '硅基底刻蚀剩余 HF', note: '剧毒 · 双锁柜 · 需安全员现场签字交接',
+      photos: ['密封容器照片'],
+      status: 'pending', submittedBy: '张一凡', submittedAt: '2026-04-21 11:20',
+      timeline: [
+        { time: '04-21 11:20', title: '学生报备', desc: '张一凡 提交报备 + 1 张现场照片', done: true },
+        { time: '—',           title: 'HSE 接收', desc: '王玉鸿 待安排回收（剧毒须双人交接）', current: true },
+        { time: '—',           title: '第三方上门', desc: '环保部直派' },
+        { time: '—',           title: '完成回收 · 归档', desc: '凭证扫描入档' },
+      ],
+    },
+  ],
+
+  // 学生危化品采购申请（反馈 12 · 学生→导师→学院 三级）
+  purchaseRequests: [
+    {
+      id: 'pr-2026-01', title: '无水乙醇 4 L × 2 瓶 · 浓硫酸 1 L × 1 瓶',
+      applicant: '张一凡', advisor: '赵振华', lab: '302',
+      items: [
+        { name: '无水乙醇', cas: '64-17-5', qty: 8, unit: 'L' },
+        { name: '浓硫酸',   cas: '7664-93-9', qty: 1, unit: 'L' },
+      ],
+      purpose: '钠离子电池正极合成 · 项目 proj-2026-01 后续批次',
+      status: 'college-review', currentStep: 2,
+      timeline: [
+        { time: '04-22 10:00', title: '学生申请', desc: '张一凡 提交采购清单 + 用途说明', done: true },
+        { time: '04-22 14:30', title: '导师审核', desc: '赵振华 审核通过 · 备注「分批领用」', done: true },
+        { time: '—',           title: '学院安全负责人终审', desc: '李雪茹 待审核 · 浓硫酸 ≥ 1 L 须学院签字', current: true },
+        { time: '—',           title: '采购下单',     desc: '通过后 24h 内挂学院招采系统' },
+        { time: '—',           title: '到货入库',     desc: 'HSE 验收 + 双锁柜入账' },
+      ],
+    },
+    {
+      id: 'pr-2026-02', title: '丙酮 4 L × 1 瓶',
+      applicant: '张一凡', advisor: '赵振华', lab: '302',
+      items: [{ name: '丙酮', cas: '67-64-1', qty: 4, unit: 'L' }],
+      purpose: 'SEM 样品脱模 · 常规耗材',
+      status: 'approved', currentStep: 4,
+      timeline: [
+        { time: '04-15 09:30', title: '学生申请',   desc: '张一凡 提交采购清单', done: true },
+        { time: '04-15 11:00', title: '导师审核',   desc: '赵振华 审核通过', done: true },
+        { time: '04-15 16:00', title: '学院终审',   desc: '常规耗材免学院审 · 自动通过', done: true },
+        { time: '04-16 10:00', title: '采购下单',   desc: '已对接学院招采系统', done: true },
+        { time: '04-19 14:00', title: '到货入库',   desc: 'HSE 验收 · A208 易燃柜入账', done: true },
+      ],
+    },
   ],
 
   // 学生「我的项目」（与 admin MOCK.projects 同 schema · timeline 字段对齐）

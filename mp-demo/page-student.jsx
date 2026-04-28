@@ -99,6 +99,18 @@ const StuHomePage = ({ onNav }) => {
             </div>
             项目报备
           </div>
+          <div className="quick-item" onClick={() => onNav('waste')}>
+            <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#06b6d4,#0369a1)' }}>
+              <Icon name="shield" size={20} color="#fff" />
+            </div>
+            废液报备
+          </div>
+          <div className="quick-item" onClick={() => onNav('purchase')}>
+            <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#f97316,#9a3412)' }}>
+              <Icon name="flask" size={20} color="#fff" />
+            </div>
+            危化品采购
+          </div>
         </div>
       </div>
 

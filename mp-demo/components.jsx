@@ -172,11 +172,13 @@ const MP_PROJECT_RISK_META = {
 
 // 教师端 TEA_PENDING.kind 的视觉元数据（icon 用 components.jsx 的 Icon 名）
 const MP_PENDING_KIND_META = {
-  appeal:  { tagCls: 'red',    bg: '#fbe9e7', color: '#d4453a', icon: 'warn' },
-  booking: { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'calendar' },
-  chem:    { tagCls: 'orange', bg: '#faf1e0', color: '#b8661a', icon: 'flask' },
-  rectify: { tagCls: 'gold',   bg: '#fbf4e0', color: '#8a6d28', icon: 'check-circle' },
-  project: { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'flask' },
+  appeal:   { tagCls: 'red',    bg: '#fbe9e7', color: '#d4453a', icon: 'warn' },
+  booking:  { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'calendar' },
+  chem:     { tagCls: 'orange', bg: '#faf1e0', color: '#b8661a', icon: 'flask' },
+  rectify:  { tagCls: 'gold',   bg: '#fbf4e0', color: '#8a6d28', icon: 'check-circle' },
+  project:  { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'flask' },
+  waste:    { tagCls: 'green',  bg: '#e5f5e9', color: '#2e7d32', icon: 'shield' },
+  purchase: { tagCls: 'orange', bg: '#fff0d6', color: '#a04706', icon: 'mail' },
 };
 
 // ============================================================
