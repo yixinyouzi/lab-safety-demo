@@ -19,7 +19,7 @@ const StuPurchaseListPage = ({ onNav }) => {
   return (
     <MiniProgram navTitle="我的危化品采购" showBack onBack={() => onNav('home')} hideTabBar>
       <div style={{ padding: '12px 16px 4px', background: '#fff' }}>
-        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
           危化品采购走 <strong>学生→导师→学院</strong> 三级审批；
           剧毒/强氧化品 ≥ 100g 须学院安全负责人现场核验。
         </div>
@@ -27,7 +27,7 @@ const StuPurchaseListPage = ({ onNav }) => {
 
       {mine.length === 0 ? (
         <div className="wx-card">
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: '#999', fontSize: 13 }}>
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
             还没有采购申请，点下方按钮新建
           </div>
         </div>
@@ -43,25 +43,25 @@ const StuPurchaseListPage = ({ onNav }) => {
               <div style={{ fontSize: 15, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>
                 {p.title}
               </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 实验室 {p.lab} · 导师 {p.advisor}
               </div>
             </div>
 
             <div style={{ padding: '10px 16px 12px' }}>
               <div style={{ fontSize: 13, color: '#333', background: '#f7f7f7', padding: 10, borderRadius: 6, lineHeight: 1.6 }}>
-                <strong style={{ fontSize: 12, color: '#666' }}>用途：</strong>{p.purpose}
+                <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>用途：</strong>{p.purpose}
                 <div style={{ marginTop: 6, fontSize: 12 }}>
                   {p.items.map((it, i) => (
                     <div key={i} style={{ marginTop: 2 }}>
-                      · {it.name} <span className="mono" style={{ color: '#999' }}>(CAS {it.cas})</span> · {it.qty} {it.unit}
+                      · {it.name} <span className="mono" style={{ color: 'var(--text-3)' }}>(CAS {it.cas})</span> · {it.qty} {it.unit}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <div style={{ padding: '0 16px 4px', fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ padding: '0 16px 4px', fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1 }}>
               审批 / 推进时间线
             </div>
             <div className="timeline" style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 14 }}>
@@ -112,7 +112,7 @@ const StuPurchaseFormPage = ({ onNav }) => {
         <div className="wx-card-title">基本信息</div>
         <div className="wx-list">
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>实验室</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>实验室</div>
             <div className="wx-cell-bd">
               <select value={labId} onChange={e => setLabId(e.target.value)}
                 style={{ width: '100%', border: 'none', fontSize: 14, outline: 'none', padding: '6px 0', background: 'transparent' }}>
@@ -121,10 +121,10 @@ const StuPurchaseFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>导师</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>导师</div>
             <div className="wx-cell-bd" style={{ fontSize: 14, color: '#333' }}>
               {(MP.labs || []).find(l => l.id === labId)?.lead || '—'}
-              <span style={{ fontSize: 11, color: '#999', marginLeft: 6 }}>（自动）</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 6 }}>（自动）</span>
             </div>
           </div>
         </div>
@@ -136,9 +136,9 @@ const StuPurchaseFormPage = ({ onNav }) => {
           {items.map((it, i) => (
             <div key={i} style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--line-weak)' }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 11, color: '#999' }}>#{i + 1}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>#{i + 1}</span>
                 {items.length > 1 && (
-                  <button className="wx-btn mini" style={{ marginLeft: 'auto', padding: '2px 8px', fontSize: 11, background: '#fbe9e7', color: '#d4453a', border: 'none' }}
+                  <button className="wx-btn mini" style={{ marginLeft: 'auto', padding: '2px 8px', fontSize: 11, background: '#fbe9e7', color: 'var(--wx-red)', border: 'none' }}
                     onClick={() => removeItem(i)}>删除</button>
                 )}
               </div>
@@ -160,7 +160,7 @@ const StuPurchaseFormPage = ({ onNav }) => {
             </div>
           ))}
           <div style={{ padding: '12px 16px' }}>
-            <button className="wx-btn ghost block" onClick={addItem} style={{ borderStyle: 'dashed', color: '#003f88' }}>
+            <button className="wx-btn ghost block" onClick={addItem} style={{ borderStyle: 'dashed', color: 'var(--wx-green)' }}>
               + 添加一项
             </button>
           </div>

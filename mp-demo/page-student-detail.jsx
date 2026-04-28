@@ -436,7 +436,7 @@ const StuQuizPage = ({ onNav }) => {
         </div>
 
         {submitted && (
-          <div style={{ marginTop: 14, padding: 12, background: '#e5ecf5', borderRadius: 8, fontSize: 12, color: '#003f88', lineHeight: 1.6 }}>
+          <div style={{ marginTop: 14, padding: 12, background: '#e5ecf5', borderRadius: 8, fontSize: 12, color: 'var(--wx-green)', lineHeight: 1.6 }}>
             <div style={{ fontWeight: 600, marginBottom: 4 }}>
               <Icon name="check" size={12} stroke={3}/> 回答正确
             </div>

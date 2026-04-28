@@ -438,7 +438,7 @@ const StuScanResultPage = ({ onNav }) => {
           <div className="wx-cell">
             <div className="wx-cell-hd" style={{ width: 32 }}><Icon name="x-circle" size={18} color="#d4453a"/></div>
             <div className="wx-cell-bd">
-              <div className="wx-cell-bd-title" style={{ color: '#d4453a' }}>权限核验 · 拦截</div>
+              <div className="wx-cell-bd-title" style={{ color: 'var(--wx-red)' }}>权限核验 · 拦截</div>
               <div className="wx-cell-bd-desc">账号挂黄牌，门禁暂停</div>
             </div>
           </div>

@@ -258,7 +258,7 @@ const PatAppealPage = ({ onNav }) => {
         navTitle="终审完成"
         icon={isSupport ? 'check' : 'x'}
         iconBg={isSupport ? '#e5f5e9' : '#fbe9e7'}
-        iconColor={isSupport ? '#2e7d32' : '#d4453a'}
+        iconColor={isSupport ? 'var(--wx-success)' : 'var(--wx-red)'}
         title={isSupport ? '已支持申诉 · 撤销扣分' : '已驳回申诉 · 进入整改'}
         subtitle="实验中心终审结论已生成"
         syncList={[
@@ -316,23 +316,23 @@ const PatAppealPage = ({ onNav }) => {
             {...clickable(() => setDecision('support'), '支持申诉')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
-              border: '1.5px solid ' + (decision === 'support' ? '#2e7d32' : 'var(--line)'),
+              border: '1.5px solid ' + (decision === 'support' ? 'var(--wx-success)' : 'var(--line)'),
               background: decision === 'support' ? '#e5f5e9' : '#fff',
-              color: decision === 'support' ? '#2e7d32' : '#333',
+              color: decision === 'support' ? 'var(--wx-success)' : '#333',
               borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer'
             }}>
-            <Icon name="check-circle" size={18} color={decision === 'support' ? '#2e7d32' : '#999'}/> 支持申诉
+            <Icon name="check-circle" size={18} color={decision === 'support' ? 'var(--wx-success)' : 'var(--text-3)'}/> 支持申诉
           </div>
           <div
             {...clickable(() => setDecision('reject'), '驳回申诉')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
-              border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+              border: '1.5px solid ' + (decision === 'reject' ? 'var(--wx-red)' : 'var(--line)'),
               background: decision === 'reject' ? '#fbe9e7' : '#fff',
-              color: decision === 'reject' ? '#d4453a' : '#333',
+              color: decision === 'reject' ? 'var(--wx-red)' : '#333',
               borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer'
             }}>
-            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回申诉
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? 'var(--wx-red)' : 'var(--text-3)'}/> 驳回申诉
           </div>
         </div>
         <div style={{ padding: '8px 16px 16px' }}>
@@ -389,7 +389,7 @@ const PatMePage = ({ onNav }) => {
       <div className="me-stats">
         <div className="me-stat"><div className="n">{u.totalLogs}</div><div className="lb">累计登记</div></div>
         <div className="me-stat"><div className="n">{u.thisMonth}</div><div className="lb">本月登记</div></div>
-        <div className="me-stat"><div className="n" style={{ color: '#003f88' }}>#{u.rank}</div><div className="lb">巡查榜</div></div>
+        <div className="me-stat"><div className="n" style={{ color: 'var(--wx-green)' }}>#{u.rank}</div><div className="lb">巡查榜</div></div>
       </div>
 
       <div className="wx-card">

@@ -28,14 +28,15 @@ body {
   --wx-orange: #e8882b;
   --wx-yellow: #e6b800;
   --wx-purple: #003f88;         /* 保留紫色给个别图标 */
+  --wx-success: #2e7d32;        /* 通过 / 支持 / 已批准 · Step 3-6c 抽出 */
 
   /* WeUI 规范 */
   --bg-page: #f0f0f2;          /* 页面灰底 */
   --bg-card: #ffffff;
   --bg-weak: #f7f7f7;
   --text-1: #191919;           /* 主文本 */
-  --text-2: #888888;           /* 次要 */
-  --text-3: #b2b2b2;           /* 辅助 */
+  --text-2: #666666;           /* 次要 · 与 inline #666 对齐（Step 3-6c） */
+  --text-3: #999999;           /* 辅助 · 与 inline #999 对齐（Step 3-6c） */
   --text-link: #003f88;
   --line: #e5e5e5;
   --line-weak: #f2f2f2;

@@ -13,7 +13,7 @@ const StuProjectListPage = ({ onNav }) => {
   return (
     <MiniProgram navTitle="我的实验项目" showBack onBack={() => onNav('home')} hideTabBar>
       <div style={{ padding: '12px 16px 4px', background: '#fff' }}>
-        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
           高风险项目须经 导师 / 实验中心 / 学院 三级审批；中/低风险走快速通道。
           每个项目登记后，门牌会自动同步状态。
         </div>
@@ -21,7 +21,7 @@ const StuProjectListPage = ({ onNav }) => {
 
       {mine.length === 0 ? (
         <div className="wx-card">
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: '#999', fontSize: 13 }}>
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
             还没有项目报备，点下方按钮新建
           </div>
         </div>
@@ -37,7 +37,7 @@ const StuProjectListPage = ({ onNav }) => {
                 <span className="wx-tag gray">阶段 {p.currentStep}/{p.timeline.length}</span>
               </div>
               <div style={{ fontSize: 16, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>{p.title}</div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 实验室 {p.lab} · 导师 {p.advisor}
                 {p.estimatedEnd && <span> · 预计 {p.estimatedEnd}</span>}
               </div>
@@ -45,7 +45,7 @@ const StuProjectListPage = ({ onNav }) => {
 
             <div style={{ padding: '10px 16px 12px' }}>
               <div style={{ fontSize: 13, color: '#333', background: '#f7f7f7', padding: 10, borderRadius: 6, lineHeight: 1.6 }}>
-                <strong style={{ fontSize: 12, color: '#666' }}>SOP：</strong>{p.sop}
+                <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>SOP：</strong>{p.sop}
               </div>
             </div>
 
@@ -57,7 +57,7 @@ const StuProjectListPage = ({ onNav }) => {
               </div>
             )}
 
-            <div style={{ padding: '0 16px 4px', fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ padding: '0 16px 4px', fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1 }}>
               审批 / 推进时间线
             </div>
             <div className="timeline" style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 14 }}>
@@ -125,7 +125,7 @@ const StuProjectFormPage = ({ onNav }) => {
         <div className="wx-card-title">基本信息</div>
         <div className="wx-list">
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>项目名</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>项目名</div>
             <div className="wx-cell-bd">
               <input
                 value={title}
@@ -136,7 +136,7 @@ const StuProjectFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>实验室</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>实验室</div>
             <div className="wx-cell-bd">
               <select
                 value={labId}
@@ -150,11 +150,11 @@ const StuProjectFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>导师</div>
-            <div className="wx-cell-bd" style={{ fontSize: 14, color: '#333' }}>{advisor} <span style={{ fontSize: 11, color: '#999' }}>（根据实验室自动填充）</span></div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>导师</div>
+            <div className="wx-cell-bd" style={{ fontSize: 14, color: '#333' }}>{advisor} <span style={{ fontSize: 11, color: 'var(--text-3)' }}>（根据实验室自动填充）</span></div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>风险等级</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>风险等级</div>
             <div className="wx-cell-bd" style={{ display: 'flex', gap: 8 }}>
               {['high', 'medium', 'low'].map(r => (
                 <div
@@ -162,7 +162,7 @@ const StuProjectFormPage = ({ onNav }) => {
                   onClick={() => setRisk(r)}
                   style={{
                     padding: '6px 14px', borderRadius: 14, fontSize: 12, cursor: 'pointer',
-                    background: risk === r ? '#003f88' : '#f5f5f7', color: risk === r ? '#fff' : '#666',
+                    background: risk === r ? 'var(--wx-green)' : '#f5f5f7', color: risk === r ? '#fff' : 'var(--text-2)',
                   }}
                 >
                   {MP_PROJECT_RISK_META[r].label}
@@ -171,7 +171,7 @@ const StuProjectFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>预计结束</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>预计结束</div>
             <div className="wx-cell-bd">
               <input
                 type="date"
@@ -188,7 +188,7 @@ const StuProjectFormPage = ({ onNav }) => {
         <div className="wx-card-title">涉及危险源 (从 {lab?.name || '所选实验室'} 选)</div>
         <div className="wx-list">
           {labHazards.length === 0 ? (
-            <div style={{ padding: '20px 16px', color: '#999', fontSize: 13 }}>该实验室暂无登记危险源</div>
+            <div style={{ padding: '20px 16px', color: 'var(--text-3)', fontSize: 13 }}>该实验室暂无登记危险源</div>
           ) : labHazards.map(h => {
             const picked = pickedHaz.includes(h.id);
             return (
@@ -196,8 +196,8 @@ const StuProjectFormPage = ({ onNav }) => {
                 <div className="wx-cell-hd" style={{ width: 28 }}>
                   <div style={{
                     width: 18, height: 18, borderRadius: 4,
-                    border: '2px solid ' + (picked ? '#003f88' : '#c7c7cc'),
-                    background: picked ? '#003f88' : '#fff',
+                    border: '2px solid ' + (picked ? 'var(--wx-green)' : '#c7c7cc'),
+                    background: picked ? 'var(--wx-green)' : '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {picked && <Icon name="check" size={12} color="#fff" stroke={3}/>}
@@ -209,7 +209,7 @@ const StuProjectFormPage = ({ onNav }) => {
                     <span className={'wx-tag ' + (h.severity === 'critical' ? 'red' : 'orange')}>
                       {h.severity === 'critical' ? '严重' : '关注'}
                     </span>
-                    <span style={{ marginLeft: 6, fontSize: 11, color: '#666' }}>
+                    <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--text-2)' }}>
                       PPE: {(h.ppe || []).join(' · ')}
                     </span>
                   </div>
@@ -249,7 +249,7 @@ const StuProjectSentPage = ({ onNav }) => {
   return (
     <MiniProgram navTitle="提交成功" showBack onBack={() => onNav('project')} hideTabBar>
       <div className="scan-result-card" style={{ marginTop: 32 }}>
-        <div className="scan-result-icon ok" style={{ background: '#e5f5e9', color: '#2e7d32' }}>
+        <div className="scan-result-icon ok" style={{ background: '#e5f5e9', color: 'var(--wx-success)' }}>
           <Icon name="check" size={30} stroke={3}/>
         </div>
         <div className="scan-result-title">项目报备已提交</div>

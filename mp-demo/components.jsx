@@ -192,12 +192,12 @@ const MP_PROJECT_RISK_META = {
 
 // 教师端 TEA_PENDING.kind 的视觉元数据（icon 用 components.jsx 的 Icon 名）
 const MP_PENDING_KIND_META = {
-  appeal:   { tagCls: 'red',    bg: '#fbe9e7', color: '#d4453a', icon: 'warn' },
-  booking:  { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'calendar' },
+  appeal:   { tagCls: 'red',    bg: '#fbe9e7', color: 'var(--wx-red)', icon: 'warn' },
+  booking:  { tagCls: 'blue',   bg: '#e5ecf5', color: 'var(--wx-green)', icon: 'calendar' },
   chem:     { tagCls: 'orange', bg: '#faf1e0', color: '#b8661a', icon: 'flask' },
   rectify:  { tagCls: 'gold',   bg: '#fbf4e0', color: '#8a6d28', icon: 'check-circle' },
-  project:  { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'flask' },
-  waste:    { tagCls: 'green',  bg: '#e5f5e9', color: '#2e7d32', icon: 'shield' },
+  project:  { tagCls: 'blue',   bg: '#e5ecf5', color: 'var(--wx-green)', icon: 'flask' },
+  waste:    { tagCls: 'green',  bg: '#e5f5e9', color: 'var(--wx-success)', icon: 'shield' },
   purchase: { tagCls: 'orange', bg: '#fff0d6', color: '#a04706', icon: 'mail' },
   night:    { tagCls: 'blue',   bg: '#ede9fe', color: '#5b21b6', icon: 'bell' },
 };
@@ -210,7 +210,7 @@ const MP_PENDING_KIND_META = {
 // ============================================================
 const TeaSubmittedView = ({
   navTitle,
-  icon = 'check', iconBg = '#e5f5e9', iconColor = '#2e7d32',
+  icon = 'check', iconBg = '#e5f5e9', iconColor = 'var(--wx-success)',
   title, subtitle,
   syncList = [],
   footnote,
@@ -261,7 +261,7 @@ const LabRealtimeCard = ({ lab }) => {
     <div className="wx-card" style={{ overflow: 'hidden' }}>
       <div style={{ padding: '12px 16px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div>
-          <div style={{ fontSize: 11, color: '#999', letterSpacing: 0.5 }}>MY LAB · LIVE</div>
+          <div style={{ fontSize: 11, color: 'var(--text-3)', letterSpacing: 0.5 }}>MY LAB · LIVE</div>
           <div style={{ fontSize: 15, fontWeight: 600, color: '#000', marginTop: 2 }}>
             {lab.id} · {lab.name}
           </div>
@@ -303,11 +303,11 @@ const LabRealtimeCard = ({ lab }) => {
       <div style={{ padding: '10px 16px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 14 }}>
           <div>
-            <div style={{ fontSize: 10, color: '#999' }}>在室</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: inRoom > 0 ? '#003f88' : '#999', fontFamily: 'JetBrains Mono, monospace' }}>{inRoom}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)' }}>在室</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: inRoom > 0 ? 'var(--wx-green)' : 'var(--text-3)', fontFamily: 'JetBrains Mono, monospace' }}>{inRoom}</div>
           </div>
           <div>
-            <div style={{ fontSize: 10, color: '#999' }}>温度</div>
+            <div style={{ fontSize: 10, color: 'var(--text-3)' }}>温度</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#333', fontFamily: 'JetBrains Mono, monospace' }}>{temp}°C</div>
           </div>
         </div>
@@ -321,7 +321,7 @@ const LabRealtimeCard = ({ lab }) => {
               border: '2px solid #fff', marginLeft: i > 0 ? -6 : 0,
             }}>{['赵','李','张'][i] || '·'}</div>
           ))}
-          {inRoom === 0 && <div style={{ fontSize: 11, color: '#999' }}>暂无人员</div>}
+          {inRoom === 0 && <div style={{ fontSize: 11, color: 'var(--text-3)' }}>暂无人员</div>}
         </div>
       </div>
 
@@ -329,15 +329,15 @@ const LabRealtimeCard = ({ lab }) => {
       <div style={{ padding: '8px 16px 14px', display: 'flex', gap: 8 }}>
         {lead ? (
           <a href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
-            className="wx-btn ghost" style={{ flex: 1, textDecoration: 'none', textAlign: 'center', fontSize: 12, padding: '8px 0', color: '#003f88', borderColor: '#c4d2e8', background: '#f0f4fa' }}>
+            className="wx-btn ghost" style={{ flex: 1, textDecoration: 'none', textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--wx-green)', borderColor: '#c4d2e8', background: '#f0f4fa' }}>
             ☎ 呼叫 {lead.name}（{lead.role === 'lead' ? '负责人' : '巡查员'}）
           </a>
         ) : (
-          <div className="wx-btn ghost" style={{ flex: 1, textAlign: 'center', fontSize: 12, padding: '8px 0', color: '#999' }}>未配置负责人</div>
+          <div className="wx-btn ghost" style={{ flex: 1, textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--text-3)' }}>未配置负责人</div>
         )}
         {inspector && (
           <a href={`tel:${inspector.phone.replace(/[^0-9+]/g, '')}`}
-            className="wx-btn ghost" style={{ flex: 1, textDecoration: 'none', textAlign: 'center', fontSize: 12, padding: '8px 0', color: '#d4453a', borderColor: '#fdc6c0', background: '#fff5f3' }}>
+            className="wx-btn ghost" style={{ flex: 1, textDecoration: 'none', textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--wx-red)', borderColor: '#fdc6c0', background: '#fff5f3' }}>
             ☎ 呼叫巡查员
           </a>
         )}

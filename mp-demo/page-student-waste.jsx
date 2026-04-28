@@ -23,7 +23,7 @@ const StuWasteListPage = ({ onNav }) => {
   return (
     <MiniProgram navTitle="我的废液报备" showBack onBack={() => onNav('home')} hideTabBar>
       <div style={{ padding: '12px 16px 4px', background: '#fff' }}>
-        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
           所有废液 / 固废需在产生当日提交报备 · 剧毒废液必须双人交接 ·
           学院 HSE 统一对接第三方回收公司。
         </div>
@@ -31,7 +31,7 @@ const StuWasteListPage = ({ onNav }) => {
 
       {mine.length === 0 ? (
         <div className="wx-card">
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: '#999', fontSize: 13 }}>
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
             还没有废液报备，点下方按钮新建
           </div>
         </div>
@@ -48,7 +48,7 @@ const StuWasteListPage = ({ onNav }) => {
               <div style={{ fontSize: 15, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>
                 {w.source}
               </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 实验室 {w.lab} · 提交于 {w.submittedAt}
               </div>
             </div>
@@ -56,12 +56,12 @@ const StuWasteListPage = ({ onNav }) => {
             {w.note && (
               <div style={{ padding: '10px 16px 12px' }}>
                 <div style={{ fontSize: 13, color: '#333', background: '#f7f7f7', padding: 10, borderRadius: 6, lineHeight: 1.6 }}>
-                  <strong style={{ fontSize: 12, color: '#666' }}>备注：</strong>{w.note}
+                  <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>备注：</strong>{w.note}
                 </div>
               </div>
             )}
 
-            <div style={{ padding: '0 16px 4px', fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ padding: '0 16px 4px', fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1 }}>
               处理时间线
             </div>
             <div className="timeline" style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 14 }}>
@@ -112,7 +112,7 @@ const StuWasteFormPage = ({ onNav }) => {
         <div className="wx-card-title">基本信息</div>
         <div className="wx-list">
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>类型 *</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>类型 *</div>
             <div className="wx-cell-bd">
               <select value={kind} onChange={e => setKind(e.target.value)}
                 style={{ width: '100%', border: 'none', fontSize: 14, outline: 'none', padding: '6px 0', background: 'transparent' }}>
@@ -121,7 +121,7 @@ const StuWasteFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>体积 *</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>体积 *</div>
             <div className="wx-cell-bd">
               <input value={vol} onChange={e => setVol(e.target.value)}
                 placeholder="如 5 L / 200 g"
@@ -129,7 +129,7 @@ const StuWasteFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>实验室</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>实验室</div>
             <div className="wx-cell-bd">
               <select value={labId} onChange={e => setLabId(e.target.value)}
                 style={{ width: '100%', border: 'none', fontSize: 14, outline: 'none', padding: '6px 0', background: 'transparent' }}>
@@ -138,7 +138,7 @@ const StuWasteFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>来源 *</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>来源 *</div>
             <div className="wx-cell-bd">
               <input value={source} onChange={e => setSource(e.target.value)}
                 placeholder="如「电化学合成实验」「项目 proj-2026-01」"
@@ -153,13 +153,13 @@ const StuWasteFormPage = ({ onNav }) => {
         <div className="photo-grid" style={{ paddingTop: 8 }}>
           {[0, 1, 2].map(i => (
             <div key={i} className="photo-cell" onClick={() => setPhotos(p => Math.min(3, p + 1))}
-              style={{ cursor: 'pointer', background: i < photos ? 'linear-gradient(135deg,#003f88,#001f4d)' : '#f5f5f7', color: i < photos ? '#fff' : '#999' }}>
+              style={{ cursor: 'pointer', background: i < photos ? 'linear-gradient(135deg,#003f88,#001f4d)' : '#f5f5f7', color: i < photos ? '#fff' : 'var(--text-3)' }}>
               <Icon name="camera" size={22} />
               <div className="ph-label">{i < photos ? '已拍' : '点击拍照'}</div>
             </div>
           ))}
         </div>
-        <div style={{ padding: '0 16px 12px', fontSize: 11, color: '#999' }}>
+        <div style={{ padding: '0 16px 12px', fontSize: 11, color: 'var(--text-3)' }}>
           已拍 {photos} 张（demo · 点击模拟拍照）
         </div>
       </div>

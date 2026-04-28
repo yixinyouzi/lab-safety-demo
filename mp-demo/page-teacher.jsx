@@ -141,11 +141,11 @@ const TeaHomePage = ({ onNav, goPending }) => {
             <div style={{ fontSize: 12, color: 'var(--text-2)' }}>我的工作台</div>
             <div style={{ display: 'flex', gap: 24, marginTop: 10 }}>
               <div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: '#d4453a', lineHeight: 1 }}>{TEA_PENDING.length}</div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--wx-red)', lineHeight: 1 }}>{TEA_PENDING.length}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 4 }}>待我审批</div>
               </div>
               <div>
-                <div style={{ fontSize: 26, fontWeight: 700, color: '#003f88', lineHeight: 1 }}>{u.students}</div>
+                <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--wx-green)', lineHeight: 1 }}>{u.students}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 4 }}>指导学生</div>
               </div>
               <div>
@@ -160,7 +160,7 @@ const TeaHomePage = ({ onNav, goPending }) => {
       {/* 紧急待办：申诉复核 */}
       {urgentPending.length > 0 && (
         <div className="alert-banner" onClick={() => goPending(urgentPending[0])} style={{ background: 'linear-gradient(135deg,#fbe9e7 0%,#f8ddd9 100%)', borderColor: '#e8a69b', cursor: 'pointer' }}>
-          <div className="alert-banner-icon" style={{ background: '#d4453a' }}>
+          <div className="alert-banner-icon" style={{ background: 'var(--wx-red)' }}>
             <Icon name="warn" size={20} color="#fff"/>
           </div>
           <div className="alert-banner-body">
@@ -170,7 +170,7 @@ const TeaHomePage = ({ onNav, goPending }) => {
             <div style={{ fontSize: 12, color: '#5c4515', marginBottom: 6 }}>
               {urgentPending[0].title}
             </div>
-            <button className="wx-btn mini" style={{ background: '#d4453a' }} onClick={() => goPending(urgentPending[0])}>
+            <button className="wx-btn mini" style={{ background: 'var(--wx-red)' }} onClick={() => goPending(urgentPending[0])}>
               立即复核 <Icon name="chevron-right" size={12} color="#fff"/>
             </button>
           </div>
@@ -187,7 +187,7 @@ const TeaHomePage = ({ onNav, goPending }) => {
         </div>
         <div className="wx-list">
           {TEA_PENDING.slice(0, 3).map(p => {
-            const meta = MP_PENDING_KIND_META[p.kind] || { bg: '#f5f5f7', color: '#666', icon: 'info' };
+            const meta = MP_PENDING_KIND_META[p.kind] || { bg: '#f5f5f7', color: 'var(--text-2)', icon: 'info' };
             return (
               <div key={p.id} className="wx-cell" onClick={() => goPending(p)}>
                 <div className="wx-cell-hd">
@@ -229,7 +229,7 @@ const TeaHomePage = ({ onNav, goPending }) => {
           <div className="wx-cell">
             <div className="wx-cell-hd" style={{ width: 48 }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: '#003f88' }}>今天</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--wx-green)' }}>今天</div>
                 <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2 }}>15:00</div>
               </div>
             </div>
@@ -305,7 +305,7 @@ const TeaPendingListPage = ({ onNav, goPending }) => (
     </div>
     <div className="wx-list" style={{ marginTop: 8 }}>
       {TEA_PENDING.map(p => {
-        const meta = MP_PENDING_KIND_META[p.kind] || { bg: '#f5f5f7', color: '#666', icon: 'info' };
+        const meta = MP_PENDING_KIND_META[p.kind] || { bg: '#f5f5f7', color: 'var(--text-2)', icon: 'info' };
         return (
           <div key={p.id} className="wx-cell" onClick={() => goPending(p)}>
             <div className="wx-cell-hd">
@@ -449,7 +449,7 @@ const TeaStudentsPage = ({ onNav }) => {
     <MiniProgram navTitle="我的学生" showBack onBack={() => onNav('t-home')} hideTabBar>
       <div style={{ padding: '12px 12px 4px', display: 'flex', gap: 8 }}>
         <div style={{ flex: 1, padding: 12, background: '#fff', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#003f88' }}>{total}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--wx-green)' }}>{total}</div>
           <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>指导学生</div>
         </div>
         <div style={{ flex: 1, padding: 12, background: '#fff', borderRadius: 10, textAlign: 'center' }}>
@@ -457,11 +457,11 @@ const TeaStudentsPage = ({ onNav }) => {
           <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>挂黄牌</div>
         </div>
         <div style={{ flex: 1, padding: 12, background: '#fff', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#d4453a' }}>{warnCnt}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--wx-red)' }}>{warnCnt}</div>
           <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>整改中</div>
         </div>
         <div style={{ flex: 1, padding: 12, background: '#fff', borderRadius: 10, textAlign: 'center' }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#2e7d32' }}>{authCnt}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--wx-success)' }}>{authCnt}</div>
           <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 2 }}>假期授权</div>
         </div>
       </div>
@@ -476,7 +476,7 @@ const TeaStudentsPage = ({ onNav }) => {
                   width: 42, height: 42, borderRadius: '50%',
                   background: s.flag === 'yellow' ? '#c9a961' :
                              s.flag === 'warn' ? '#e8882b' :
-                             s.flag === 'good' ? '#003f88' : '#e5e5e5',
+                             s.flag === 'good' ? 'var(--wx-green)' : '#e5e5e5',
                   color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontWeight: 600, fontSize: 15
@@ -490,7 +490,7 @@ const TeaStudentsPage = ({ onNav }) => {
                   {s.flag === 'warn' && <span className="wx-tag orange">{s.tag}</span>}
                   {s.flag === 'good' && <span className="wx-tag blue">{s.tag}</span>}
                   {s.vacationAuth && (
-                    <span className="wx-tag green" style={{ background: '#e5f5e9', color: '#2e7d32' }}>
+                    <span className="wx-tag green" style={{ background: '#e5f5e9', color: 'var(--wx-success)' }}>
                       ✓ 假期授权
                     </span>
                   )}
@@ -498,14 +498,14 @@ const TeaStudentsPage = ({ onNav }) => {
                 <div className="wx-cell-bd-desc">
                   {s.note}
                   {s.vacationAuth && (
-                    <span style={{ marginLeft: 6, fontSize: 11, color: '#2e7d32' }}>
+                    <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--wx-success)' }}>
                       · {s.vacationAuth.fromDate.slice(5)}→{s.vacationAuth.toDate.slice(5)} {s.vacationAuth.dayOnly ? '仅日间' : '全天'}
                     </span>
                   )}
                 </div>
               </div>
               <div className="wx-cell-ft" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: s.score >= 90 ? '#003f88' : s.score >= 80 ? '#333' : '#c9a961' }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: s.score >= 90 ? 'var(--wx-green)' : s.score >= 80 ? '#333' : '#c9a961' }}>
                   {s.score}
                 </div>
                 {s.vacationAuth ? (
@@ -513,7 +513,7 @@ const TeaStudentsPage = ({ onNav }) => {
                 ) : (
                   <button
                     className="wx-btn mini"
-                    style={{ fontSize: 11, padding: '3px 8px', background: '#f0f4fa', color: '#003f88', border: '1px solid #c4d2e8' }}
+                    style={{ fontSize: 11, padding: '3px 8px', background: '#f0f4fa', color: 'var(--wx-green)', border: '1px solid #c4d2e8' }}
                     onClick={(e) => { e.stopPropagation(); grant(s.name); }}
                   >
                     + 假期授权
@@ -536,13 +536,13 @@ const TeaStudentsPage = ({ onNav }) => {
 const TeaMsgPage = ({ onNav, goPending }) => {
   const msgs = [
     {
-      kind: 'appeal', icon: 'warn', color: '#d4453a', bg: '#fbe9e7',
+      kind: 'appeal', icon: 'warn', color: 'var(--wx-red)', bg: '#fbe9e7',
       title: '【申诉复核】张一凡',
       preview: '对 3月7日 扣 2 分提起申诉，理由：样品降温阶段不得中断。请在 48 小时内复核。',
       time: '8 分钟前', unread: true,
     },
     {
-      kind: 'booking', icon: 'calendar', color: '#003f88', bg: '#e5ecf5',
+      kind: 'booking', icon: 'calendar', color: 'var(--wx-green)', bg: '#e5ecf5',
       title: '【预约审批】刘梓萱',
       preview: '申请 3月11日 20:00 夜间加班使用材料楼 303 实验室。',
       time: '35 分钟前', unread: true,
@@ -692,7 +692,7 @@ const TeaProjectPage = ({ onNav, item }) => {
         navTitle="审核完成"
         icon={isApprove ? 'check' : 'x-circle'}
         iconBg={isApprove ? '#e5f5e9' : '#fbe9e7'}
-        iconColor={isApprove ? '#2e7d32' : '#d4453a'}
+        iconColor={isApprove ? 'var(--wx-success)' : 'var(--wx-red)'}
         title={isApprove ? '已通过审核 · 进入下一级' : '已驳回 · 通知学生修订'}
         subtitle={isApprove ? subtitleApprove : '学生小程序消息已通知 · 等待修订重提'}
         syncList={[`学生${proj?.applicant}（小程序消息）`, nextStop]}
@@ -704,7 +704,7 @@ const TeaProjectPage = ({ onNav, item }) => {
   if (!proj) {
     return (
       <MiniProgram navTitle="项目审核" showBack onBack={() => onNav('t-home')} hideTabBar>
-        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待审项目</div>
+        <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}>未找到待审项目</div>
       </MiniProgram>
     );
   }
@@ -759,23 +759,23 @@ const TeaProjectPage = ({ onNav, item }) => {
             {...clickable(() => setDecision('approve'), '通过')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
-              border: '1.5px solid ' + (decision === 'approve' ? '#2e7d32' : 'var(--line)'),
+              border: '1.5px solid ' + (decision === 'approve' ? 'var(--wx-success)' : 'var(--line)'),
               background: decision === 'approve' ? '#e5f5e9' : '#fff',
-              color: decision === 'approve' ? '#2e7d32' : '#333',
+              color: decision === 'approve' ? 'var(--wx-success)' : '#333',
               borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
             }}>
-            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#2e7d32' : '#999'}/> 通过
+            <Icon name="check-circle" size={18} color={decision === 'approve' ? 'var(--wx-success)' : 'var(--text-3)'}/> 通过
           </div>
           <div
             {...clickable(() => setDecision('reject'), '驳回')}
             style={{
               flex: 1, textAlign: 'center', padding: '12px 0',
-              border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+              border: '1.5px solid ' + (decision === 'reject' ? 'var(--wx-red)' : 'var(--line)'),
               background: decision === 'reject' ? '#fbe9e7' : '#fff',
-              color: decision === 'reject' ? '#d4453a' : '#333',
+              color: decision === 'reject' ? 'var(--wx-red)' : '#333',
               borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
             }}>
-            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? 'var(--wx-red)' : 'var(--text-3)'}/> 驳回
           </div>
         </div>
         <div style={{ padding: '8px 16px 16px' }}>
@@ -848,7 +848,7 @@ const TeaWastePage = ({ onNav, item }) => {
   if (!w) {
     return (
       <MiniProgram navTitle="废液接收" showBack onBack={() => onNav('t-home')} hideTabBar>
-        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待接收报备</div>
+        <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}>未找到待接收报备</div>
       </MiniProgram>
     );
   }
@@ -920,7 +920,7 @@ const TeaPurchasePage = ({ onNav, item }) => {
         navTitle="终审完成"
         icon={isApprove ? 'check' : 'x-circle'}
         iconBg={isApprove ? '#e5f5e9' : '#fbe9e7'}
-        iconColor={isApprove ? '#2e7d32' : '#d4453a'}
+        iconColor={isApprove ? 'var(--wx-success)' : 'var(--wx-red)'}
         title={isApprove ? '已批准 · 推送至学院招采' : '已驳回 · 通知学生修订'}
         subtitle={isApprove ? '24h 内挂学院招采系统' : '导师已抄送 · 等待修订重提'}
         syncList={[
@@ -936,7 +936,7 @@ const TeaPurchasePage = ({ onNav, item }) => {
   if (!p) {
     return (
       <MiniProgram navTitle="采购终审" showBack onBack={() => onNav('t-home')} hideTabBar>
-        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待终审申请</div>
+        <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}>未找到待终审申请</div>
       </MiniProgram>
     );
   }
@@ -962,8 +962,8 @@ const TeaPurchasePage = ({ onNav, item }) => {
               <div className="wx-cell-bd">
                 <div className="wx-cell-bd-title" style={{ fontSize: 14 }}>{it.name}</div>
                 <div className="wx-cell-bd-desc">
-                  <span className="mono" style={{ fontSize: 11, color: '#999' }}>CAS {it.cas}</span>
-                  <span style={{ marginLeft: 6, fontSize: 13, fontWeight: 600, color: '#003f88' }}>{it.qty} {it.unit}</span>
+                  <span className="mono" style={{ fontSize: 11, color: 'var(--text-3)' }}>CAS {it.cas}</span>
+                  <span style={{ marginLeft: 6, fontSize: 13, fontWeight: 600, color: 'var(--wx-green)' }}>{it.qty} {it.unit}</span>
                 </div>
               </div>
             </div>
@@ -981,21 +981,21 @@ const TeaPurchasePage = ({ onNav, item }) => {
         <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
           <div {...clickable(() => setDecision('approve'), '批准')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
-            border: '1.5px solid ' + (decision === 'approve' ? '#2e7d32' : 'var(--line)'),
+            border: '1.5px solid ' + (decision === 'approve' ? 'var(--wx-success)' : 'var(--line)'),
             background: decision === 'approve' ? '#e5f5e9' : '#fff',
-            color: decision === 'approve' ? '#2e7d32' : '#333',
+            color: decision === 'approve' ? 'var(--wx-success)' : '#333',
             borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
           }}>
-            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#2e7d32' : '#999'}/> 批准采购
+            <Icon name="check-circle" size={18} color={decision === 'approve' ? 'var(--wx-success)' : 'var(--text-3)'}/> 批准采购
           </div>
           <div {...clickable(() => setDecision('reject'), '驳回')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
-            border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+            border: '1.5px solid ' + (decision === 'reject' ? 'var(--wx-red)' : 'var(--line)'),
             background: decision === 'reject' ? '#fbe9e7' : '#fff',
-            color: decision === 'reject' ? '#d4453a' : '#333',
+            color: decision === 'reject' ? 'var(--wx-red)' : '#333',
             borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
           }}>
-            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? 'var(--wx-red)' : 'var(--text-3)'}/> 驳回
           </div>
         </div>
         <div style={{ padding: '8px 16px 16px' }}>
@@ -1048,7 +1048,7 @@ const TeaNightPage = ({ onNav, item }) => {
         navTitle="审批完成"
         icon={isApprove ? 'check' : 'x-circle'}
         iconBg={isApprove ? '#ede9fe' : '#fbe9e7'}
-        iconColor={isApprove ? '#5b21b6' : '#d4453a'}
+        iconColor={isApprove ? '#5b21b6' : 'var(--wx-red)'}
         title={isApprove
           ? (isLast ? '已批准 · 准予立项' : `已通过 · 推送至 ${stage.nextRole}`)
           : '已驳回 · 通知学生修订'}
@@ -1067,7 +1067,7 @@ const TeaNightPage = ({ onNav, item }) => {
   if (!n) {
     return (
       <MiniProgram navTitle="过夜审批" showBack onBack={() => onNav('t-home')} hideTabBar>
-        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待审申请</div>
+        <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}>未找到待审申请</div>
       </MiniProgram>
     );
   }
@@ -1093,17 +1093,17 @@ const TeaNightPage = ({ onNav, item }) => {
       <div className="wx-card" style={{ marginTop: 8 }}>
         <div className="wx-card-title">实验范围 + SOP</div>
         <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>
-          <strong style={{ fontSize: 12, color: '#666' }}>范围：</strong>{n.scope}
-          <div style={{ marginTop: 4 }}><strong style={{ fontSize: 12, color: '#666' }}>SOP：</strong>{n.sop}</div>
+          <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>范围：</strong>{n.scope}
+          <div style={{ marginTop: 4 }}><strong style={{ fontSize: 12, color: 'var(--text-2)' }}>SOP：</strong>{n.sop}</div>
         </div>
       </div>
 
       <div className="wx-card">
         <div className="wx-card-title">同行人员 + 应急</div>
         <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>
-          <strong style={{ fontSize: 12, color: '#666' }}>同行：</strong>{n.accompanies.join('、')}
+          <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>同行：</strong>{n.accompanies.join('、')}
           <div style={{ marginTop: 4 }}>
-            <strong style={{ fontSize: 12, color: '#666' }}>应急：</strong>{n.emergency}
+            <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>应急：</strong>{n.emergency}
           </div>
         </div>
       </div>
@@ -1134,16 +1134,16 @@ const TeaNightPage = ({ onNav, item }) => {
             color: decision === 'approve' ? '#5b21b6' : '#333',
             borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
           }}>
-            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#5b21b6' : '#999'}/> 通过
+            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#5b21b6' : 'var(--text-3)'}/> 通过
           </div>
           <div {...clickable(() => setDecision('reject'), '驳回')} style={{
             flex: 1, textAlign: 'center', padding: '12px 0',
-            border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+            border: '1.5px solid ' + (decision === 'reject' ? 'var(--wx-red)' : 'var(--line)'),
             background: decision === 'reject' ? '#fbe9e7' : '#fff',
-            color: decision === 'reject' ? '#d4453a' : '#333',
+            color: decision === 'reject' ? 'var(--wx-red)' : '#333',
             borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
           }}>
-            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? 'var(--wx-red)' : 'var(--text-3)'}/> 驳回
           </div>
         </div>
         <div style={{ padding: '8px 16px 16px' }}>

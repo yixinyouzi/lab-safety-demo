@@ -26,7 +26,7 @@ const StuNightListPage = ({ onNav }) => {
   return (
     <MiniProgram navTitle="我的过夜申请" showBack onBack={() => onNav('home')} hideTabBar>
       <div style={{ padding: '12px 16px 4px', background: '#fff' }}>
-        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+        <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
           过夜实验须经 <strong>四级审批</strong>（学生→导师→实验中心→副院长）；
           周末节假日 <strong>三级</strong>（学生→导师→实验中心）。所有过夜实验须双人在场。
         </div>
@@ -34,7 +34,7 @@ const StuNightListPage = ({ onNav }) => {
 
       {mine.length === 0 ? (
         <div className="wx-card">
-          <div style={{ padding: '32px 16px', textAlign: 'center', color: '#999', fontSize: 13 }}>
+          <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-3)', fontSize: 13 }}>
             还没有过夜申请，点下方按钮新建
           </div>
         </div>
@@ -52,30 +52,30 @@ const StuNightListPage = ({ onNav }) => {
               <div style={{ fontSize: 15, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>
                 {n.title}
               </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
                 实验室 {n.lab} · 导师 {n.advisor}
               </div>
-              <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
                 ⏱ {n.dateRange} · {n.timeRange}
               </div>
             </div>
 
             <div style={{ padding: '10px 16px 12px' }}>
               <div style={{ fontSize: 13, color: '#333', background: '#f7f7f7', padding: 10, borderRadius: 6, lineHeight: 1.6 }}>
-                <strong style={{ fontSize: 12, color: '#666' }}>范围：</strong>{n.scope}
+                <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>范围：</strong>{n.scope}
                 <div style={{ marginTop: 4 }}>
-                  <strong style={{ fontSize: 12, color: '#666' }}>SOP：</strong>{n.sop}
+                  <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>SOP：</strong>{n.sop}
                 </div>
                 <div style={{ marginTop: 4 }}>
-                  <strong style={{ fontSize: 12, color: '#666' }}>同行人：</strong>{n.accompanies.join('、')}
+                  <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>同行人：</strong>{n.accompanies.join('、')}
                 </div>
                 <div style={{ marginTop: 4 }}>
-                  <strong style={{ fontSize: 12, color: '#666' }}>应急：</strong>{n.emergency}
+                  <strong style={{ fontSize: 12, color: 'var(--text-2)' }}>应急：</strong>{n.emergency}
                 </div>
               </div>
             </div>
 
-            <div style={{ padding: '0 16px 4px', fontSize: 11, color: '#999', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <div style={{ padding: '0 16px 4px', fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1 }}>
               审批 / 推进时间线
             </div>
             <div className="timeline" style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 14 }}>
@@ -132,7 +132,7 @@ const StuNightFormPage = ({ onNav }) => {
         <div className="wx-card-title">基本信息</div>
         <div className="wx-list">
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>实验名 *</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>实验名 *</div>
             <div className="wx-cell-bd">
               <input value={title} onChange={e => setTitle(e.target.value)}
                 placeholder="如：高温烧结 800°C 过夜降温"
@@ -140,7 +140,7 @@ const StuNightFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>实验室</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>实验室</div>
             <div className="wx-cell-bd">
               <select value={labId} onChange={e => setLabId(e.target.value)}
                 style={{ width: '100%', border: 'none', fontSize: 14, outline: 'none', padding: '6px 0', background: 'transparent' }}>
@@ -149,13 +149,13 @@ const StuNightFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>导师</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>导师</div>
             <div className="wx-cell-bd" style={{ fontSize: 14, color: '#333' }}>
-              {advisor} <span style={{ fontSize: 11, color: '#999' }}>（自动）</span>
+              {advisor} <span style={{ fontSize: 11, color: 'var(--text-3)' }}>（自动）</span>
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>起止时段 *</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>起止时段 *</div>
             <div className="wx-cell-bd">
               <input value={dateRange} onChange={e => setDateRange(e.target.value)}
                 placeholder="如 2026-05-02 19:00 → 05-03 07:30"
@@ -163,14 +163,14 @@ const StuNightFormPage = ({ onNav }) => {
             </div>
           </div>
           <div className="wx-cell">
-            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: '#666' }}>类型</div>
+            <div className="wx-cell-hd" style={{ width: 70, fontSize: 13, color: 'var(--text-2)' }}>类型</div>
             <div className="wx-cell-bd" style={{ display: 'flex', gap: 8 }}>
               {Object.entries(NIGHT_MODE_MP).map(([k, m]) => (
                 <div key={k} onClick={() => setMode(k)}
                   style={{
                     padding: '6px 12px', borderRadius: 14, fontSize: 12, cursor: 'pointer',
-                    background: mode === k ? '#003f88' : '#f5f5f7',
-                    color: mode === k ? '#fff' : '#666',
+                    background: mode === k ? 'var(--wx-green)' : '#f5f5f7',
+                    color: mode === k ? '#fff' : 'var(--text-2)',
                   }}>
                   {m.label}
                 </div>
