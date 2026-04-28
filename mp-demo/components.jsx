@@ -249,6 +249,12 @@ const TeaSubmittedView = ({
 // 仅显示 lab.contacts 配置的角色；缺数据时降级文字提示。
 // ============================================================
 const LabRealtimeCard = ({ lab }) => {
+  // 时间码每秒更新（critique P2 修复 · 避免 LIVE 闪烁但时间静止穿帮）
+  const [now, setNow] = React.useState(() => new Date());
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
   if (!lab) return null;
   const inRoom = lab.inRoom ?? 0;
   const temp = lab.temp ?? '—';
@@ -295,7 +301,7 @@ const LabRealtimeCard = ({ lab }) => {
           fontSize: 10, color: 'rgba(255,255,255,0.55)',
           fontFamily: 'JetBrains Mono, monospace',
         }}>
-          {new Date().toTimeString().slice(0, 8)}
+          {now.toTimeString().slice(0, 8)}
         </div>
       </div>
 

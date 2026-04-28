@@ -460,7 +460,7 @@ body {
   line-height: 16px;
   gap: 4px;
 }
-.wx-tag.green { background: #e5ecf5; color: #003f88; }
+.wx-tag.green { background: #e5f5e9; color: #2e7d32; }
 .wx-tag.red { background: #fbe9e7; color: #d4453a; }
 .wx-tag.orange { background: #faf1e0; color: #e8882b; }
 .wx-tag.blue { background: #e5ecf5; color: #4a6fa5; }

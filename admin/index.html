@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=17">
+<link rel="stylesheet" href="styles.css?v=18">
 </head>
 <body>
 <div id="root"></div>
@@ -15,19 +15,19 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-<script src="mock.js?v=17"></script>
-<script type="text/babel" src="shell.jsx?v=17"></script>
-<script type="text/babel" src="page-inbox.jsx?v=17"></script>
-<script type="text/babel" src="page-events.jsx?v=17"></script>
-<script type="text/babel" src="page-labs.jsx?v=17"></script>
-<script type="text/babel" src="page-other.jsx?v=17"></script>
-<script type="text/babel" src="page-bigscreen.jsx?v=17"></script>
-<script type="text/babel" src="page-training.jsx?v=17"></script>
-<script type="text/babel" src="page-chems.jsx?v=17"></script>
-<script type="text/babel" src="page-reports.jsx?v=17"></script>
-<script type="text/babel" src="page-sysmap.jsx?v=17"></script>
-<script type="text/babel" src="page-hazards.jsx?v=17"></script>
-<script type="text/babel" src="page-projects.jsx?v=17"></script>
+<script src="mock.js?v=18"></script>
+<script type="text/babel" src="shell.jsx?v=18"></script>
+<script type="text/babel" src="page-inbox.jsx?v=18"></script>
+<script type="text/babel" src="page-events.jsx?v=18"></script>
+<script type="text/babel" src="page-labs.jsx?v=18"></script>
+<script type="text/babel" src="page-other.jsx?v=18"></script>
+<script type="text/babel" src="page-bigscreen.jsx?v=18"></script>
+<script type="text/babel" src="page-training.jsx?v=18"></script>
+<script type="text/babel" src="page-chems.jsx?v=18"></script>
+<script type="text/babel" src="page-reports.jsx?v=18"></script>
+<script type="text/babel" src="page-sysmap.jsx?v=18"></script>
+<script type="text/babel" src="page-hazards.jsx?v=18"></script>
+<script type="text/babel" src="page-projects.jsx?v=18"></script>
 
 <script type="text/babel">
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -44,6 +44,19 @@ function App() {
   const [tweaks, setTweaks] = React.useState(TWEAK_DEFAULTS);
 
   React.useEffect(() => { localStorage.setItem('lab-admin-page', page); }, [page]);
+
+  // 应用 tweaks.accent 到 :root（Step 3-6d critique P3 修 · 让强调色 select 实际生效）
+  React.useEffect(() => {
+    const ACCENT_PALETTE = {
+      blue:  { brand: '#1e5eb5', dark: '#0b2348', soft: '#eff6ff' },
+      teal:  { brand: '#0d9488', dark: '#134e4a', soft: '#f0fdfa' },
+      slate: { brand: '#475569', dark: '#1e293b', soft: '#f1f5f9' },
+    };
+    const p = ACCENT_PALETTE[tweaks.accent] || ACCENT_PALETTE.blue;
+    document.documentElement.style.setProperty('--brand', p.brand);
+    document.documentElement.style.setProperty('--brand-dark', p.dark);
+    document.documentElement.style.setProperty('--brand-soft', p.soft);
+  }, [tweaks.accent]);
 
   // Tweak protocol
   React.useEffect(() => {
