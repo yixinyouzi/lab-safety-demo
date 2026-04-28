@@ -111,6 +111,12 @@ const StuHomePage = ({ onNav }) => {
             </div>
             危化品采购
           </div>
+          <div className="quick-item" onClick={() => onNav('night')}>
+            <div className="quick-icon" style={{ background: 'linear-gradient(135deg,#7c3aed,#1e1b4b)' }}>
+              <Icon name="bell" size={20} color="#fff" />
+            </div>
+            过夜申请
+          </div>
         </div>
       </div>
 

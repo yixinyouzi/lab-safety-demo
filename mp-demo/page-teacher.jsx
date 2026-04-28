@@ -78,6 +78,16 @@ const TEA_PENDING = [
     tagCls: 'orange',
     purchaseId: 'pr-2026-01',
   },
+  {
+    id: 'AP-NE-2026-02',
+    kind: 'night',
+    title: '张一凡 · 周六生物样品 18 小时连续培养',
+    sub: '周末 3 级 · B105 · 已提交申请 · 待导师审核',
+    time: '5 分钟前',
+    tag: '过夜审批',
+    tagCls: 'blue',
+    nightId: 'ne-2026-02',
+  },
 ];
 
 const TEA_STUDENTS = [
@@ -1006,8 +1016,156 @@ const TeaPurchasePage = ({ onNav, item }) => {
   );
 };
 
+// ---------- 过夜实验审批页（导师 / 实验中心 / 副院长共用 · 反馈 10） ----------
+// 当前节点根据 status 自动判断：advisor-review = 导师，center-review = 实验中心，dean-review = 副院长
+const TeaNightPage = ({ onNav, item }) => {
+  const list = MP.nightExperiments || [];
+  const n = list.find(x => x.id === item?.nightId)
+    || list.find(x => /-review$/.test(x.status))
+    || list[0];
+  const [decision, setDecision] = React.useState(null);
+  const [reason, setReason] = React.useState('');
+  const [submitted, setSubmitted] = React.useState(false);
+
+  const STATUS_LABEL = {
+    'advisor-review': { stage: '导师审核 · 第二级', nextRole: '实验中心' },
+    'center-review':  { stage: '实验中心复核 · 第三级', nextRole: n?.mode === 'weekend' ? '完成立项' : '学院安全副院长' },
+    'dean-review':    { stage: '学院终审 · 第四级', nextRole: '完成立项' },
+  };
+  const stage = STATUS_LABEL[n?.status] || { stage: '审批', nextRole: '下一级' };
+
+  if (submitted) {
+    const isApprove = decision === 'approve';
+    const isLast = n?.status === 'dean-review' || (n?.mode === 'weekend' && n?.status === 'center-review');
+    return (
+      <TeaSubmittedView
+        navTitle="审批完成"
+        icon={isApprove ? 'check' : 'x-circle'}
+        iconBg={isApprove ? '#ede9fe' : '#fbe9e7'}
+        iconColor={isApprove ? '#5b21b6' : '#d4453a'}
+        title={isApprove
+          ? (isLast ? '已批准 · 准予立项' : `已通过 · 推送至 ${stage.nextRole}`)
+          : '已驳回 · 通知学生修订'}
+        subtitle={isApprove
+          ? (isLast ? '门牌将自动切「高风险作业」状态' : `${stage.nextRole} 24h 内响应`)
+          : '导师 + 学生同步收到通知 · 须修订 SOP / 同行人 / 应急方案后重提'}
+        syncList={[
+          `学生${n?.applicant}（小程序消息）`,
+          isApprove ? `${stage.nextRole}（待复核 / 立项）` : '管理控制台事件中心',
+        ]}
+        onBack={() => onNav('t-home')}
+      />
+    );
+  }
+
+  if (!n) {
+    return (
+      <MiniProgram navTitle="过夜审批" showBack onBack={() => onNav('t-home')} hideTabBar>
+        <div style={{ padding: 32, textAlign: 'center', color: '#999' }}>未找到待审申请</div>
+      </MiniProgram>
+    );
+  }
+
+  return (
+    <MiniProgram navTitle="过夜实验 · 审批" showBack onBack={() => onNav('t-pending')} hideTabBar>
+      <div style={{ padding: '10px 16px 0', background: '#fff' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span className={'wx-tag ' + (n.mode === 'weekend' ? 'blue' : 'red')}>
+            {n.mode === 'weekend' ? '周末/节假日 · 3 级' : '工作日 · 4 级'}
+          </span>
+          <span className="wx-tag orange">{stage.stage}</span>
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>{n.title}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
+          编号 {n.id} · 申请人 {n.applicant} · 实验室 {n.lab}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
+          ⏱ {n.dateRange} · {n.timeRange}
+        </div>
+      </div>
+
+      <div className="wx-card" style={{ marginTop: 8 }}>
+        <div className="wx-card-title">实验范围 + SOP</div>
+        <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>
+          <strong style={{ fontSize: 12, color: '#666' }}>范围：</strong>{n.scope}
+          <div style={{ marginTop: 4 }}><strong style={{ fontSize: 12, color: '#666' }}>SOP：</strong>{n.sop}</div>
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">同行人员 + 应急</div>
+        <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>
+          <strong style={{ fontSize: 12, color: '#666' }}>同行：</strong>{n.accompanies.join('、')}
+          <div style={{ marginTop: 4 }}>
+            <strong style={{ fontSize: 12, color: '#666' }}>应急：</strong>{n.emergency}
+          </div>
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">已完成审批</div>
+        <div className="timeline" style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 14 }}>
+          {n.timeline.filter(t => t.done).map((t, i) => (
+            <div key={i} className="tl-item done">
+              <div className="tl-dot"><Icon name="check" size={10} color="#fff" stroke={3}/></div>
+              <div className="tl-body">
+                <div className="t1">{t.title}</div>
+                <div className="t2">{t.desc}</div>
+                <div className="t3">{t.time}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="wx-card">
+        <div className="wx-card-title">审批决定</div>
+        <div style={{ padding: '4px 16px 8px', display: 'flex', gap: 10 }}>
+          <div onClick={() => setDecision('approve')} style={{
+            flex: 1, textAlign: 'center', padding: '12px 0',
+            border: '1.5px solid ' + (decision === 'approve' ? '#5b21b6' : 'var(--line)'),
+            background: decision === 'approve' ? '#ede9fe' : '#fff',
+            color: decision === 'approve' ? '#5b21b6' : '#333',
+            borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+          }}>
+            <Icon name="check-circle" size={18} color={decision === 'approve' ? '#5b21b6' : '#999'}/> 通过
+          </div>
+          <div onClick={() => setDecision('reject')} style={{
+            flex: 1, textAlign: 'center', padding: '12px 0',
+            border: '1.5px solid ' + (decision === 'reject' ? '#d4453a' : 'var(--line)'),
+            background: decision === 'reject' ? '#fbe9e7' : '#fff',
+            color: decision === 'reject' ? '#d4453a' : '#333',
+            borderRadius: 10, fontSize: 14, fontWeight: 500, cursor: 'pointer',
+          }}>
+            <Icon name="x-circle" size={18} color={decision === 'reject' ? '#d4453a' : '#999'}/> 驳回
+          </div>
+        </div>
+        <div style={{ padding: '8px 16px 16px' }}>
+          <textarea value={reason} onChange={e => setReason(e.target.value)}
+            placeholder={decision === 'reject' ? '请说明驳回原因（如「同行人不足」「应急预案缺失」）...' : '通过 · 可补充建议（选填）...'}
+            style={{ width: '100%', minHeight: 80, border: '1px solid var(--line)', borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit', outline: 'none', resize: 'none' }} />
+          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
+            {decision === 'approve' && `通过后推送至 ${stage.nextRole}。`}
+            {decision === 'reject' && '驳回后学生需修订重提；导师同步抄送。'}
+            {!decision && '请先选择通过或驳回。'}
+          </div>
+        </div>
+      </div>
+
+      <div className="mp-bottom-bar">
+        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
+        <button className={'wx-btn ' + (decision === 'reject' ? 'danger' : '')} style={{ flex: 2 }}
+          disabled={!decision || (decision === 'reject' && !reason.trim())}
+          onClick={() => setSubmitted(true)}>
+          提交审批
+        </button>
+      </div>
+    </MiniProgram>
+  );
+};
+
 Object.assign(window, {
   TEA_TABS, TEA_PENDING, TEA_STUDENTS,
   TeaHomePage, TeaPendingListPage, TeaReviewPage, TeaStudentsPage, TeaMsgPage, TeaMePage,
-  TeaProjectPage, TeaWastePage, TeaPurchasePage,
+  TeaProjectPage, TeaWastePage, TeaPurchasePage, TeaNightPage,
 });

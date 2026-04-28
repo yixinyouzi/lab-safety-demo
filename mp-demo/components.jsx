@@ -179,6 +179,7 @@ const MP_PENDING_KIND_META = {
   project:  { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'flask' },
   waste:    { tagCls: 'green',  bg: '#e5f5e9', color: '#2e7d32', icon: 'shield' },
   purchase: { tagCls: 'orange', bg: '#fff0d6', color: '#a04706', icon: 'mail' },
+  night:    { tagCls: 'blue',   bg: '#ede9fe', color: '#5b21b6', icon: 'bell' },
 };
 
 // ============================================================

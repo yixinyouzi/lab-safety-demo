@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 <style>
   /* —— 单机模式下的舞台 —— */
   .solo-stage {
@@ -85,16 +85,17 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-<script src="mock.js?v=8"></script>
-<script type="text/babel" src="components.jsx?v=8"></script>
-<script type="text/babel" src="page-login.jsx?v=8"></script>
-<script type="text/babel" src="page-student.jsx?v=8"></script>
-<script type="text/babel" src="page-student-detail.jsx?v=8"></script>
-<script type="text/babel" src="page-student-project.jsx?v=8"></script>
-<script type="text/babel" src="page-student-waste.jsx?v=8"></script>
-<script type="text/babel" src="page-student-purchase.jsx?v=8"></script>
-<script type="text/babel" src="page-teacher.jsx?v=8"></script>
-<script type="text/babel" src="page-patrol.jsx?v=8"></script>
+<script src="mock.js?v=9"></script>
+<script type="text/babel" src="components.jsx?v=9"></script>
+<script type="text/babel" src="page-login.jsx?v=9"></script>
+<script type="text/babel" src="page-student.jsx?v=9"></script>
+<script type="text/babel" src="page-student-detail.jsx?v=9"></script>
+<script type="text/babel" src="page-student-project.jsx?v=9"></script>
+<script type="text/babel" src="page-student-waste.jsx?v=9"></script>
+<script type="text/babel" src="page-student-purchase.jsx?v=9"></script>
+<script type="text/babel" src="page-student-night.jsx?v=9"></script>
+<script type="text/babel" src="page-teacher.jsx?v=9"></script>
+<script type="text/babel" src="page-patrol.jsx?v=9"></script>
 
 <script type="text/babel">
 // ============================================================
@@ -158,7 +159,7 @@ function SoloPhone() {
   // 教师 → 审批项传递（按 kind 路由）
   const goPending = (item) => {
     setPendingItem(item);
-    const KIND_TO_PAGE = { project: 't-project', waste: 't-waste', purchase: 't-purchase' };
+    const KIND_TO_PAGE = { project: 't-project', waste: 't-waste', purchase: 't-purchase', night: 't-night' };
     setPage(KIND_TO_PAGE[item?.kind] || 't-review');
   };
 
@@ -192,6 +193,9 @@ function SoloPhone() {
         {page === 'purchase' && <StuPurchaseListPage onNav={nav} />}
         {page === 'purchase-form' && <StuPurchaseFormPage onNav={nav} />}
         {page === 'purchase-sent' && <StuPurchaseSentPage onNav={nav} />}
+        {page === 'night' && <StuNightListPage onNav={nav} />}
+        {page === 'night-form' && <StuNightFormPage onNav={nav} />}
+        {page === 'night-sent' && <StuNightSentPage onNav={nav} />}
       </>
     );
   } else if (role === 'teacher') {
@@ -203,6 +207,7 @@ function SoloPhone() {
         {page === 't-project' && <TeaProjectPage onNav={nav} item={pendingItem} />}
         {page === 't-waste' && <TeaWastePage onNav={nav} item={pendingItem} />}
         {page === 't-purchase' && <TeaPurchasePage onNav={nav} item={pendingItem} />}
+        {page === 't-night' && <TeaNightPage onNav={nav} item={pendingItem} />}
         {page === 't-students' && <TeaStudentsPage onNav={nav} />}
         {page === 't-msg' && <TeaMsgPage onNav={nav} goPending={goPending} />}
         {page === 't-me' && <TeaMePage onNav={nav} />}
@@ -250,7 +255,7 @@ function MultiPreview({ onExit }) {
     const [page, setPage] = React.useState(initial);
     const [pendingItem, setPendingItem] = React.useState(null);
     const nav = (p) => setPage(p);
-    const goPending = (item) => { setPendingItem(item); const KP = { project: 't-project', waste: 't-waste', purchase: 't-purchase' }; setPage(KP[item?.kind] || 't-review'); };
+    const goPending = (item) => { setPendingItem(item); const KP = { project: 't-project', waste: 't-waste', purchase: 't-purchase', night: 't-night' }; setPage(KP[item?.kind] || 't-review'); };
     let body;
     if (page === 'login') body = <LoginPage onLogin={() => {}} />;
     else if (role === 'student') body = (
@@ -278,6 +283,9 @@ function MultiPreview({ onExit }) {
         {page === 'purchase' && <StuPurchaseListPage onNav={nav} />}
         {page === 'purchase-form' && <StuPurchaseFormPage onNav={nav} />}
         {page === 'purchase-sent' && <StuPurchaseSentPage onNav={nav} />}
+        {page === 'night' && <StuNightListPage onNav={nav} />}
+        {page === 'night-form' && <StuNightFormPage onNav={nav} />}
+        {page === 'night-sent' && <StuNightSentPage onNav={nav} />}
       </>
     );
     else if (role === 'teacher') body = (
@@ -288,6 +296,7 @@ function MultiPreview({ onExit }) {
         {page === 't-project' && <TeaProjectPage onNav={nav} item={pendingItem} />}
         {page === 't-waste' && <TeaWastePage onNav={nav} item={pendingItem} />}
         {page === 't-purchase' && <TeaPurchasePage onNav={nav} item={pendingItem} />}
+        {page === 't-night' && <TeaNightPage onNav={nav} item={pendingItem} />}
         {page === 't-students' && <TeaStudentsPage onNav={nav} />}
         {page === 't-msg' && <TeaMsgPage onNav={nav} goPending={goPending} />}
         {page === 't-me' && <TeaMePage onNav={nav} />}

@@ -19,6 +19,12 @@
 // purchaseRequests[i]: 学生危化品采购申请（反馈 12 · 学生→导师→学院 三级审批）
 //   { id, title, applicant, advisor, lab, items[], purpose, status, currentStep, timeline[] }
 //   status: 'advisor-review' | 'college-review' | 'approved' | 'rejected' | 'delivered'
+// nightExperiments[i]: 学生过夜实验申请（反馈 10 · 工作日 4 级 / 周末节假日 3 级）
+//   { id, title, applicant, advisor, lab, dateRange, timeRange, mode,
+//     scope, sop, accompanies[], emergency, status, currentStep, timeline[] }
+//   mode: 'weekday' (4 级：学生→导师→实验中心→副院长) | 'weekend' (3 级：学生→导师→实验中心)
+//   status: 'advisor-review' | 'center-review' | 'dean-review' | 'approved' |
+//           'rejected' | 'in-progress' | 'closed'
 // ============================================================
 
 window.MP = {
@@ -423,6 +429,45 @@ window.MP = {
         { time: '04-15 16:00', title: '学院终审',   desc: '常规耗材免学院审 · 自动通过', done: true },
         { time: '04-16 10:00', title: '采购下单',   desc: '已对接学院招采系统', done: true },
         { time: '04-19 14:00', title: '到货入库',   desc: 'HSE 验收 · A208 易燃柜入账', done: true },
+      ],
+    },
+  ],
+
+  // 学生过夜实验申请（反馈 10 · 工作日 4 级 / 周末节假日 3 级）
+  nightExperiments: [
+    {
+      id: 'ne-2026-01', title: '钠离子电池 800°C 烧结过夜降温',
+      applicant: '张一凡', advisor: '赵振华', lab: '302',
+      dateRange: '2026-04-29 19:00 → 04-30 07:30', timeRange: '过夜 12.5 小时',
+      mode: 'weekday',
+      scope: '高温烧结后样品需在 800°C 下持续 6h 后自然降温至 50°C 以下方可取出',
+      sop: '工艺已通过项目 proj-2026-01 学院终审 · 此次仅延长无人值守时段 · 现场配双人值班',
+      accompanies: ['李思远（同组博三）', '陈延松（夜班巡查员）'],
+      emergency: '炉温异常报警 → 联系赵振华（135-xxxx-6602）+ 王玉鸿（135-xxxx-6688）',
+      status: 'dean-review', currentStep: 3,
+      timeline: [
+        { time: '04-25 14:00', title: '学生申请',         desc: '张一凡 提交过夜申请 + SOP + 应急预案', done: true },
+        { time: '04-25 16:30', title: '导师审核',         desc: '赵振华 已签字 · 双人值班已落实', done: true },
+        { time: '04-26 10:00', title: '实验中心复核',     desc: '王玉鸿 现场核对消防器材 + 通风', done: true },
+        { time: '—',           title: '学院安全副院长终审', desc: '李雪茹 待审 · 高风险过夜须院级签字', current: true },
+        { time: '—',           title: '准予立项 · 自动同步门禁', desc: '门牌切「高风险作业」状态' },
+      ],
+    },
+    {
+      id: 'ne-2026-02', title: '周六生物样品 18 小时连续培养',
+      applicant: '张一凡', advisor: '赵振华', lab: 'B105',
+      dateRange: '2026-05-02 (周六) 09:00 → 05-03 03:00', timeRange: '跨夜 18 小时',
+      mode: 'weekend',
+      scope: '细胞培养连续观察 · 周末节假日 3 级审批',
+      sop: '与 BSL-1 操作规程相符 · 每 4h 现场记录 1 次',
+      accompanies: ['赵雪（同组研三）'],
+      emergency: 'CO₂ 培养箱报警 → 联系周明（135-xxxx-7702）+ 王玉鸿',
+      status: 'advisor-review', currentStep: 1,
+      timeline: [
+        { time: '04-27 11:00', title: '学生申请',     desc: '张一凡 提交周末过夜 + SOP', done: true },
+        { time: '—',           title: '导师审核',     desc: '赵振华 待签字（剩 36h）', current: true },
+        { time: '—',           title: '实验中心复核', desc: '周末节假日仅 3 级 · 中风险通常自动通过' },
+        { time: '—',           title: '准予立项',     desc: '通过后自动同步门禁' },
       ],
     },
   ],
