@@ -179,8 +179,48 @@ const MP_PENDING_KIND_META = {
   project: { tagCls: 'blue',   bg: '#e5ecf5', color: '#003f88', icon: 'flask' },
 };
 
+// ============================================================
+// === TeaSubmittedView · 教师/巡查员审批提交后的反馈页（抽出共享） ====
+// 用于 TeaReviewPage / TeaProjectPage / PatAppealPage 等审批页提交后的
+// 「图标 + 标题 + 副标题 + 同步通知列表 + 可选 amber 说明」。
+// 各页只传内容、不再各自维护一份 30 行的反馈页布局。
+// ============================================================
+const TeaSubmittedView = ({
+  navTitle,
+  icon = 'check', iconBg = '#e5f5e9', iconColor = '#2e7d32',
+  title, subtitle,
+  syncList = [],
+  footnote,
+  onBack,
+  backText = '返回首页',
+}) => (
+  <MiniProgram navTitle={navTitle} showBack onBack={onBack} hideTabBar>
+    <div className="scan-result-card" style={{ marginTop: 32 }}>
+      <div className="scan-result-icon ok" style={{ background: iconBg, color: iconColor }}>
+        <Icon name={icon} size={30} stroke={3}/>
+      </div>
+      <div className="scan-result-title">{title}</div>
+      {subtitle && <div className="scan-result-sub" style={{ marginTop: 8 }}>{subtitle}</div>}
+      {syncList.length > 0 && (
+        <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
+          系统将自动同步至：<br/>
+          {syncList.map((s, i) => <React.Fragment key={i}>· {s}<br/></React.Fragment>)}
+        </div>
+      )}
+      {footnote && (
+        <div style={{ marginTop: 12, padding: 10, background: '#fff8e1', border: '1px solid #f5d97a', borderRadius: 8, fontSize: 12, color: '#7a5c00', lineHeight: 1.6 }}>
+          {footnote}
+        </div>
+      )}
+    </div>
+    <div style={{ padding: 16 }}>
+      <button className="wx-btn block" onClick={onBack}>{backText}</button>
+    </div>
+  </MiniProgram>
+);
+
 // 导出到 window
 Object.assign(window, {
-  Icon, StatusBar, NavBar, TabBar, MiniProgram,
+  Icon, StatusBar, NavBar, TabBar, MiniProgram, TeaSubmittedView,
   MP_PROJECT_STATUS_META, MP_PROJECT_RISK_META, MP_PENDING_KIND_META,
 });

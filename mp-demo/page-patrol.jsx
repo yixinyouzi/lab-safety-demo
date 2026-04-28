@@ -252,27 +252,23 @@ const PatAppealPage = ({ onNav }) => {
   const [submitted, setSubmitted] = React.useState(false);
 
   if (submitted) {
+    const isSupport = decision === 'support';
     return (
-      <MiniProgram navTitle="终审完成" showBack onBack={() => onNav('p-history')} hideTabBar>
-        <div className="scan-result-card" style={{ marginTop: 32 }}>
-          <div className={'scan-result-icon ok'} style={{ background: decision === 'support' ? '#e5f5e9' : '#fbe9e7', color: decision === 'support' ? '#2e7d32' : '#d4453a' }}>
-            <Icon name={decision === 'support' ? 'check' : 'x'} size={30} stroke={3}/>
-          </div>
-          <div className="scan-result-title">{decision === 'support' ? '已支持申诉 · 撤销扣分' : '已驳回申诉 · 进入整改'}</div>
-          <div className="scan-result-sub" style={{ marginTop: 8 }}>
-            实验中心终审结论已生成
-          </div>
-          <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
-            系统将自动同步至：<br/>
-            · 学生张一凡（小程序消息 · {decision === 'support' ? '权限恢复' : '触发整改流程'}）<br/>
-            · 导师李建国（结论已抄送）<br/>
-            · 管理控制台事件中心
-          </div>
-        </div>
-        <div style={{ padding: 16 }}>
-          <button className="wx-btn block" onClick={() => onNav('p-history')}>返回记录</button>
-        </div>
-      </MiniProgram>
+      <TeaSubmittedView
+        navTitle="终审完成"
+        icon={isSupport ? 'check' : 'x'}
+        iconBg={isSupport ? '#e5f5e9' : '#fbe9e7'}
+        iconColor={isSupport ? '#2e7d32' : '#d4453a'}
+        title={isSupport ? '已支持申诉 · 撤销扣分' : '已驳回申诉 · 进入整改'}
+        subtitle="实验中心终审结论已生成"
+        syncList={[
+          `学生张一凡（小程序消息 · ${isSupport ? '权限恢复' : '触发整改流程'}）`,
+          '导师李建国（结论已抄送）',
+          '管理控制台事件中心',
+        ]}
+        onBack={() => onNav('p-history')}
+        backText="返回记录"
+      />
     );
   }
 

@@ -306,29 +306,19 @@ const TeaReviewPage = ({ onNav, item }) => {
 
   if (submitted) {
     return (
-      <MiniProgram navTitle="补充已提交" showBack onBack={() => onNav('t-home')} hideTabBar>
-        <div className="scan-result-card" style={{ marginTop: 32 }}>
-          <div className="scan-result-icon ok" style={{ background: '#e5ecf5', color: '#003f88' }}>
-            <Icon name="check" size={30} stroke={3}/>
-          </div>
-          <div className="scan-result-title">事实补充已提交</div>
-          <div className="scan-result-sub" style={{ marginTop: 8 }}>
-            已移交实验中心巡查员终审
-          </div>
-          <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
-            系统将自动同步至：<br/>
-            · 学生张一凡（小程序消息 · 待终审）<br/>
-            · 巡查员王玉鸿（待复核队列）<br/>
-            · 管理控制台事件中心
-          </div>
-          <div style={{ marginTop: 12, padding: 10, background: '#fff8e1', border: '1px solid #f5d97a', borderRadius: 8, fontSize: 12, color: '#7a5c00', lineHeight: 1.6 }}>
-            说明：导师仅核实事实 / 补充情况，<strong>支持或驳回的最终决定由实验中心巡查员做出</strong>。
-          </div>
-        </div>
-        <div style={{ padding: 16 }}>
-          <button className="wx-btn block" onClick={() => onNav('t-home')}>返回首页</button>
-        </div>
-      </MiniProgram>
+      <TeaSubmittedView
+        navTitle="补充已提交"
+        icon="check" iconBg="#e5ecf5" iconColor="#003f88"
+        title="事实补充已提交"
+        subtitle="已移交实验中心巡查员终审"
+        syncList={[
+          '学生张一凡（小程序消息 · 待终审）',
+          '巡查员王玉鸿（待复核队列）',
+          '管理控制台事件中心',
+        ]}
+        footnote={<>说明：导师仅核实事实 / 补充情况，<strong>支持或驳回的最终决定由实验中心巡查员做出</strong>。</>}
+        onBack={() => onNav('t-home')}
+      />
     );
   }
 
@@ -615,32 +605,22 @@ const TeaProjectPage = ({ onNav, item }) => {
   const riskMeta = MP_PROJECT_RISK_META[proj?.riskLevel] || { label: '—', cls: 'gray' };
 
   if (submitted) {
+    const isApprove = decision === 'approve';
+    const subtitleApprove = proj?.riskLevel === 'low'
+      ? '低风险走快速通道 · 准予立项'
+      : (proj?.riskLevel === 'medium' ? '推送至 实验中心 备案' : '推送至 实验中心 + 学院终审');
+    const nextStop = isApprove && proj?.riskLevel !== 'low' ? '实验中心王玉鸿（待复核队列）' : '管理控制台事件中心';
     return (
-      <MiniProgram navTitle="审核完成" showBack onBack={() => onNav('t-home')} hideTabBar>
-        <div className="scan-result-card" style={{ marginTop: 32 }}>
-          <div className={'scan-result-icon ok'}
-            style={{ background: decision === 'approve' ? '#e5f5e9' : '#fbe9e7',
-                     color: decision === 'approve' ? '#2e7d32' : '#d4453a' }}>
-            <Icon name={decision === 'approve' ? 'check' : 'x-circle'} size={30} stroke={3}/>
-          </div>
-          <div className="scan-result-title">
-            {decision === 'approve' ? '已通过审核 · 进入下一级' : '已驳回 · 通知学生修订'}
-          </div>
-          <div className="scan-result-sub" style={{ marginTop: 8 }}>
-            {decision === 'approve'
-              ? (proj?.riskLevel === 'low' ? '低风险走快速通道 · 准予立项' : (proj?.riskLevel === 'medium' ? '推送至 实验中心 备案' : '推送至 实验中心 + 学院终审'))
-              : '学生小程序消息已通知 · 等待修订重提'}
-          </div>
-          <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6 }}>
-            系统将自动同步至：<br/>
-            · 学生{proj?.applicant}（小程序消息）<br/>
-            · {decision === 'approve' && proj?.riskLevel !== 'low' ? '实验中心王玉鸿（待复核队列）' : '管理控制台事件中心'}
-          </div>
-        </div>
-        <div style={{ padding: 16 }}>
-          <button className="wx-btn block" onClick={() => onNav('t-home')}>返回首页</button>
-        </div>
-      </MiniProgram>
+      <TeaSubmittedView
+        navTitle="审核完成"
+        icon={isApprove ? 'check' : 'x-circle'}
+        iconBg={isApprove ? '#e5f5e9' : '#fbe9e7'}
+        iconColor={isApprove ? '#2e7d32' : '#d4453a'}
+        title={isApprove ? '已通过审核 · 进入下一级' : '已驳回 · 通知学生修订'}
+        subtitle={isApprove ? subtitleApprove : '学生小程序消息已通知 · 等待修订重提'}
+        syncList={[`学生${proj?.applicant}（小程序消息）`, nextStop]}
+        onBack={() => onNav('t-home')}
+      />
     );
   }
 
