@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="door-display.css?v=2">
+<link rel="stylesheet" href="door-display.css?v=4">
 <style>
   body {
     margin: 0;
@@ -88,6 +88,22 @@ const LAB = {
   contacts: [
     { role: '负责人', name: '赵振华', phone: '·· 6602' },
     { role: '安全员', name: '王玉鸿', phone: '·· 6688' },
+  ],
+  // 反馈 7 · 巡查模式（SCENES.inspect）展开的结构化危险源清单
+  // 与 admin/MOCK.labs[302].hazardSources 同 schema · 演示时 URL ?mode=inspect 进入
+  hazardSources: [
+    { id: 'hs-302-01', kind: 'chemical', name: '浓硫酸 1 L', location: '危化柜 #1',
+      severity: 'critical', ppe: ['丁腈手套', '防护面屏', '耐酸围裙'],
+      emergency: '大量清水冲洗 ≥ 15min · 立即就医（一级洗眼器在门口右侧）',
+      lastCheck: '2026-04-15', checker: '王玉鸿' },
+    { id: 'hs-302-02', kind: 'chemical', name: '锂金属箔 50 g', location: '手套箱配套柜',
+      severity: 'critical', ppe: ['丁腈手套', '防护眼镜', '阻燃实验服'],
+      emergency: '严禁遇水 · D 类金属火灾用石墨粉扑灭，禁用水/CO₂',
+      lastCheck: '2026-04-12', checker: '王玉鸿' },
+    { id: 'hs-302-03', kind: 'electrical', name: '电化学工作站 CHI760E', location: '工位 3',
+      severity: 'warning', ppe: ['绝缘鞋'],
+      emergency: '断电 → 隔离 · 切勿触碰输出端子（最高 ±10V / 1A）',
+      lastCheck: '2026-04-10', checker: '王玉鸿' },
   ],
   // 当前在跑的高风险项目（用于 SCENES.high 数据驱动 banner）
   // riskLevel === 'high' 时门牌切到 high 状态显示项目名 + 涉及危险源 + 预计结束
@@ -202,6 +218,17 @@ const SCENES = [
     qr: 'disabled', cam: 'err', haztape: true, alert: true,
     safetyTag: { tone: 'red', label: '安全状态 · 紧急' },
   },
+  // 反馈 7 · 巡查模式：URL ?mode=inspect 触发；展开 lab.hazardSources 完整清单
+  {
+    k: 'inspect', label: '检查模式', state: 'busy', chipDot: '#1e5eb5',
+    statusLabel: '检查模式 · 王玉鸿',
+    temp: 22.2, humidity: 58, score: 92, scoreCls: 'score-good',
+    presence: [{ name: '王玉鸿', role: '巡查员', gold: true }],
+    notice: { tone: 'blue', ico: 'i', text: '巡查员现场检查中 · 危险源逐项核对 · 上次检查 04-15' },
+    qr: 'disabled', cam: 'idle',
+    safetyTag: { tone: 'blue', label: '检查模式' },
+    inspectMode: true,   // 主区切换到 InspectMode 组件
+  },
 ];
 
 // ============================================================
@@ -242,6 +269,60 @@ function Header({ scene, time, date }) {
         ))}
       </div>
     </header>
+  );
+}
+
+// ============================================================
+// INSPECT MODE · 反馈 7 · 巡查员展开危险源完整清单
+// 触发：URL ?mode=inspect 或 NAV「检查模式」按钮
+// 数据：LAB.hazardSources（与 admin/MOCK 同 schema · kind/severity/ppe/emergency/lastCheck）
+// ============================================================
+const HAZARD_KIND_LABEL = {
+  chemical: '化学品', physical: '物理', biological: '生物',
+  radiation: '辐射', mechanical: '机械', electrical: '电气', gas: '气体',
+};
+const HAZARD_KIND_ICON = {
+  chemical: '🧪', physical: '🔥', biological: '🧫',
+  radiation: '☢', mechanical: '⚙', electrical: '⚡', gas: '💨',
+};
+
+function InspectMode() {
+  const list = LAB.hazardSources || [];
+  const critical = list.filter(h => h.severity === 'critical').length;
+  return (
+    <div className="dd-inspect">
+      <div className="dd-inspect-head">
+        <div className="dd-sec-title">
+          <span>危险源台账 · 现场检查</span>
+          <span className="dd-inspect-meta">{list.length} 项 · 严重 {critical} 项</span>
+        </div>
+        <div className="dd-inspect-sub">
+          上次检查 <span className="num">{list[0]?.lastCheck || '—'}</span> · 检查人 {list[0]?.checker || '—'}
+        </div>
+      </div>
+      <div className="dd-inspect-list">
+        {list.map(h => (
+          <div key={h.id} className={'dd-inspect-row sev-' + h.severity}>
+            <div className="dd-inspect-row-h">
+              <span className="dd-inspect-kind">{HAZARD_KIND_ICON[h.kind] || '·'} {HAZARD_KIND_LABEL[h.kind] || h.kind}</span>
+              <span className={'dd-inspect-sev sev-' + h.severity}>
+                {h.severity === 'critical' ? '严重' : h.severity === 'warning' ? '关注' : '一般'}
+              </span>
+            </div>
+            <div className="dd-inspect-name">{h.name}</div>
+            <div className="dd-inspect-loc">📍 {h.location} · 上次检查 {h.lastCheck}</div>
+            <div className="dd-inspect-ppe">
+              <span className="dd-inspect-tag-label">PPE</span>
+              {h.ppe.map(p => <span key={p} className="dd-inspect-ppe-chip">{p}</span>)}
+            </div>
+            <div className="dd-inspect-emergency">
+              <span className="dd-inspect-tag-label">应急</span>
+              <span>{h.emergency}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -499,9 +580,15 @@ function DoorDisplay({ scene }) {
       {scene.haztape && <div className={'dd-haztape' + (scene.alert ? ' flash' : '')} />}
       <Header scene={scene} time={time} date={date} />
       <main className="dd-main">
-        <Hazards />
-        <KPIs scene={scene} />
-        <Presence scene={scene} />
+        {scene.inspectMode ? (
+          <InspectMode />
+        ) : (
+          <>
+            <Hazards />
+            <KPIs scene={scene} />
+            <Presence scene={scene} />
+          </>
+        )}
       </main>
       <Footer scene={scene} />
       {scene.haztape && <div className={'dd-haztape' + (scene.alert ? ' flash' : '')} />}
@@ -515,11 +602,20 @@ function DoorDisplay({ scene }) {
 // APP / TOOLBAR / SCALE
 // ============================================================
 function App() {
-  const [sceneKey, setSceneKey] = React.useState(() => localStorage.getItem('dd-scene') || 'busy');
+  // URL ?mode=inspect 优先（巡查员卡刷/扫码进入检查模式）
+  // URL 触发的会话不写 localStorage，避免巡查模式「粘住」下次访问
+  const urlInspect = new URLSearchParams(location.search).get('mode') === 'inspect';
+  const [sceneKey, setSceneKey] = React.useState(() =>
+    urlInspect ? 'inspect' : (localStorage.getItem('dd-scene') || 'busy')
+  );
   const [autoplay, setAutoplay] = React.useState(false);
   const [scale, setScale] = React.useState(0.45);
 
-  React.useEffect(() => { localStorage.setItem('dd-scene', sceneKey); }, [sceneKey]);
+  React.useEffect(() => {
+    // URL 触发的 inspect 会话不持久化（避免巡查员离开后下次访问仍停在巡查模式）
+    if (urlInspect && sceneKey === 'inspect') return;
+    localStorage.setItem('dd-scene', sceneKey);
+  }, [sceneKey]);
 
   React.useEffect(() => {
     const fit = () => {
@@ -536,10 +632,13 @@ function App() {
 
   React.useEffect(() => {
     if (!autoplay) return;
+    // 自动轮播仅在前 9 个状态间循环，inspect（第 10 个）需手动触发
+    const cycleScenes = SCENES.filter(s => !s.inspectMode);
     const id = setInterval(() => {
       setSceneKey(k => {
-        const i = SCENES.findIndex(s => s.k === k);
-        return SCENES[(i + 1) % SCENES.length].k;
+        const i = cycleScenes.findIndex(s => s.k === k);
+        if (i === -1) return cycleScenes[0].k;
+        return cycleScenes[(i + 1) % cycleScenes.length].k;
       });
     }, 5000);
     return () => clearInterval(id);

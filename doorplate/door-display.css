@@ -106,6 +106,7 @@
 .dd-safety-tag.tone-amber { color: #fbbf24; background: rgba(251, 191, 36, 0.18); border-color: rgba(251, 191, 36, 0.45); }
 .dd-safety-tag.tone-red   { color: #fca5a5; background: rgba(220, 38, 38, 0.22); border-color: rgba(220, 38, 38, 0.5); }
 .dd-safety-tag.tone-gray  { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.18); }
+.dd-safety-tag.tone-blue  { color: #60a5fa; background: rgba(30, 94, 181, 0.20); border-color: rgba(30, 94, 181, 0.5); }
 
 .dd-lab-id {
   font-family: var(--font-num);
@@ -622,4 +623,109 @@
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.45);
+}
+
+
+/* ============================================================
+   反馈 7 · 巡查模式 InspectMode（URL ?mode=inspect 触发）
+   ============================================================ */
+.dd-inspect {
+  display: flex; flex-direction: column;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 32px 28px;
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+}
+.dd-inspect-head {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line-2);
+  margin-bottom: 18px;
+}
+.dd-inspect-meta {
+  margin-left: auto;
+  font-size: 28px;
+  font-family: var(--font-num);
+  color: var(--ink-2);
+  letter-spacing: 0.04em;
+}
+.dd-inspect-sub {
+  margin-top: 10px;
+  font-size: 22px;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  letter-spacing: 0.04em;
+}
+.dd-inspect-sub .num { color: var(--ink); font-weight: 600; }
+.dd-inspect-list { display: flex; flex-direction: column; gap: 16px; }
+.dd-inspect-row {
+  padding: 22px 24px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.dd-inspect-row.sev-critical { background: var(--red-soft); border-color: rgba(220,38,38,0.25); }
+.dd-inspect-row.sev-warning  { background: var(--amber-soft); border-color: rgba(180,83,9,0.20); }
+.dd-inspect-row-h {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px;
+}
+.dd-inspect-kind {
+  font-size: 22px;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+.dd-inspect-sev {
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.dd-inspect-sev.sev-critical { background: var(--red); color: #fff; }
+.dd-inspect-sev.sev-warning  { background: var(--amber); color: #fff; }
+.dd-inspect-sev.sev-info     { background: var(--ink-3); color: #fff; }
+.dd-inspect-name {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.dd-inspect-loc {
+  font-size: 22px;
+  color: var(--ink-2);
+  font-family: var(--font-num);
+  letter-spacing: 0.03em;
+  margin-bottom: 14px;
+}
+.dd-inspect-ppe, .dd-inspect-emergency {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 22px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin-top: 10px;
+}
+.dd-inspect-tag-label {
+  flex-shrink: 0;
+  padding: 3px 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 4px;
+  letter-spacing: 0.1em;
+}
+.dd-inspect-ppe-chip {
+  padding: 4px 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 20px;
+  color: var(--ink);
+}
+.dd-inspect-emergency span:last-child {
+  flex: 1;
 }
