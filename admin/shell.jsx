@@ -3,7 +3,7 @@ const { useState, useEffect, useMemo } = React;
 
 const ICONS = {
   inbox: '📥', events: '⚠', labs: '🏛', people: '👥', training: '🎓', chems: '🧪', reports: '📊', settings: '⚙', bigscreen: '📺', sysmap: '🗺',
-  hazards: '⚠️', projects: '🧬',
+  hazards: '⚠️', projects: '🧬', scoring: '⚖',
   search: '🔍', bell: '🔔', help: '?', dark: '◐',
 };
 
@@ -23,7 +23,7 @@ function Sidebar({ page, setPage, counts }) {
   ];
   const nav3 = [
     { k: 'reports', label: '统计与报表', ico: ICONS.reports },
-    { k: 'settings', label: '规则与设置', ico: ICONS.settings },
+    { k: 'scoring', label: '扣分细则', ico: ICONS.scoring },
     { k: 'sysmap', label: '关于系统', ico: ICONS.sysmap },
   ];
   const renderItem = (n) => (

@@ -1494,75 +1494,121 @@ body {
   flex-shrink: 0;
 }
 
-/* 违规类型多选 chips */
-.chip-group {
+/* 巡查登记 · 5 类规则 tab + 多选行（取代旧 chip-group + score-slider）
+ * 数据由 SCORING.RULES 反算；样式贴近 wx 列表观感（白底 / 1px line / 蓝勾） */
+.rule-tabs {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 12px 16px 16px;
+  gap: 4px;
+  padding: 8px 16px 12px;
+  overflow-x: auto;
 }
-.chip {
-  padding: 7px 12px;
-  font-size: 13px;
-  color: #333;
-  background: #f2f2f2;
-  border-radius: 14px;
-  border: 1px solid transparent;
+.rule-tab {
+  flex: 1 0 auto;
+  min-width: 64px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-2);
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
-.chip.on {
+.rule-tab .ico { font-size: 16px; line-height: 1; }
+.rule-tab .cnt { font-size: 10px; color: var(--text-3); font-family: var(--font-num); }
+.rule-tab.on {
   background: #e5ecf5;
   color: #003f88;
   border-color: #003f88;
   font-weight: 500;
 }
+.rule-tab.on .cnt { color: #003f88; }
 
-/* 扣分滑块 */
-.score-slider-wrap {
-  padding: 4px 16px 16px;
+.rule-list {
+  border-top: 1px solid var(--line);
 }
-.score-slider-row {
+.rule-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+.rule-row.on { background: #f7faff; }
+.rule-row:active { background: #eef3fa; }
+.rule-check { padding-top: 2px; flex-shrink: 0; }
+.rule-check-on, .rule-check-off {
+  width: 18px; height: 18px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 8px;
+  justify-content: center;
 }
-.score-slider {
-  flex: 1;
-  height: 4px;
-  background: #f0f0f0;
-  border-radius: 2px;
-  position: relative;
-}
-.score-slider-fill {
-  height: 100%;
-  background: var(--wx-red);
-  border-radius: 2px;
-}
-.score-slider-dot {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 22px; height: 22px;
-  background: #fff;
-  border: 2px solid var(--wx-red);
-  border-radius: 50%;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-}
-.score-slider-val {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--wx-red);
-  min-width: 30px;
-  text-align: right;
-}
-.score-slider-scale {
+.rule-check-on  { background: #003f88; }
+.rule-check-off { background: #fff; border: 1.5px solid var(--line); }
+.rule-body { flex: 1; min-width: 0; }
+.rule-h {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.rule-code {
   font-size: 11px;
   color: var(--text-3);
-  margin-top: 6px;
+  letter-spacing: 0.5px;
 }
+.rule-pts {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  font-family: var(--font-num);
+}
+.rule-pts.amber { color: #e6a700; }
+.rule-pts.red   { color: var(--wx-red); }
+.rule-desc {
+  font-size: 13px;
+  color: var(--text-1);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* 小计区 */
+.rule-subtotal-num {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--wx-red);
+  font-family: var(--font-num);
+  line-height: 1.1;
+}
+
+/* wx-switch · 微信经典圆形开关 */
+.wx-switch {
+  width: 40px; height: 22px;
+  background: #e5e5ea;
+  border-radius: 11px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.18s;
+  flex-shrink: 0;
+}
+.wx-switch.on { background: #003f88; }
+.wx-switch.disabled { opacity: 0.4; cursor: not-allowed; }
+.wx-switch-knob {
+  position: absolute;
+  top: 1.5px; left: 1.5px;
+  width: 19px; height: 19px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: left 0.18s;
+}
+.wx-switch.on .wx-switch-knob { left: 19px; }
 
 /* "我的" 页 */
 .me-hero {

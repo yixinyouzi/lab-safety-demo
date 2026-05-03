@@ -2,28 +2,45 @@
 // 学生端 · 违规详情 / 申诉 / 整改拍照 / 培训 / 我的
 // ============================================================
 
-// 违规详情
-const StuViolationPage = ({ onNav }) => {
+// 违规详情 · 标签由 SCORING.tally 反算（不再硬编码"扣 2 分 / 挂黄牌"）
+// readOnly · 管理员/教师只读查看（隐藏底部「我要申诉/上传整改」学生动作按钮）
+// homePage · 跨角色复用时返回到对应 home（学生 home / 管理员 p-history）
+const StuViolationPage = ({ onNav, readOnly = false, homePage = 'home' }) => {
   const v = MP.violation;
+  const u = MP.student;
+  const thisDeducted = SCORING.tally([v]);                                 // 本条扣分
+  const accumulated  = SCORING.tally(u.personalViolations);                // 累积扣分（含本条）
+  const verdict      = SCORING.verdict(accumulated, 'person');             // 当前档位
+  // 触发的规则（用 PDF 编号与文案，避免凭空"中等违规"标签）
+  const rules = (v.ruleIds || []).map(id => SCORING.RULE_INDEX[id]).filter(Boolean);
   return (
     <MiniProgram
       navTitle="违规详情"
       showBack
-      onBack={() => onNav('home')}
+      onBack={() => onNav(homePage)}
       hideTabBar
     >
       <div className="detail-head">
         <div className="detail-badge-row">
-          <span className="wx-tag red">中等违规</span>
-          <span className="wx-tag orange">扣 2 分</span>
-          <span className="wx-tag yellow">挂黄牌</span>
+          {rules.map(r => (
+            <span key={r.id} className="wx-tag red" title={r.desc}>
+              {SCORING.CATEGORIES[r.cat].short} {r.code}
+            </span>
+          ))}
+          <span className="wx-tag orange">扣 {thisDeducted} 分</span>
+          {verdict.tier !== 'normal' && (
+            <span className="wx-tag yellow">{verdict.label}</span>
+          )}
         </div>
         <div className="detail-title">{v.title}</div>
         <dl className="detail-meta">
           <dt>编号</dt><dd style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>{v.id}</dd>
           <dt>时间</dt><dd>{v.time}</dd>
           <dt>地点</dt><dd>{v.lab}</dd>
-          <dt>登记人</dt><dd>{v.inspector} · 巡查员</dd>
+          <dt>登记人</dt><dd>{v.inspector} · 实验室管理员</dd>
+          <dt>累积</dt><dd style={{ color: verdict.color, fontWeight: 600 }}>
+            {accumulated} / {SCORING.PERIOD_LIMITS.person} · {verdict.label}
+          </dd>
         </dl>
       </div>
 
@@ -71,15 +88,18 @@ const StuViolationPage = ({ onNav }) => {
         </div>
       </div>
 
-      <div className="mp-bottom-bar">
-        <button className="wx-btn ghost" style={{ flex: 1 }} onClick={() => onNav('appeal')}>
-          我要申诉
-        </button>
-        <button className="wx-btn block" style={{ flex: 1 }} onClick={() => onNav('rectify')}>
-          <Icon name="camera" size={16} color="#fff"/>
-          上传整改
-        </button>
-      </div>
+      {/* 学生动作按钮 · 仅当事人本人可见（readOnly 时隐藏：管理员/教师只读查看） */}
+      {!readOnly && (
+        <div className="mp-bottom-bar">
+          <button className="wx-btn ghost" style={{ flex: 1 }} onClick={() => onNav('appeal')}>
+            我要申诉
+          </button>
+          <button className="wx-btn block" style={{ flex: 1 }} onClick={() => onNav('rectify')}>
+            <Icon name="camera" size={16} color="#fff"/>
+            上传整改
+          </button>
+        </div>
+      )}
     </MiniProgram>
   );
 };
@@ -92,7 +112,7 @@ const StuAppealPage = ({ onNav }) => {
     <MiniProgram navTitle="违规申诉" showBack onBack={() => onNav('violation')} hideTabBar>
       <div style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6, background: '#fbf4e0' }}>
         <Icon name="info" size={14} color="#e6a700"/> &nbsp;
-        申诉将由指导老师 <b style={{ color: '#000' }}>李建国</b> 和学院安全办共同复核，48 小时内给出结果。
+        申诉将由实验中心管理员 <b style={{ color: '#000' }}>王玉鸿</b> 复核，48 小时内给出结果。
       </div>
 
       <div className="appeal-form">
@@ -130,11 +150,11 @@ const StuAppealSentPage = ({ onNav }) => {
           <Icon name="info" size={30}/>
         </div>
         <div className="scan-result-title">申诉被驳回</div>
-        <div className="scan-result-sub">李建国 老师 · 03-09 10:22 回复</div>
+        <div className="scan-result-sub">王玉鸿 实验中心 · 04-16 14:20 终审</div>
       </div>
 
       <div className="wx-card">
-        <div className="wx-card-title">教师意见</div>
+        <div className="wx-card-title">管理员意见</div>
         <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.7 }}>
           收到你的说明。夜间单人作业的风险并非只看"是否告知"，而是"是否有第二人在场"。本次违规事实成立；
           但考虑到加热工艺的客观限制，本次不再加重处理。<br/>
@@ -159,7 +179,7 @@ const StuRectifyPage = ({ onNav }) => {
     <MiniProgram navTitle="整改上传" showBack onBack={() => onNav('violation')} hideTabBar>
       <div style={{ padding: '12px 16px', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.6, background: '#e5ecf5' }}>
         <Icon name="info" size={14} color="#4a6fa5"/> &nbsp;
-        请按整改要求拍照并上传，由巡查员复核通过后恢复权限。
+        请按整改要求拍照并上传，由实验室管理员复核通过后恢复权限。
       </div>
 
       <div className="wx-card">
@@ -218,7 +238,7 @@ const StuRectifyDonePage = ({ onNav }) => {
           <Icon name="check" size={30} stroke={3}/>
         </div>
         <div className="scan-result-title">整改已提交</div>
-        <div className="scan-result-sub">等待巡查员 王玉鸿 复检 · 预计 24h 内</div>
+        <div className="scan-result-sub">等待管理员 王玉鸿 复检 · 预计 24h 内</div>
       </div>
 
       <div className="banner-pass">
@@ -239,7 +259,7 @@ const StuRectifyDonePage = ({ onNav }) => {
             <div className="tl-body"><div className="t1">通过课后考试</div><div className="t2">10/10 题 · 得分 92</div><div className="t3">03-09 11:48</div></div>
           </div>
           <div className="tl-item current"><div className="tl-dot"/>
-            <div className="tl-body"><div className="t1">整改拍照上传</div><div className="t2">3 张现场照片 · 等待巡查员复检</div><div className="t3">刚刚</div></div>
+            <div className="tl-body"><div className="t1">整改拍照上传</div><div className="t2">3 张现场照片 · 等待管理员复检</div><div className="t3">刚刚</div></div>
           </div>
           <div className="tl-item"><div className="tl-dot"/>
             <div className="tl-body"><div className="t1">复检通过 · 自动恢复权限</div><div className="t2">复检通过后 1 分钟内生效</div></div>
@@ -483,7 +503,16 @@ const StuMePage = ({ onNav }) => {
       </div>
 
       <div className="me-stats">
-        <div className="me-stat"><div className="n" style={{ color: '#e8882b' }}>{u.score}</div><div className="lb">安全分</div></div>
+        {(() => {
+          const pts = SCORING.tally(u.personalViolations);
+          const v = SCORING.verdict(pts, 'person');
+          return (
+            <div className="me-stat">
+              <div className="n" style={{ color: v.color }}>{pts}<span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}> / {SCORING.PERIOD_LIMITS.person}</span></div>
+              <div className="lb">本周期扣分</div>
+            </div>
+          );
+        })()}
         <div className="me-stat"><div className="n">32</div><div className="lb">历史预约</div></div>
         <div className="me-stat"><div className="n">4</div><div className="lb">已修课程</div></div>
       </div>

@@ -2,13 +2,27 @@
 
 function PeoplePage() {
   const [f, setF] = React.useState('all');
-  const list = MOCK.people.filter(p => f === 'all' || (f === 'risk' && p.status !== '正常') || p.role === f);
+  // 累积扣分 / 处置档位 全由 SCORING 派生 · 不再读 p.score / p.status
+  const decorate = (p) => {
+    const points = SCORING.tally(p.personalViolations);
+    const v = SCORING.verdict(points, 'person');
+    return { ...p, _points: points, _verdict: v, _violations: (p.personalViolations || []).length };
+  };
+  const decorated = MOCK.people.map(decorate);
+  const list = decorated.filter(p =>
+    f === 'all' ? true
+    : f === 'risk' ? p._verdict.tier !== 'normal'
+    : p.role === f
+  );
+  const personLimit = SCORING.PERIOD_LIMITS.person;
   return (
     <div>
       <div className="page-h">
         <div>
           <div className="page-title">人员档案</div>
-          <div className="page-sub">按角色查看 · 可追溯每人的培训、违规、出入记录</div>
+          <div className="page-sub">
+            按角色查看 · 周期累积扣分 · 当前周期 <span className="mono">{SCORING.formatPeriod(MOCK.today)}</span> · 个人满分 {personLimit}
+          </div>
         </div>
         <div className="row">
           <button className="btn">导入名单</button>
@@ -18,11 +32,11 @@ function PeoplePage() {
 
       <div className="filters">
         {[
-          { k: 'all', l: '全部', n: MOCK.people.length },
-          { k: '学生', l: '学生', n: MOCK.people.filter(p => p.role === '学生').length },
-          { k: '导师', l: '导师', n: MOCK.people.filter(p => p.role === '导师').length },
-          { k: '巡查员', l: '巡查员', n: MOCK.people.filter(p => p.role === '巡查员').length },
-          { k: 'risk', l: '🚨 高风险', n: MOCK.people.filter(p => p.status !== '正常').length },
+          { k: 'all', l: '全部', n: decorated.length },
+          { k: '学生', l: '学生', n: decorated.filter(p => p.role === '学生').length },
+          { k: '教师', l: '教师', n: decorated.filter(p => p.role === '教师').length },
+          { k: '实验室管理员', l: '实验室管理员', n: decorated.filter(p => p.role === '实验室管理员').length },
+          { k: 'risk', l: '⚠ 待关注', n: decorated.filter(p => p._verdict.tier !== 'normal').length },
         ].map(x => (
           <button key={x.k} className={'pill ' + (f === x.k ? 'active' : '')} onClick={() => setF(x.k)}>{x.l} · {x.n}</button>
         ))}
@@ -35,10 +49,10 @@ function PeoplePage() {
               <th>姓名</th>
               <th>角色 / 院系</th>
               <th>可进入实验室</th>
-              <th>安全积分</th>
+              <th>累积扣分</th>
               <th>违规次数</th>
               <th>培训状态</th>
-              <th style={{ width: 100 }}>操作</th>
+              <th style={{ width: 100 }}>处置档位</th>
             </tr>
           </thead>
           <tbody>
@@ -58,19 +72,17 @@ function PeoplePage() {
                   {p.labs.map(l => <span key={l} className="chip chip-brand" style={{ marginRight: 4 }}>{l}</span>)}
                 </td>
                 <td>
-                  <span style={{ fontWeight: 700, fontSize: 15, color: p.score >= 85 ? 'var(--green)' : p.score >= 70 ? 'var(--amber)' : 'var(--red)' }} className="num">{p.score}</span>
-                  <span className="meta"> / 100</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: p._verdict.color }} className="num">{p._points}</span>
+                  <span className="meta"> / {personLimit}</span>
                 </td>
                 <td>
-                  {p.violations > 0 ? <span className="chip chip-amber">{p.violations} 次</span> : <span className="meta">0</span>}
+                  {p._violations > 0 ? <span className="chip chip-amber">{p._violations} 次</span> : <span className="meta">0</span>}
                 </td>
                 <td>
                   {p.training === 'valid' && <span className="chip chip-green">有效</span>}
                   {p.training === 'expiring' && <span className="chip chip-amber">即将到期</span>}
                 </td>
-                <td>
-                  {p.status === '黄牌' ? <span className="chip chip-amber">黄牌</span> : <span className="chip chip-gray">正常</span>}
-                </td>
+                <td>{statusChip(p._verdict.tier)}</td>
               </tr>
             ))}
           </tbody>
@@ -95,8 +107,8 @@ function LabPanel({ lab, onClose }) {
             <div style={{ fontSize: 22, fontWeight: 700, marginTop: 2 }}>{lab.name}</div>
             <div className="row" style={{ marginTop: 8, gap: 6 }}>
               {statusChip(lab.status)}
-              <span className="chip chip-gray">负责人 {lab.lead}</span>
-              <span className="chip chip-gray">积分 <span className="num">{lab.score}</span></span>
+              <span className="chip chip-gray">管理员 {lab.lead}</span>
+              <span className="chip chip-gray">扣分 <span className="num">{SCORING.tally(lab.labViolations)}</span> / {SCORING.PERIOD_LIMITS.lab}</span>
             </div>
           </div>
           <button className="icon-btn" onClick={onClose} style={{ fontSize: 18 }}>✕</button>
@@ -172,7 +184,7 @@ function LabPanel({ lab, onClose }) {
                   <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.15 }}>{lab.name}</div>
                   <div style={{ fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', fontFamily: 'var(--font-num)' }}>{lab.id}</div>
                   <div style={{ height: 1, background: 'rgba(255,255,255,0.25)' }}></div>
-                  <div style={{ fontSize: 9, opacity: 0.8 }}>负责人</div>
+                  <div style={{ fontSize: 9, opacity: 0.8 }}>管理员</div>
                   <div style={{ fontSize: 12, fontWeight: 600 }}>{lab.lead}</div>
                   <div style={{ fontSize: 9, opacity: 0.8, marginTop: 4 }}>危险告示</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -188,7 +200,7 @@ function LabPanel({ lab, onClose }) {
               </div>
               <div style={{ fontSize: 12, color: 'var(--ink-2)' }} className="stack-m">
                 <div>门口的电子门牌会<strong>自动同步</strong>实验室状态：</div>
-                <div>• 负责人、危险类别、在室人数实时刷新</div>
+                <div>• 管理员、危险类别、在室人数实时刷新</div>
                 <div>• 状态异常时整块变橙 / 红</div>
                 <div>• 整改期显示倒计时</div>
                 <button className="btn btn-sm" style={{ alignSelf: 'flex-start', marginTop: 4 }}>推送更新 →</button>
@@ -280,7 +292,7 @@ function EventPanel({ ev, onClose }) {
             <div style={{ fontSize: 11, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>处理动作</div>
             <div className="stack-m">
               <div className="row" style={{ padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 6 }}>
-                <input type="checkbox" /> 通知实验室负责人（{ev.lab === 'A208' ? '钱雨桐' : ev.lab === '410' ? '周景明' : '赵振华'}）
+                <input type="checkbox" /> 通知实验室管理员（{(MOCK.labs.find(l => l.id === ev.lab) || {}).lead || '—'}）
               </div>
               <div className="row" style={{ padding: '10px 12px', border: '1px solid var(--line)', borderRadius: 6 }}>
                 <input type="checkbox" defaultChecked /> 短信通知当事人

@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="door-display.css?v=4">
+<link rel="stylesheet" href="door-display.css?v=8">
 <style>
   body {
     margin: 0;
@@ -72,6 +72,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../lib/scoring-rules.js?v=8"></script>
 
 <script type="text/babel">
 // ============================================================
@@ -83,10 +84,11 @@ const LAB = {
   id: '302',
   name: '电化学与储能材料实验室',
   dept: '材料化学系',
-  lead: '赵振华',
+  lead: '周建国',                                      // 实验室管理员（系级专人）· 教师不挂此职
+  today: '2026-04-21',                                  // 与 admin MOCK.today / mp MP.today 单一基准
   hazards: ['腐蚀', '火灾', '爆炸', '中毒', '高压'],
   contacts: [
-    { role: '负责人', name: '赵振华', phone: '·· 6602' },
+    { role: '管理员', name: '周建国', phone: '·· 6602' },
     { role: '安全员', name: '王玉鸿', phone: '·· 6688' },
   ],
   // 反馈 7 · 巡查模式（SCENES.inspect）展开的结构化危险源清单
@@ -135,12 +137,20 @@ const PRESENCE = [
   { name: '张一凡', role: '研24' },
 ];
 
+// 关停场景的累积扣分清单 · 复用 admin lab 410 的扣分组合（共 60 分恰触发关停档）
+// notice 文案与 labViolations 同源 → SCENES.rect 引用一次，notice 反算 SCORING.tally 不漂移
+const RECT_VIOLATIONS = [
+  { ruleIds: ['hazard-7'] }, { ruleIds: ['hazard-9'] }, { ruleIds: ['hazard-1'] },
+  { ruleIds: ['mgmt-3'] },   { ruleIds: ['env-2'] },    { ruleIds: ['hazard-5'] },
+  { ruleIds: ['ppe-4'] },    { ruleIds: ['hazard-6'] },
+];
+
 // === 8 SCENES ===
 const SCENES = [
   {
     k: 'free', label: '空闲开放', state: 'free', chipDot: '#15803d',
     statusLabel: '空闲开放',
-    temp: 22.4, humidity: 52, score: 92, scoreCls: 'score-good',
+    temp: 22.4, humidity: 52, labViolations: [],
     presence: [],
     notice: { tone: 'green', ico: '✓', text: '当前可预约进入 · 14:00 起 张一凡 等 3 人有预约' },
     qr: 'idle', cam: 'idle',
@@ -149,7 +159,7 @@ const SCENES = [
   {
     k: 'busy', label: '使用中', state: 'busy', chipDot: '#1e5eb5',
     statusLabel: '使用中',
-    temp: 23.1, humidity: 48, score: 92, scoreCls: 'score-good',
+    temp: 23.1, humidity: 48, labViolations: [],
     presence: PRESENCE,
     notice: { tone: 'blue', ico: 'i', text: '实验进行中 · 14:00 - 17:00 · 入内请穿戴实验服与护目镜' },
     qr: 'idle', cam: 'idle',
@@ -158,7 +168,7 @@ const SCENES = [
   {
     k: 'high', label: '高风险作业', state: 'crit', chipDot: '#dc2626',
     statusLabel: '高风险项目进行中',
-    temp: 36.8, humidity: 42, score: 88, scoreCls: 'score-good', tempAlert: true,
+    temp: 36.8, humidity: 42, tempAlert: true, labViolations: [],
     presence: PRESENCE.slice(0, 2),
     notice: buildHighNotice(LAB),
     qr: 'disabled', cam: 'idle', haztape: true,
@@ -167,16 +177,18 @@ const SCENES = [
   {
     k: 'rect', label: '整改中 (停用)', state: 'crit', chipDot: '#dc2626',
     statusLabel: '整改中 · 已停用',
-    temp: 22.0, humidity: 50, score: 48, scoreCls: 'score-bad',
+    temp: 22.0, humidity: 50,
+    labViolations: RECT_VIOLATIONS, // = 60 分 → 关停整改（同源单一引用）
     presence: [],
-    notice: { tone: 'red', ico: '!', text: '安全状态：未通过 · 废液桶未分类 扣 5 分 · 04-28 前完成整改后方可恢复运行' },
+    notice: { tone: 'red', ico: '!',
+              text: '安全状态：累积 ' + SCORING.tally(RECT_VIOLATIONS) + ' 分 / ' + SCORING.PERIOD_LIMITS.lab + ' 触发关停 · 04-28 前完成整改后方可恢复运行' },
     qr: 'disabled', cam: 'idle', haztape: true, qrStamp: '整改',
     safetyTag: { tone: 'red', label: '安全状态 · 整改' },
   },
   {
     k: 'closed', label: '关闭维护', state: 'off', chipDot: '#64748b',
     statusLabel: '关闭维护',
-    temp: 21.0, humidity: 50, score: 92, scoreCls: 'score-good',
+    temp: 21.0, humidity: 50, labViolations: [],
     presence: [],
     notice: { tone: 'gray', ico: '⏻', text: '通风系统检修中 · 预计 04-29 09:00 恢复 · 请勿强行进入' },
     qr: 'disabled', cam: 'idle',
@@ -185,7 +197,7 @@ const SCENES = [
   {
     k: 'scan', label: '扫码识别', state: 'busy', chipDot: '#b45309',
     statusLabel: '识别中',
-    temp: 23.1, humidity: 48, score: 92, scoreCls: 'score-good',
+    temp: 23.1, humidity: 48, labViolations: [],
     presence: PRESENCE,
     notice: { tone: 'amber', ico: '?', text: '识别中 · 请正对摄像头 · 张一凡（研24 · 已预约）正在核验' },
     qr: 'scanning', cam: 'scanning',
@@ -194,7 +206,7 @@ const SCENES = [
   {
     k: 'success', label: '识别成功', state: 'busy', chipDot: '#15803d',
     statusLabel: '使用中',
-    temp: 23.1, humidity: 48, score: 92, scoreCls: 'score-good',
+    temp: 23.1, humidity: 48, labViolations: [],
     presence: PRESENCE,
     notice: { tone: 'blue', ico: 'i', text: '实验进行中 · 14:00 - 17:00' },
     qr: 'idle', cam: 'idle', overlay: 'success',
@@ -203,7 +215,7 @@ const SCENES = [
   {
     k: 'fail', label: '识别失败', state: 'busy', chipDot: '#dc2626',
     statusLabel: '使用中',
-    temp: 23.1, humidity: 48, score: 92, scoreCls: 'score-good',
+    temp: 23.1, humidity: 48, labViolations: [],
     presence: PRESENCE,
     notice: { tone: 'blue', ico: 'i', text: '实验进行中 · 14:00 - 17:00' },
     qr: 'idle', cam: 'err', overlay: 'fail',
@@ -212,7 +224,7 @@ const SCENES = [
   {
     k: 'alert', label: '紧急事件', state: 'crit', chipDot: '#c9a961',
     statusLabel: '紧急事件',
-    temp: 28.3, humidity: 60, score: 78, scoreCls: 'score-warn', tempAlert: true,
+    temp: 28.3, humidity: 60, tempAlert: true, labViolations: [],
     presence: PRESENCE.slice(0, 2),
     notice: { tone: 'red', ico: '!', text: '紧急事件 · 请勿靠近 · 14:32 检测到高浓度 VOC · 安全员已派出' },
     qr: 'disabled', cam: 'err', haztape: true, alert: true,
@@ -222,9 +234,9 @@ const SCENES = [
   {
     k: 'inspect', label: '检查模式', state: 'busy', chipDot: '#1e5eb5',
     statusLabel: '检查模式 · 王玉鸿',
-    temp: 22.2, humidity: 58, score: 92, scoreCls: 'score-good',
-    presence: [{ name: '王玉鸿', role: '巡查员', gold: true }],
-    notice: { tone: 'blue', ico: 'i', text: '巡查员现场检查中 · 危险源逐项核对 · 上次检查 04-15' },
+    temp: 22.2, humidity: 58, labViolations: [],
+    presence: [{ name: '王玉鸿', role: '实验室管理员', gold: true }],
+    notice: { tone: 'blue', ico: 'i', text: '实验室管理员现场检查中 · 危险源逐项核对 · 上次检查 04-15' },
     qr: 'disabled', cam: 'idle',
     safetyTag: { tone: 'blue', label: '检查模式' },
     inspectMode: true,   // 主区切换到 InspectMode 组件
@@ -362,11 +374,19 @@ function KPIs({ scene }) {
         </div>
       </div>
       <div className="dd-kpi">
-        <div className="dd-kpi-label">安全积分</div>
-        <div className={'dd-kpi-value ' + scene.scoreCls}>
-          <span className="num">{scene.score}</span>
-          <span className="unit">分</span>
-        </div>
+        <div className="dd-kpi-label">本周期扣分</div>
+        {(() => {
+          const pts = SCORING.tally(scene.labViolations);
+          const v = SCORING.verdict(pts, 'lab');
+          // 颜色映射倒过来：累积扣分越高越红（与旧 100 分制相反）
+          const cls = v.tier === 'rectifying' ? 'score-bad' : v.tier === 'warning' ? 'score-warn' : 'score-good';
+          return (
+            <div className={'dd-kpi-value ' + cls}>
+              <span className="num">{pts}</span>
+              <span className="unit">/{SCORING.PERIOD_LIMITS.lab}</span>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -491,25 +511,37 @@ function Camera({ state }) {
 // FOOTER
 // ============================================================
 function Footer({ scene }) {
+  // 本周期累积扣分 + PDF 6 月周期 label · 由 SCORING 派生（与三端共享 lib）
+  const pts = SCORING.tally(scene.labViolations);
+  const v = SCORING.verdict(pts, 'lab');
   return (
     <footer className="dd-footer">
-      <div className={'dd-notice tone-' + scene.notice.tone}>
-        <div className="ico">{scene.notice.ico}</div>
-        <div className="text">{scene.notice.text}</div>
+      {/* 仪表带：克制的 mono 一行，传达"这块屏跟三端联动" */}
+      <div className={'dd-period-bar tier-' + v.tier}>
+        <span className="lbl">PERIOD POINTS</span>
+        <span className="num">{pts}<span className="ceil">/{SCORING.PERIOD_LIMITS.lab}</span></span>
+        <span className="dot" />
+        <span className="prd">{SCORING.formatPeriod(LAB.today)}</span>
       </div>
-      <div className="dd-entry">
-        <div className="dd-entry-tile">
-          <div className={'dd-qr ' + (scene.qr === 'disabled' ? 'disabled' : scene.qr === 'scanning' ? 'scanning' : '')}>
-            <QRCode />
-            {scene.qr === 'disabled' && (
-              <div className="dd-qr-stamp">{scene.qrStamp || (scene.k === 'closed' ? 'OFFLINE' : '禁入')}</div>
-            )}
-          </div>
-          <div className="cap">{scene.qr === 'disabled' ? '门禁已锁' : '扫码进门'}</div>
+      <div className="dd-footer-row">
+        <div className={'dd-notice tone-' + scene.notice.tone}>
+          <div className="ico">{scene.notice.ico}</div>
+          <div className="text">{scene.notice.text}</div>
         </div>
-        <div className="dd-entry-tile">
-          <Camera state={scene.cam} />
-          <div className="cap">{scene.cam === 'scanning' ? '识别中' : scene.cam === 'err' ? '识别失败' : '人脸核验'}</div>
+        <div className="dd-entry">
+          <div className="dd-entry-tile">
+            <div className={'dd-qr ' + (scene.qr === 'disabled' ? 'disabled' : scene.qr === 'scanning' ? 'scanning' : '')}>
+              <QRCode />
+              {scene.qr === 'disabled' && (
+                <div className="dd-qr-stamp">{scene.qrStamp || (scene.k === 'closed' ? 'OFFLINE' : '禁入')}</div>
+              )}
+            </div>
+            <div className="cap">{scene.qr === 'disabled' ? '门禁已锁' : '扫码进门'}</div>
+          </div>
+          <div className="dd-entry-tile">
+            <Camera state={scene.cam} />
+            <div className="cap">{scene.cam === 'scanning' ? '识别中' : scene.cam === 'err' ? '识别失败' : '人脸核验'}</div>
+          </div>
         </div>
       </div>
     </footer>
@@ -549,7 +581,7 @@ function FailOverlay() {
         </svg>
       </div>
       <div className="title">身份核验未通过</div>
-      <div className="sub">人脸与已扫码身份不匹配 · 请联系实验室负责人或安全员</div>
+      <div className="sub">人脸与已扫码身份不匹配 · 请联系实验室管理员或安全员</div>
       <div className="checks">
         <div><div className="k">SCAN ID</div><div className="v">张一凡 · 材料研24</div></div>
         <div><div className="k">FACE MATCH</div><div className="v">41% · BELOW 75%</div></div>

@@ -9,7 +9,12 @@ function BigScreenPage({ onOpenLab }) {
 
   const totalIn = labs.reduce((s, l) => s + l.inRoom, 0);
   const totalToday = labs.reduce((s, l) => s + l.today, 0);
-  const avgScore = Math.round(labs.reduce((s, l) => s + l.score, 0) / labs.length);
+  // 院级累积扣分总览（PDF 累积制）：所有实验室扣分之和，越高越严重
+  const totalDeducted = labs.reduce((s, l) => s + SCORING.tally(l.labViolations), 0);
+  // 最严重档位（基于任一 lab 触发的最高 tier）— 大屏顶部颜色用它，避免 sum 套单 lab 阈值恒红
+  const worstTier = labs.some(l => SCORING.tally(l.labViolations) >= 60) ? 'rectifying'
+                  : labs.some(l => SCORING.tally(l.labViolations) >= 30) ? 'warning'
+                  : 'normal';
   const rectifying = labs.filter(l => l.status === 'rectifying').length;
   const warnCount = labs.filter(l => l.status === 'warning').length;
   const normalCount = labs.filter(l => l.status === 'normal').length;
@@ -36,7 +41,7 @@ function BigScreenPage({ onOpenLab }) {
   const trendArrow = trendDelta > 0 ? '↑' : trendDelta < 0 ? '↓' : '→';
   const trendHint = `日均 ${trendAvg} · 较均值 ${trendArrow}${Math.abs(trendDelta)}%`;
 
-  // 院系排行反算（按 dept group labs · 取 score 均值 · 当前压力事件数作为 trend 信号）
+  // 院系扣分排行（累积制）：累积分总和降序 = 风险高的在前；openCount 是当前未闭环违规事件数（真实 count，非 delta）
   const deptMap = labs.reduce((m, l) => {
     if (!m[l.dept]) m[l.dept] = [];
     m[l.dept].push(l);
@@ -44,18 +49,18 @@ function BigScreenPage({ onOpenLab }) {
   }, {});
   const deptRows = Object.entries(deptMap).map(([name, deptLabs]) => {
     const labIds = deptLabs.map(l => l.id);
-    const avg = Math.round(deptLabs.reduce((s, l) => s + l.score, 0) / deptLabs.length);
-    const issues = events.filter(e =>
+    const sumPts = deptLabs.reduce((s, l) => s + SCORING.tally(l.labViolations), 0);
+    const openCount = events.filter(e =>
       labIds.includes(e.lab) &&
       (e.status === 'active' || e.status === 'pending') &&
       EVENT_KIND_META[e.kind]?.scoring
     ).length;
-    return { name, score: avg, labs: deptLabs.length, trend: -issues * 2 };
+    return { name, score: sumPts, labs: deptLabs.length, openCount };
   }).sort((a, b) => b.score - a.score);
 
   return (
     <div className="bs-root">
-      <BgHeader totalIn={totalIn} active={active.length} critical={critical.length} avgScore={avgScore} />
+      <BgHeader totalIn={totalIn} active={active.length} critical={critical.length} totalDeducted={totalDeducted} worstTier={worstTier} />
 
       <div className="bs-grid">
         {/* LEFT COLUMN */}
@@ -67,7 +72,7 @@ function BigScreenPage({ onOpenLab }) {
               warnCount={warnCount}
               rectifying={rectifying}
               totalIn={totalIn}
-              avgScore={avgScore}
+              totalDeducted={totalDeducted}
               activeEvents={active}
             />
           </BsCard>
@@ -145,7 +150,7 @@ function BigScreenPage({ onOpenLab }) {
             <div className="bs-duty" style={{ opacity: 0.7 }}>
               <div className="bs-duty-avatar" style={{ background: 'linear-gradient(135deg,#475569,#1e293b)' }}>王</div>
               <div style={{ minWidth: 0, flex: 1 }}>
-                <div className="bs-duty-name">王玉鸿 · 巡查</div>
+                <div className="bs-duty-name">王玉鸿 · 管理员</div>
                 <div className="bs-duty-sub">当前位置 A208 · 已巡 5/8 间</div>
               </div>
               <button className="bs-btn">呼叫</button>
@@ -159,7 +164,8 @@ function BigScreenPage({ onOpenLab }) {
 
 /* ============ sub-components ============ */
 
-function BgHeader({ totalIn, active, critical, avgScore }) {
+function BgHeader({ totalIn, active, critical, totalDeducted, worstTier }) {
+  const deductedColor = worstTier === 'rectifying' ? '#f87171' : worstTier === 'warning' ? '#fbbf24' : '#4ade80';
   const [t, setT] = React.useState(new Date());
   React.useEffect(() => {
     const id = setInterval(() => setT(new Date()), 1000);
@@ -182,7 +188,8 @@ function BgHeader({ totalIn, active, critical, avgScore }) {
         <Stat label="当前在室" value={totalIn} unit="人" color="#6ba4ff" />
         <Stat label="待处理告警" value={active} unit="件" color="#fbbf24" pulse={active > 0} />
         <Stat label="严重告警" value={critical} unit="件" color="#f87171" pulse={critical > 0} />
-        <Stat label="全院均分" value={avgScore} unit="/100" color="#4ade80" />
+        {/* 颜色取自全院最严重档位（任一 lab 触发的最高 tier）· 数字仍是 sum */}
+        <Stat label="全院累积扣分" value={totalDeducted} unit="分" color={deductedColor} />
       </div>
     </div>
   );
@@ -259,27 +266,36 @@ function TrendChart({ data }) {
   );
 }
 
+/* 排行：累积扣分降序 = 风险最高在前
+ * bar 宽度 = pts / 60（lab 满分）；超过 60 截断到 100% 并加红
+ * 颜色映射倒过来：高分=红 / 中=琥珀 / 低=绿（与 100 分制相反）
+ * 右栏 openCount 是当前未闭环违规事件数（真实 count，不用 ▲▼ 暗示 delta）
+ */
 function RankList({ rows }) {
-  const max = Math.max(...rows.map(r => r.score));
+  const ceiling = SCORING.PERIOD_LIMITS.lab; // 60
   return (
     <div className="bs-rank">
-      {rows.map((r, i) => (
-        <div key={i} className="bs-rank-row">
-          <span className="bs-rank-i mono">{String(i + 1).padStart(2, '0')}</span>
-          <div className="bs-rank-main">
-            <div className="bs-rank-h">
-              <span className="bs-rank-n">{r.name}</span>
-              <span className="bs-rank-v num">{r.score}</span>
+      {rows.map((r, i) => {
+        const pct = Math.min(100, (r.score / ceiling) * 100);
+        const color = r.score >= 60 ? '#dc2626' : r.score >= 30 ? '#d97706' : '#16a34a';
+        return (
+          <div key={i} className="bs-rank-row">
+            <span className="bs-rank-i mono">{String(i + 1).padStart(2, '0')}</span>
+            <div className="bs-rank-main">
+              <div className="bs-rank-h">
+                <span className="bs-rank-n">{r.name}</span>
+                <span className="bs-rank-v num">{r.score}</span>
+              </div>
+              <div className="bs-rank-bar">
+                <div className="bs-rank-bar-f" style={{ width: pct + '%', background: color }}></div>
+              </div>
             </div>
-            <div className="bs-rank-bar">
-              <div className="bs-rank-bar-f" style={{ width: (r.score / 100) * 100 + '%', background: r.score >= 85 ? '#16a34a' : r.score >= 70 ? '#d97706' : '#dc2626' }}></div>
-            </div>
+            <span className={'bs-rank-t mono ' + (r.openCount > 0 ? 'dn' : 'eq')}>
+              {r.openCount > 0 ? '● ' + r.openCount : '—'}
+            </span>
           </div>
-          <span className={'bs-rank-t mono ' + (r.trend > 0 ? 'up' : r.trend < 0 ? 'dn' : 'eq')}>
-            {r.trend > 0 ? '▲' + r.trend : r.trend < 0 ? '▼' + Math.abs(r.trend) : '—'}
-          </span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -322,7 +338,7 @@ function FloorPlan({ labs, onOpenLab }) {
                   {lab.status !== 'normal' && <span className="bs-floor-pulse"><span className="dot-live"></span></span>}
                   <div className="bs-floor-room-top">
                     <span className="bs-floor-room-id mono" style={{ color: c.fg }}>{lab.id}</span>
-                    <span className="bs-floor-room-s mono">{lab.score}</span>
+                    <span className="bs-floor-room-s mono">{SCORING.tally(lab.labViolations)}/{SCORING.PERIOD_LIMITS.lab}</span>
                   </div>
                   <div className="bs-floor-room-name">{lab.name}</div>
                   <div className="bs-floor-room-b mono">👥 {lab.inRoom} · {lab.temp}° · {lab.humidity}%</div>
@@ -452,7 +468,7 @@ function EquipmentList() {
    左：磷光绿 PPI 雷达盘（conic-gradient sweep + 8 个 lab blip）
    右：5 行子系统检查（全部数据驱动）+ 3 个 alm 盒（实验室计数）
    =========================================================== */
-function RadarMonitor({ labs, normalCount, warnCount, rectifying, totalIn, avgScore, activeEvents }) {
+function RadarMonitor({ labs, normalCount, warnCount, rectifying, totalIn, totalDeducted, activeEvents }) {
   // 整体风险等级（与 alm 盒和中心字保持一致）
   const riskLabel = rectifying > 0 ? '预警' : warnCount > 0 ? '关注' : '正常';
   const riskColor = rectifying > 0 ? '#f87171' : warnCount > 0 ? '#fbbf24' : '#4ade80';
@@ -492,9 +508,12 @@ function RadarMonitor({ labs, normalCount, warnCount, rectifying, totalIn, avgSc
       tone: accessAlerts === 0 ? 'ok' : accessAlerts >= 3 ? 'err' : 'warn',
     },
     {
-      label: '综合积分',
-      value: `${avgScore} / 100`,
-      tone: avgScore >= 85 ? 'ok' : avgScore >= 70 ? 'warn' : 'err',
+      // 评级语义：有任意 lab 触发关停（≥60）即 err；任意 lab 触发黄区（≥30）即 warn；否则 ok
+      label: '累积扣分',
+      value: `${totalDeducted} 分`,
+      tone: labs.some(l => SCORING.tally(l.labViolations) >= 60) ? 'err'
+          : labs.some(l => SCORING.tally(l.labViolations) >= 30) ? 'warn'
+          : 'ok',
     },
   ];
 

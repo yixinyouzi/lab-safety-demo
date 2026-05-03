@@ -1,5 +1,5 @@
 // ============================================================
-// 教师 / 导师端页面（与学生共享大部分功能，多了"待审工作台"和"我的学生"）
+// 教师端页面（与学生共享大部分功能，多了"待审工作台"和"我的学生"）
 // ============================================================
 
 const TEA_TABS = [
@@ -10,17 +10,9 @@ const TEA_TABS = [
 ];
 
 // ---------- 教师待审 mock ----------
+// 教师只审「学生实验申请」类（booking / chem / project / purchase / night）
+// 违规申诉(appeal) / 整改复核(rectify) / 废液接收(waste) 全部下放给实验室管理员
 const TEA_PENDING = [
-  {
-    id: 'AP-V20250307-018',
-    kind: 'appeal',
-    title: '张一凡 · 夜间单人作业申诉',
-    sub: '扣 2 分 · 3月7日 22:40 · 材料楼 303',
-    time: '8 分钟前',
-    tag: '申诉复核',
-    tagCls: 'red',
-    urgent: true,
-  },
   {
     id: 'AP-BK-2025031001',
     kind: 'booking',
@@ -40,15 +32,6 @@ const TEA_PENDING = [
     tagCls: 'orange',
   },
   {
-    id: 'AP-RECT-011',
-    kind: 'rectify',
-    title: '王磊 · 废液标签整改复核',
-    sub: '已上传 4 张照片 · 巡查员复检待签字',
-    time: '昨天',
-    tag: '整改签字',
-    tagCls: 'gold',
-  },
-  {
     id: 'AP-PROJ-2026-04',
     kind: 'project',
     title: '张一凡 · 聚合物固态电解质制备',
@@ -59,20 +42,10 @@ const TEA_PENDING = [
     projectId: 'proj-2026-04',
   },
   {
-    id: 'AP-WR-2026-02',
-    kind: 'waste',
-    title: '张一凡 · 剧毒废液 (含氟) 0.5 L',
-    sub: 'A208 · 硅基底刻蚀剩余 HF · 须双人交接',
-    time: '20 分钟前',
-    tag: '废液接收',
-    tagCls: 'green',
-    wasteId: 'wr-2026-02',
-  },
-  {
     id: 'AP-PR-2026-01',
     kind: 'purchase',
     title: '张一凡 · 浓硫酸 + 无水乙醇 采购',
-    sub: '中风险 · 302 · 已通过导师 · 待学院终审',
+    sub: '中风险 · 302 · 已通过教师 · 待学院终审',
     time: '昨天 14:30',
     tag: '采购终审',
     tagCls: 'orange',
@@ -82,7 +55,7 @@ const TEA_PENDING = [
     id: 'AP-NE-2026-02',
     kind: 'night',
     title: '张一凡 · 周六生物样品 18 小时连续培养',
-    sub: '周末 3 级 · B105 · 已提交申请 · 待导师审核',
+    sub: '周末 3 级 · B105 · 已提交申请 · 待教师审核',
     time: '5 分钟前',
     tag: '过夜审批',
     tagCls: 'blue',
@@ -90,22 +63,34 @@ const TEA_PENDING = [
   },
 ];
 
+// 教师端 · 我的学生（演示用）· 累积扣分制：tag/flag 由 SCORING.verdict 派生
+// personalViolations 是单一来源，UI 一律用 SCORING.tally + verdict 计算 score / tier
 const TEA_STUDENTS = [
-  { name: '张一凡', grade: '研三', score: 78, flag: 'yellow', tag: '挂黄牌', note: '夜间单人作业 · 整改中' },
-  { name: '刘梓萱', grade: '研二', score: 94, flag: 'good', tag: '优秀', note: '本月 0 违规 · 安全之星候选',
-    vacationAuth: { fromDate: '2026-07-15', toDate: '2026-08-31', dayOnly: true } },
-  { name: '陈昊', grade: '研二', score: 88, flag: 'ok', tag: '正常', note: '培训完成度 4/5' },
-  { name: '周佳明', grade: '研一', score: 92, flag: 'ok', tag: '正常', note: '刚完成入门培训' },
-  { name: '王磊', grade: '博二', score: 82, flag: 'warn', tag: '整改中', note: '废液标签缺失 · 已拍照上传' },
-  { name: '李思远', grade: '博三', score: 96, flag: 'good', tag: '优秀', note: '连续 6 月零违规',
-    vacationAuth: { fromDate: '2026-07-15', toDate: '2026-08-25', dayOnly: true } },
-  { name: '赵雪', grade: '研三', score: 90, flag: 'ok', tag: '正常', note: '培训完成度 5/5' },
+  { name: '张一凡', grade: '研三', note: '夜间单人作业 · 申诉中',
+    personalViolations: [
+      { ruleIds: ['elec-6'],  time: '2026-03-12' },                             // 3
+      { ruleIds: ['ppe-1'],   time: '2026-03-25' },                             // 3
+      { ruleIds: ['hazard-5'], time: '2026-04-15', eventId: 'V20260415-018' }, // 6
+    ] }, // = 12 → 挂牌
+  { name: '刘梓萱', grade: '研二', note: '本月 0 违规 · 安全之星候选',
+    personalViolations: [],
+    vacationAuth: { fromDate: '2026-07-15', toDate: '2026-08-31', dayOnly: true } }, // 0 → 正常
+  { name: '陈昊',   grade: '研二', note: '培训完成度 4/5',
+    personalViolations: [{ ruleIds: ['mgmt-2'], time: '2026-03-20' }] }, // 1 → 正常
+  { name: '周佳明', grade: '研一', note: '刚完成入门培训',
+    personalViolations: [] }, // 0 → 正常
+  { name: '王磊',   grade: '博二', note: '废液标签缺失 · 已拍照上传',
+    personalViolations: [{ ruleIds: ['hazard-4'], time: '2026-04-12' }] }, // 6 → 注意
+  { name: '李思远', grade: '博三', note: '连续 6 月零违规',
+    personalViolations: [],
+    vacationAuth: { fromDate: '2026-07-15', toDate: '2026-08-25', dayOnly: true } }, // 0 → 正常
+  { name: '赵雪',   grade: '研三', note: '培训完成度 5/5',
+    personalViolations: [] }, // 0 → 正常
 ];
 
 // ---------- 首页 ----------
 const TeaHomePage = ({ onNav, goPending }) => {
   const u = MP.teacher;
-  const urgentPending = TEA_PENDING.filter(p => p.urgent);
 
   return (
     <MiniProgram
@@ -123,7 +108,7 @@ const TeaHomePage = ({ onNav, goPending }) => {
             <div className="name">
               {u.name} 老师
               <span style={{ fontSize: 11, padding: '2px 7px', background: 'rgba(201,169,97,0.25)', borderRadius: 4, border: '1px solid rgba(201,169,97,0.6)', fontWeight: 500 }}>
-                导师
+                教师
               </span>
             </div>
             <div className="sub">{u.title} · {u.dept}</div>
@@ -150,32 +135,14 @@ const TeaHomePage = ({ onNav, goPending }) => {
               </div>
               <div>
                 <div style={{ fontSize: 26, fontWeight: 700, color: '#c9a961', lineHeight: 1 }}>{u.labs}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 4 }}>负责实验室</div>
+                <div style={{ fontSize: 11, color: 'var(--text-2)', marginTop: 4 }}>关联实验室</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 紧急待办：申诉复核 */}
-      {urgentPending.length > 0 && (
-        <div className="alert-banner" onClick={() => goPending(urgentPending[0])} style={{ background: 'linear-gradient(135deg,#fbe9e7 0%,#f8ddd9 100%)', borderColor: '#e8a69b', cursor: 'pointer' }}>
-          <div className="alert-banner-icon" style={{ background: 'var(--wx-red)' }}>
-            <Icon name="warn" size={20} color="#fff"/>
-          </div>
-          <div className="alert-banner-body">
-            <div className="alert-banner-title" style={{ color: '#8a1f14' }}>
-              {urgentPending.length} 条学生申诉待复核
-            </div>
-            <div style={{ fontSize: 12, color: '#5c4515', marginBottom: 6 }}>
-              {urgentPending[0].title}
-            </div>
-            <button className="wx-btn mini" style={{ background: 'var(--wx-red)' }} onClick={() => goPending(urgentPending[0])}>
-              立即复核 <Icon name="chevron-right" size={12} color="#fff"/>
-            </button>
-          </div>
-        </div>
-      )}
+      {/* 紧急待办 banner 已移除 · 教师不再处理违规申诉/整改复核（归实验室管理员） */}
 
       {/* 待审工作台 */}
       <div className="wx-card">
@@ -213,11 +180,7 @@ const TeaHomePage = ({ onNav, goPending }) => {
         </div>
       </div>
 
-      {/* 我负责的实验室 · 实时（反馈 4） */}
-      {(u.myLabIds || []).map(id => {
-        const lab = (MP.labs || []).find(l => l.id === id);
-        return lab ? <LabRealtimeCard key={id} lab={lab} /> : null;
-      })}
+      {/* LabRealtimeCard 已移除 · 教师有学生使用情况知情权但不必看实时视频；实时视频归实验室管理员端 */}
 
       {/* 今日实验 · 教师和学生一样要做 */}
       <div className="wx-card">
@@ -297,7 +260,8 @@ const TeaHomePage = ({ onNav, goPending }) => {
 const TeaPendingListPage = ({ onNav, goPending }) => (
   <MiniProgram navTitle="待审工作台" showBack onBack={() => onNav('t-home')} hideTabBar>
     <div className="filters-bar" style={{ display: 'flex', gap: 8, padding: '10px 16px', background: '#fff', borderBottom: '0.5px solid var(--line)', overflow: 'auto' }}>
-      {['全部', '申诉复核', '预约审批', '危化领用', '整改签字'].map((f, i) => (
+      {/* 教师只审「学生实验申请」5 类 · 申诉/整改/废液 已下放实验室管理员 */}
+      {['全部', '预约审批', '危化领用', '项目审核', '采购终审', '过夜审批'].map((f, i) => (
         <span key={f} className={'wx-tag ' + (i === 0 ? 'green' : 'gray')} style={{ padding: '6px 12px', flexShrink: 0, fontSize: 12 }}>
           {f}
         </span>
@@ -335,108 +299,14 @@ const TeaPendingListPage = ({ onNav, goPending }) => (
   </MiniProgram>
 );
 
-// ---------- 申诉复核详情页（导师端 · 仅事实补充，无判决权） ----------
-// 反馈 8：驳回权移交巡查员/实验中心。导师只做事实核实，提交后移交巡查员终审。
-const TeaReviewPage = ({ onNav, item }) => {
-  const [reason, setReason] = React.useState('');
-  const [submitted, setSubmitted] = React.useState(false);
-  const v = MP.violation;
-
-  if (submitted) {
-    return (
-      <TeaSubmittedView
-        navTitle="补充已提交"
-        icon="check" iconBg="#e5ecf5" iconColor="#003f88"
-        title="事实补充已提交"
-        subtitle="已移交实验中心巡查员终审"
-        syncList={[
-          '学生张一凡（小程序消息 · 待终审）',
-          '巡查员王玉鸿（待复核队列）',
-          '管理控制台事件中心',
-        ]}
-        footnote={<>说明：导师仅核实事实 / 补充情况，<strong>支持或驳回的最终决定由实验中心巡查员做出</strong>。</>}
-        onBack={() => onNav('t-home')}
-      />
-    );
-  }
-
-  return (
-    <MiniProgram navTitle="申诉事实补充" showBack onBack={() => onNav('t-pending')} hideTabBar>
-      <div style={{ padding: '10px 16px 0', background: '#fff' }}>
-        <div className="wx-tag red" style={{ marginBottom: 8 }}>扣 2 分 · 夜间单人作业</div>
-        <div style={{ fontSize: 17, fontWeight: 600, color: '#000' }}>张一凡 · 材料楼 303 违规申诉</div>
-        <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
-          违规编号 {v.id} · 巡查员 {v.inspector} 登记
-        </div>
-      </div>
-
-      <div className="wx-card" style={{ marginTop: 8 }}>
-        <div className="wx-card-title">违规事实</div>
-        <div style={{ padding: '0 16px 14px', fontSize: 13, color: '#333', lineHeight: 1.6 }}>
-          {v.description}
-        </div>
-        <div className="photo-grid" style={{ paddingTop: 0 }}>
-          {v.photos.slice(0, 3).map((p, i) => (
-            <div key={i} className="photo-cell">
-              <Icon name="camera" size={22}/>
-              <div className="ph-label">{p.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="wx-card">
-        <div className="wx-card-title">学生申诉</div>
-        <div style={{ padding: '4px 16px 14px' }}>
-          <div style={{ padding: 12, background: '#f7f7f7', borderRadius: 8, fontSize: 13, lineHeight: 1.65, color: '#333' }}>
-            老师您好：<br/>
-            {v.studentAppeal}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 8 }}>
-            提交于 3月8日 10:30 · 附申诉理由 1 份
-          </div>
-        </div>
-      </div>
-
-      <div className="wx-card">
-        <div className="wx-card-title">事实补充 · 仅核实，不判决</div>
-        <div style={{ padding: '4px 16px 16px' }}>
-          <textarea
-            value={reason}
-            onChange={e => setReason(e.target.value)}
-            placeholder="请补充您所了解的事实情况（如：实验性质、当晚同组人员、平时表现等）。最终是否撤销由实验中心巡查员裁定。"
-            style={{
-              width: '100%', minHeight: 110, border: '1px solid var(--line)',
-              borderRadius: 8, padding: 10, fontSize: 14, fontFamily: 'inherit',
-              outline: 'none', resize: 'none',
-            }}
-          />
-          <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
-            提交后会作为终审参考材料推送给巡查员王玉鸿；学生会同步看到您的补充内容。
-          </div>
-        </div>
-      </div>
-
-      <div className="mp-bottom-bar">
-        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
-        <button
-          className="wx-btn"
-          style={{ flex: 2 }}
-          disabled={!reason.trim()}
-          onClick={() => setSubmitted(true)}
-        >
-          提交补充 → 移交巡查员
-        </button>
-      </div>
-    </MiniProgram>
-  );
-};
 
 // ---------- 我的学生 ----------
 const TeaStudentsPage = ({ onNav }) => {
   const total = TEA_STUDENTS.length;
-  const yellowCnt = TEA_STUDENTS.filter(s => s.flag === 'yellow').length;
-  const warnCnt = TEA_STUDENTS.filter(s => s.flag === 'warn').length;
+  // 学生计数：从 verdict.tier 派生（rectifying = 挂牌 / warning = 注意警示 / normal = 正常）
+  const tierOf = (s) => SCORING.verdict(SCORING.tally(s.personalViolations), 'person').tier;
+  const yellowCnt = TEA_STUDENTS.filter(s => tierOf(s) === 'rectifying').length;
+  const warnCnt   = TEA_STUDENTS.filter(s => tierOf(s) === 'warning').length;
   const authCnt = TEA_STUDENTS.filter(s => s.vacationAuth).length;
 
   const grant = (name) => {
@@ -469,14 +339,21 @@ const TeaStudentsPage = ({ onNav }) => {
       <div className="wx-card">
         <div className="wx-card-title">全部学生</div>
         <div className="wx-list">
-          {TEA_STUDENTS.map(s => (
+          {TEA_STUDENTS.map(s => {
+            const pts = SCORING.tally(s.personalViolations);
+            const v = SCORING.verdict(pts, 'person');
+            // 头像背景色 + tag 由 verdict.tier 派生（红=挂牌 / 琥珀=注意警示 / 绿=正常但有 vacationAuth / 灰=普通正常）
+            const avatarBg = v.tier === 'rectifying' ? '#c9a961'
+                           : v.tier === 'warning' ? '#e8882b'
+                           : s.vacationAuth ? 'var(--wx-green)' : '#e5e5e5';
+            const tagCls = v.tier === 'rectifying' ? 'yellow'
+                         : v.tier === 'warning' ? 'orange' : null;
+            return (
             <div key={s.name} className="wx-cell">
               <div className="wx-cell-hd">
                 <div style={{
                   width: 42, height: 42, borderRadius: '50%',
-                  background: s.flag === 'yellow' ? '#c9a961' :
-                             s.flag === 'warn' ? '#e8882b' :
-                             s.flag === 'good' ? 'var(--wx-green)' : '#e5e5e5',
+                  background: avatarBg,
                   color: '#fff',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontWeight: 600, fontSize: 15
@@ -486,9 +363,7 @@ const TeaStudentsPage = ({ onNav }) => {
                 <div className="wx-cell-bd-title">
                   {s.name}
                   <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}>· {s.grade}</span>
-                  {s.flag === 'yellow' && <span className="wx-tag yellow">{s.tag}</span>}
-                  {s.flag === 'warn' && <span className="wx-tag orange">{s.tag}</span>}
-                  {s.flag === 'good' && <span className="wx-tag blue">{s.tag}</span>}
+                  {tagCls && <span className={'wx-tag ' + tagCls}>{v.label}</span>}
                   {s.vacationAuth && (
                     <span className="wx-tag green" style={{ background: '#e5f5e9', color: 'var(--wx-success)' }}>
                       ✓ 假期授权
@@ -505,11 +380,11 @@ const TeaStudentsPage = ({ onNav }) => {
                 </div>
               </div>
               <div className="wx-cell-ft" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: s.score >= 90 ? 'var(--wx-green)' : s.score >= 80 ? '#333' : '#c9a961' }}>
-                  {s.score}
+                <div style={{ fontSize: 15, fontWeight: 600, color: v.color, fontFamily: 'var(--font-num)' }}>
+                  {pts}<span style={{ fontSize: 10, color: 'var(--text-3)', fontWeight: 400 }}> / {SCORING.PERIOD_LIMITS.person}</span>
                 </div>
                 {s.vacationAuth ? (
-                  <div style={{ fontSize: 10, color: 'var(--text-3)' }}>安全分</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-3)' }}>累积扣分</div>
                 ) : (
                   <button
                     className="wx-btn mini"
@@ -521,7 +396,7 @@ const TeaStudentsPage = ({ onNav }) => {
                 )}
               </div>
             </div>
-          ))}
+          );})}
         </div>
       </div>
 
@@ -535,12 +410,7 @@ const TeaStudentsPage = ({ onNav }) => {
 // ---------- 教师消息中心 ----------
 const TeaMsgPage = ({ onNav, goPending }) => {
   const msgs = [
-    {
-      kind: 'appeal', icon: 'warn', color: 'var(--wx-red)', bg: '#fbe9e7',
-      title: '【申诉复核】张一凡',
-      preview: '对 3月7日 扣 2 分提起申诉，理由：样品降温阶段不得中断。请在 48 小时内复核。',
-      time: '8 分钟前', unread: true,
-    },
+    // 教师只收"申请类"消息 + 抄送通知；违规复核已移出教师权限
     {
       kind: 'booking', icon: 'calendar', color: 'var(--wx-green)', bg: '#e5ecf5',
       title: '【预约审批】刘梓萱',
@@ -554,17 +424,33 @@ const TeaMsgPage = ({ onNav, goPending }) => {
       time: '1 小时前', unread: true,
     },
     {
+      // 抄送类：纯通知，不可点进入审批；让教师对学生违规有知情权
+      kind: 'cc', icon: 'info', color: 'var(--text-2)', bg: '#f5f5f7',
+      title: '【违规结论 · 抄送】张一凡',
+      preview: '4月15日 扣 6 分（危险源管控 四-5）· 实验室管理员王玉鸿 处理中 · 终审结论将抄送您。',
+      time: '8 分钟前', unread: true,
+    },
+    {
       kind: 'system', icon: 'info', color: '#4a6fa5', bg: '#e5ecf5',
       title: '【系统通知】月度安全报表',
-      preview: '您负责的 3 间实验室 2 月安全报表已生成，本月 1 例违规（张一凡）。',
+      preview: '您指导的学生关联 3 间实验室 4 月安全报表已生成，本月 1 例违规（张一凡）。',
       time: '昨天', unread: false,
     },
   ];
+  // 仅 booking/chem 等申请类可点进审批；cc/system 只读不可进入
+  const APPROVABLE = new Set(['booking', 'chem', 'project', 'purchase', 'night']);
   return (
     <MiniProgram navTitle="消息" tabItems={TEA_TABS} activeTab="t-msg" onTabChange={onNav}>
       <div className="wx-list" style={{ marginTop: 0 }}>
-        {msgs.map((m, i) => (
-          <div key={i} className="msg-item" onClick={() => m.kind !== 'system' ? goPending({ id: 'x' + i }) : alert('月度安全报表 · 功能开发中')}>
+        {msgs.map((m, i) => {
+          const clickable = APPROVABLE.has(m.kind);
+          return (
+          <div key={i} className="msg-item" style={!clickable ? { cursor: 'default' } : {}}
+               onClick={() => {
+                 if (clickable) goPending({ id: 'x' + i, kind: m.kind });
+                 else if (m.kind === 'system') alert('月度安全报表 · 功能开发中');
+                 // cc 抄送类点击无操作（只读）
+               }}>
             <div className="msg-icon" style={{ background: m.bg, color: m.color }}>
               <Icon name={m.icon} size={20}/>
               {m.unread && <span className="msg-icon-badge"/>}
@@ -577,7 +463,8 @@ const TeaMsgPage = ({ onNav, goPending }) => {
               <div className="msg-preview">{m.preview}</div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </MiniProgram>
   );
@@ -611,9 +498,18 @@ const TeaMePage = ({ onNav }) => {
       </div>
 
       <div className="me-stats">
-        <div className="me-stat"><div className="n">{u.score}</div><div className="lb">安全分</div></div>
+        {(() => {
+          const pts = SCORING.tally(u.personalViolations);
+          const v = SCORING.verdict(pts, 'person');
+          return (
+            <div className="me-stat">
+              <div className="n" style={{ color: v.color }}>{pts}<span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 400 }}> / {SCORING.PERIOD_LIMITS.person}</span></div>
+              <div className="lb">本周期扣分</div>
+            </div>
+          );
+        })()}
         <div className="me-stat"><div className="n">{u.students}</div><div className="lb">指导学生</div></div>
-        <div className="me-stat"><div className="n">{u.labs}</div><div className="lb">负责实验室</div></div>
+        <div className="me-stat"><div className="n">{u.labs}</div><div className="lb">关联实验室</div></div>
       </div>
 
       <div className="wx-card" style={{ marginTop: 16 }}>
@@ -629,9 +525,9 @@ const TeaMePage = ({ onNav }) => {
             <div className="wx-cell-bd"><div className="wx-cell-bd-title">我的学生</div></div>
             <div className="wx-cell-ft arrow">{u.students} 人</div>
           </div>
-          <div className="wx-cell" onClick={() => alert('我负责的实验室 · 功能开发中')}>
+          <div className="wx-cell" onClick={() => alert('我关联的实验室 · 功能开发中')}>
             <div className="wx-cell-hd" style={{ width: 32 }}><Icon name="flask" size={18} color="#003f88"/></div>
-            <div className="wx-cell-bd"><div className="wx-cell-bd-title">我负责的实验室</div></div>
+            <div className="wx-cell-bd"><div className="wx-cell-bd-title">我关联的实验室</div></div>
             <div className="wx-cell-ft arrow">303 / 305 / 402</div>
           </div>
           <div className="wx-cell" onClick={() => alert('教学督导记录 · 功能开发中')}>
@@ -655,11 +551,7 @@ const TeaMePage = ({ onNav }) => {
             <div className="wx-cell-bd"><div className="wx-cell-bd-title">扫码进门</div></div>
             <div className="wx-cell-ft arrow"/>
           </div>
-          <div className="wx-cell" onClick={() => onNav('train')}>
-            <div className="wx-cell-hd" style={{ width: 32 }}><Icon name="book" size={18} color="#c9a961"/></div>
-            <div className="wx-cell-bd"><div className="wx-cell-bd-title">继续培训</div></div>
-            <div className="wx-cell-ft arrow">已修 4 本</div>
-          </div>
+          {/* "继续培训" 入口已删 · 教师 tabbar 无 train 路由（学生专属功能） */}
         </div>
       </div>
 
@@ -714,7 +606,7 @@ const TeaProjectPage = ({ onNav, item }) => {
       <div style={{ padding: '10px 16px 0', background: '#fff' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           <span className={'wx-tag ' + riskMeta.cls}>{riskMeta.label}</span>
-          <span className="wx-tag blue">导师审核 · 第二级</span>
+          <span className="wx-tag blue">教师审核 · 第二级</span>
         </div>
         <div style={{ fontSize: 17, fontWeight: 600, color: '#000' }}>{proj.title}</div>
         <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
@@ -820,9 +712,10 @@ const TeaProjectPage = ({ onNav, item }) => {
   );
 };
 
-// ---------- 废液接收页（HSE / 巡查员视角 · 反馈 13） ----------
+// ---------- 废液接收页（实验室管理员视角 · 反馈 13） ----------
 // 单按钮模式（仅接收登记，不审核 — HSE 必须接收所有废液）
-const TeaWastePage = ({ onNav, item }) => {
+// homePage / pendingPage prop · 跨角色复用：教师传 t-home/t-pending；管理员传 p-tasks/p-pending
+const TeaWastePage = ({ onNav, item, homePage = 't-home', pendingPage = 't-pending' }) => {
   const reports = MP.wasteReports || [];
   const w = reports.find(r => r.id === item?.wasteId) || reports.find(r => r.status === 'pending') || reports[0];
   const [note, setNote] = React.useState('');
@@ -840,21 +733,21 @@ const TeaWastePage = ({ onNav, item }) => {
           '北京京环 / 环保部直派（按废液类型自动分配）',
           '管理控制台 危化品 · 三废处置 队列',
         ]}
-        onBack={() => onNav('t-home')}
+        onBack={() => onNav(homePage)}
       />
     );
   }
 
   if (!w) {
     return (
-      <MiniProgram navTitle="废液接收" showBack onBack={() => onNav('t-home')} hideTabBar>
+      <MiniProgram navTitle="废液接收" showBack onBack={() => onNav(homePage)} hideTabBar>
         <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-3)' }}>未找到待接收报备</div>
       </MiniProgram>
     );
   }
 
   return (
-    <MiniProgram navTitle="废液固废接收" showBack onBack={() => onNav('t-pending')} hideTabBar>
+    <MiniProgram navTitle="废液固废接收" showBack onBack={() => onNav(pendingPage)} hideTabBar>
       <div style={{ padding: '10px 16px 0', background: '#fff' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           <span className="wx-tag red">{w.kind}</span>
@@ -896,7 +789,7 @@ const TeaWastePage = ({ onNav, item }) => {
       </div>
 
       <div className="mp-bottom-bar">
-        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav('t-pending')}>稍后再处理</button>
+        <button className="wx-btn gray" style={{ flex: 1 }} onClick={() => onNav(pendingPage)}>稍后再处理</button>
         <button className="wx-btn block" style={{ flex: 2 }} onClick={() => setSubmitted(true)}>
           确认接收 · 安排回收
         </button>
@@ -946,7 +839,7 @@ const TeaPurchasePage = ({ onNav, item }) => {
       <div style={{ padding: '10px 16px 0', background: '#fff' }}>
         <div style={{ display: 'flex', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           <span className="wx-tag orange">学院终审 · 第三级</span>
-          <span className="wx-tag gray">已通过导师审核</span>
+          <span className="wx-tag gray">已通过教师审核</span>
         </div>
         <div style={{ fontSize: 17, fontWeight: 600, color: '#000', lineHeight: 1.4 }}>{p.title}</div>
         <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
@@ -1022,7 +915,7 @@ const TeaPurchasePage = ({ onNav, item }) => {
   );
 };
 
-// ---------- 过夜实验审批页（导师 / 实验中心 / 副院长共用 · 反馈 10） ----------
+// ---------- 过夜实验审批页（教师 / 实验中心 / 副院长共用 · 反馈 10） ----------
 // 当前节点根据 status 自动判断：advisor-review = 导师，center-review = 实验中心，dean-review = 副院长
 const TeaNightPage = ({ onNav, item }) => {
   const list = MP.nightExperiments || [];
@@ -1034,7 +927,7 @@ const TeaNightPage = ({ onNav, item }) => {
   const [submitted, setSubmitted] = React.useState(false);
 
   const STATUS_LABEL = {
-    'advisor-review': { stage: '导师审核 · 第二级', nextRole: '实验中心' },
+    'advisor-review': { stage: '教师审核 · 第二级', nextRole: '实验中心' },
     'center-review':  { stage: '实验中心复核 · 第三级', nextRole: n?.mode === 'weekend' ? '完成立项' : '学院安全副院长' },
     'dean-review':    { stage: '学院终审 · 第四级', nextRole: '完成立项' },
   };
@@ -1172,6 +1065,6 @@ const TeaNightPage = ({ onNav, item }) => {
 
 Object.assign(window, {
   TEA_TABS, TEA_PENDING, TEA_STUDENTS,
-  TeaHomePage, TeaPendingListPage, TeaReviewPage, TeaStudentsPage, TeaMsgPage, TeaMePage,
+  TeaHomePage, TeaPendingListPage, TeaStudentsPage, TeaMsgPage, TeaMePage,
   TeaProjectPage, TeaWastePage, TeaPurchasePage, TeaNightPage,
 });

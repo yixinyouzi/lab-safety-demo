@@ -177,7 +177,7 @@ const clickable = (onClick, ariaLabel) => ({
 const MP_PROJECT_STATUS_META = {
   active:           { label: '进行中',          cls: 'green' },
   rejected:         { label: '已驳回 · 待修订', cls: 'red' },
-  'advisor-review': { label: '导师审核中',      cls: 'orange' },
+  'advisor-review': { label: '教师审核中',      cls: 'orange' },
   'center-review':  { label: '实验中心审核',    cls: 'orange' },
   'dean-review':    { label: '学院终审',        cls: 'orange' },
   closed:           { label: '已结案',          cls: 'gray' },
@@ -203,7 +203,7 @@ const MP_PENDING_KIND_META = {
 };
 
 // ============================================================
-// === TeaSubmittedView · 教师/巡查员审批提交后的反馈页（抽出共享） ====
+// === TeaSubmittedView · 教师/管理员审批提交后的反馈页（抽出共享） ====
 // 用于 TeaReviewPage / TeaProjectPage / PatAppealPage 等审批页提交后的
 // 「图标 + 标题 + 副标题 + 同步通知列表 + 可选 amber 说明」。
 // 各页只传内容、不再各自维护一份 30 行的反馈页布局。
@@ -245,7 +245,7 @@ const TeaSubmittedView = ({
 // ============================================================
 // === LabRealtimeCard · 我的实验室 · 实时看板（反馈 4） ============
 // 学生 home / 教师 home 共用：视频缩略图（mock：色相渐变 + LIVE 标识）+
-// inRoom 头像组 + 温度 + 一键呼叫负责人/巡查员（tel: 跳系统拨号）
+// inRoom 头像组 + 温度 + 一键呼叫管理员/学院 HSE（tel: 跳系统拨号）
 // 仅显示 lab.contacts 配置的角色；缺数据时降级文字提示。
 // ============================================================
 const LabRealtimeCard = ({ lab }) => {
@@ -262,6 +262,9 @@ const LabRealtimeCard = ({ lab }) => {
   const contacts = lab.contacts || [];
   const lead = contacts.find(c => c.role === 'lead');
   const inspector = contacts.find(c => c.role === 'inspector');
+  // 当前在室的工作人员（学生/在场导师）· 远程"☎ 呼叫现场"目标
+  const occupants = lab.currentOccupants || [];
+  const telHref = (phone) => 'tel:' + phone.replace(/[^0-9+]/g, '');
 
   return (
     <div className="wx-card" style={{ overflow: 'hidden' }}>
@@ -305,7 +308,7 @@ const LabRealtimeCard = ({ lab }) => {
         </div>
       </div>
 
-      {/* 实时数据 + 在室人员 */}
+      {/* 实时数据 + 在室人员（头像组从 currentOccupants 真实姓名渲染） */}
       <div style={{ padding: '10px 16px 6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: 14 }}>
           <div>
@@ -318,33 +321,50 @@ const LabRealtimeCard = ({ lab }) => {
           </div>
         </div>
         <div style={{ display: 'flex' }}>
-          {Array.from({ length: Math.min(inRoom, 3) }).map((_, i) => (
-            <div key={i} style={{
+          {occupants.slice(0, 3).map((o, i) => (
+            <div key={o.name} title={o.name + ' · ' + o.role} style={{
               width: 26, height: 26, borderRadius: '50%',
               background: `hsl(${(hue + i * 60) % 360}, 35%, 50%)`,
               color: '#fff', fontSize: 11, fontWeight: 600,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: '2px solid #fff', marginLeft: i > 0 ? -6 : 0,
-            }}>{['赵','李','张'][i] || '·'}</div>
+            }}>{o.name[0]}</div>
           ))}
           {inRoom === 0 && <div style={{ fontSize: 11, color: 'var(--text-3)' }}>暂无人员</div>}
         </div>
       </div>
 
-      {/* 通话按钮（tel: 跳拨号；当前 demo 仅展示 phone 占位） */}
-      <div style={{ padding: '8px 16px 14px', display: 'flex', gap: 8 }}>
+      {/* 现场人员可拨号行（头像组下 · 仅有人在室时显示） */}
+      {occupants.length > 0 && (
+        <div style={{ padding: '0 16px 8px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, fontSize: 12, lineHeight: 1.6 }}>
+          <span style={{ color: 'var(--text-3)', fontSize: 11 }}>呼叫现场：</span>
+          {occupants.map((o, i) => (
+            <React.Fragment key={o.name}>
+              {i > 0 && <span style={{ color: 'var(--text-3)' }}>·</span>}
+              <a href={telHref(o.phone)} style={{
+                color: 'var(--wx-green)', textDecoration: 'none',
+                padding: '1px 6px', borderRadius: 3, background: '#f0f4fa',
+                fontWeight: 500,
+              }}>☎ {o.name}</a>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+
+      {/* 外部联系：实验室管理员 + 学院 HSE（tel: 跳拨号） */}
+      <div style={{ padding: '4px 16px 14px', display: 'flex', gap: 8 }}>
         {lead ? (
-          <a href={`tel:${lead.phone.replace(/[^0-9+]/g, '')}`}
+          <a href={telHref(lead.phone)}
             className="wx-btn ghost" style={{ flex: 1, textDecoration: 'none', textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--wx-green)', borderColor: '#c4d2e8', background: '#f0f4fa' }}>
-            ☎ 呼叫 {lead.name}（{lead.role === 'lead' ? '负责人' : '巡查员'}）
+            ☎ {lead.name}（管理员）
           </a>
         ) : (
-          <div className="wx-btn ghost" style={{ flex: 1, textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--text-3)' }}>未配置负责人</div>
+          <div className="wx-btn ghost" style={{ flex: 1, textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--text-3)' }}>未配置管理员</div>
         )}
         {inspector && (
-          <a href={`tel:${inspector.phone.replace(/[^0-9+]/g, '')}`}
+          <a href={telHref(inspector.phone)}
             className="wx-btn ghost" style={{ flex: 1, textDecoration: 'none', textAlign: 'center', fontSize: 12, padding: '8px 0', color: 'var(--wx-red)', borderColor: '#fdc6c0', background: '#fff5f3' }}>
-            ☎ 呼叫巡查员
+            ☎ 学院 HSE
           </a>
         )}
       </div>

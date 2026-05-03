@@ -8,24 +8,53 @@ function ReportsPage() {
   const evSeries = [58, 72, 65, 48, 42, 31]; // violations
   const alertSeries = [18, 24, 21, 19, 14, 12];
 
-  // Violation type breakdown (for Top 违规类型)
-  const types = [
-    { k: '未戴防护装备', n: 18, color: '#dc2626' },
-    { k: '可燃试剂乱放', n: 12, color: '#d97706' },
-    { k: '单人操作', n: 9, color: '#f59e0b' },
-    { k: '废液未分类', n: 6, color: '#1e5eb5' },
-    { k: '离岗未断电', n: 5, color: '#6ba4ff' },
-    { k: '培训过期进入', n: 3, color: '#94a3b8' },
+  // 违规类型分布 · 按 PDF 5 大类聚合所有违规（events.ruleIds + people.personalViolations + labs.labViolations）
+  // 颜色：SCORING.CATEGORIES.color 是 'var(--brand)' 这类 CSS 变量，但下面 DonutChart 用 SVG fill
+  // 不接受 CSS 变量，所以这里是 SCORING.CATEGORIES.color 的 hex 镜像，改色时两处同步。
+  const CAT_COLOR = { mgmt: '#1e5eb5', elec: '#d97706', ppe: '#94a3b8', hazard: '#dc2626', env: '#16a34a' };
+  const allViolations = [
+    ...MOCK.events.filter(e => e.ruleIds).map(e => ({ ruleIds: e.ruleIds, multiplier: e.multiplier })),
+    ...MOCK.people.flatMap(p => p.personalViolations || []),
+    ...MOCK.labs.flatMap(l => l.labViolations || []),
   ];
+  const catBreakdown = SCORING.tallyByCategory(allViolations);
+  const types = SCORING.CATEGORY_ORDER.map(k => ({
+    k: SCORING.CATEGORIES[k].label, cat: k, n: catBreakdown[k], color: CAT_COLOR[k],
+  })).filter(t => t.n > 0);
   const totalType = types.reduce((s, t) => s + t.n, 0);
 
-  // Department comparison
-  const depts = [
-    { n: '材料化学系', score: 91, eventsDelta: -4, trainDone: 96, hi: true },
-    { n: '材料工程系', score: 90, eventsDelta: -1, trainDone: 95 },
-    { n: '测试中心',   score: 85, eventsDelta: -2, trainDone: 89 },
-    { n: '材料物理系', score: 62, eventsDelta: +3, trainDone: 71, lo: true },
-  ];
+  // 院系对标 · 累积扣分制：分越低越好（标兵）；高低反过来
+  const deptStats = MOCK.labs.reduce((m, l) => {
+    if (!m[l.dept]) m[l.dept] = { labPts: 0, personPts: 0, labs: 0 };
+    m[l.dept].labPts += SCORING.tally(l.labViolations);
+    m[l.dept].labs += 1;
+    return m;
+  }, {});
+  MOCK.people.forEach(p => p.labs.forEach(labId => {
+    const lab = MOCK.labs.find(l => l.id === labId);
+    if (lab && deptStats[lab.dept]) {
+      deptStats[lab.dept].personPts += SCORING.tally(p.personalViolations);
+    }
+  }));
+  // 院系待闭环违规事件数（真实 count，不再编造 trend / trainDone 占位列）
+  const deptOpenEvents = (deptName) => {
+    const labIds = MOCK.labs.filter(l => l.dept === deptName).map(l => l.id);
+    return MOCK.events.filter(e =>
+      labIds.includes(e.lab) &&
+      (e.status === 'active' || e.status === 'pending') &&
+      EVENT_KIND_META[e.kind]?.scoring
+    ).length;
+  };
+  const depts = Object.entries(deptStats)
+    .map(([n, s]) => ({
+      n,
+      score: s.labPts + s.personPts,        // 累积扣分总和（含 lab + person）
+      openEvents: deptOpenEvents(n),         // 待闭环违规事件数
+    }))
+    .sort((a, b) => a.score - b.score);     // 升序：分少（少违规）排前面 = 标兵
+  if (depts.length > 0) depts[0].hi = true;
+  if (depts.length > 1) depts[depts.length - 1].lo = true;
+  const totalDepts = depts.reduce((s, d) => s + d.score, 0);
 
   return (
     <div>
@@ -50,7 +79,7 @@ function ReportsPage() {
         <HeroStat label="本月事件总数" v="43" delta="-19%" good sub="告警 12 · 违规 31" />
         <HeroStat label="培训合规率" v="91" unit="%" delta="+3pp" good sub="应训 142 · 已训 129" />
         <HeroStat label="整改按期完成" v="88" unit="%" delta="+5pp" good sub="15 项 · 逾期 2 项" />
-        <HeroStat label="全院安全积分" v="85.6" delta="+1.2" good sub="较上月 / 学校 TOP 30%" />
+        <HeroStat label="全院累积扣分" v={String(totalDepts)} unit="分" sub={SCORING.formatPeriod(MOCK.today)} />
       </div>
 
       {/* 2. Six-month trend + violation type donut */}
@@ -70,8 +99,8 @@ function ReportsPage() {
 
         <div className="card">
           <div className="card-h">
-            <h3>违规类型 Top 6</h3>
-            <span className="meta" style={{ fontSize: 11 }}>本月共 {totalType} 条</span>
+            <h3>违规扣分 · 按 PDF 五类聚合</h3>
+            <span className="meta" style={{ fontSize: 11 }}>本周期累计 {totalType} 分</span>
           </div>
           <div className="card-body">
             <div className="rp-donut-wrap">
@@ -91,11 +120,13 @@ function ReportsPage() {
         </div>
       </div>
 
-      {/* 3. Department comparison */}
+      {/* 3. Department comparison · 累积扣分升序：少违规 = 标兵
+        * 列：排名 / 院系 / 累积扣分 / 待闭环事件 / 综合评级
+        * 移除占位 "事件环比 / 培训完成率"——它们都从 labPts 反算，三列一信息 */}
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-h">
-          <h3>院系对标 · 本月</h3>
-          <span className="meta" style={{ fontSize: 11 }}>积分 · 事件变化 · 培训完成 · 三项对比</span>
+          <h3>院系对标 · 本周期</h3>
+          <span className="meta" style={{ fontSize: 11 }}>累积扣分越少 = 越靠前 · 满分 60/lab</span>
         </div>
         <div style={{ overflow: 'auto' }}>
           <table className="tbl rp-tbl">
@@ -103,14 +134,15 @@ function ReportsPage() {
               <tr>
                 <th style={{ width: 40 }}>排名</th>
                 <th>院系</th>
-                <th>安全积分</th>
-                <th>事件环比</th>
-                <th>培训完成率</th>
+                <th>累积扣分</th>
+                <th>待闭环违规</th>
                 <th style={{ width: 120 }}>综合评级</th>
               </tr>
             </thead>
             <tbody>
-              {depts.map((d, i) => (
+              {(() => {
+                const maxPts = Math.max(1, ...depts.map(d => d.score));
+                return depts.map((d, i) => (
                 <tr key={d.n} className={d.hi ? 'rp-hi' : d.lo ? 'rp-lo' : ''}>
                   <td className="mono" style={{ textAlign: 'center', fontWeight: 700, fontSize: 15 }}>{i + 1}</td>
                   <td>
@@ -121,38 +153,57 @@ function ReportsPage() {
                   <td>
                     <div className="rp-score">
                       <div className="rp-score-bar">
-                        <div className="rp-score-fill" style={{ width: d.score + '%', background: d.score >= 85 ? '#16a34a' : d.score >= 70 ? '#d97706' : '#dc2626' }}></div>
+                        <div className="rp-score-fill" style={{ width: ((d.score / maxPts) * 100) + '%', background: d.score >= 60 ? '#dc2626' : d.score >= 30 ? '#d97706' : '#16a34a' }}></div>
                       </div>
                       <span className="num rp-score-v">{d.score}</span>
                     </div>
                   </td>
                   <td>
-                    <span className={'rp-delta mono ' + (d.eventsDelta < 0 ? 'good' : d.eventsDelta > 0 ? 'bad' : 'neu')}>
-                      {d.eventsDelta < 0 ? '↓ ' + Math.abs(d.eventsDelta) : d.eventsDelta > 0 ? '↑ ' + d.eventsDelta : '— 0'}
-                    </span>
+                    {d.openEvents > 0
+                      ? <span className="chip chip-amber">{d.openEvents} 件待办</span>
+                      : <span className="meta">— 无</span>}
                   </td>
                   <td>
-                    <div className="rp-score">
-                      <div className="rp-score-bar">
-                        <div className="rp-score-fill" style={{ width: d.trainDone + '%', background: '#1e5eb5' }}></div>
-                      </div>
-                      <span className="num rp-score-v">{d.trainDone}%</span>
-                    </div>
-                  </td>
-                  <td>
-                    {d.score >= 90 ? <span className="chip chip-green">A · 优秀</span>
-                    : d.score >= 80 ? <span className="chip chip-brand">B · 良好</span>
-                    : d.score >= 70 ? <span className="chip chip-amber">C · 合格</span>
+                    {d.score === 0 ? <span className="chip chip-green">A · 优秀</span>
+                    : d.score < 15 ? <span className="chip chip-brand">B · 良好</span>
+                    : d.score < 30 ? <span className="chip chip-amber">C · 合格</span>
                     : <span className="chip chip-red">D · 待整改</span>}
                   </td>
                 </tr>
-              ))}
+                ));
+              })()}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* 4. Monthly report preview */}
+      {/* 4. 当前周期扣分排行（人员 / 实验室 双栏） · 复用 page-scoring 的 RankCard */}
+      <div className="grid-2" style={{ gap: 16, marginTop: 16 }}>
+        <RankCard
+          title="人员扣分排行"
+          sub={'本周期 · ' + SCORING.formatPeriod(MOCK.today)}
+          rows={MOCK.people.map(p => {
+            const pts = SCORING.tally(p.personalViolations);
+            return { id: p.id, name: p.name, role: p.role, dept: p.dept,
+                     points: pts, verdict: SCORING.verdict(pts, 'person') };
+          }).filter(r => r.points > 0).sort((a, b) => b.points - a.points)}
+          ceiling={SCORING.PERIOD_LIMITS.person}
+          subjectKey="人员"
+        />
+        <RankCard
+          title="实验室扣分排行"
+          sub={'本周期 · ' + SCORING.formatPeriod(MOCK.today)}
+          rows={MOCK.labs.map(l => {
+            const pts = SCORING.tally(l.labViolations);
+            return { id: l.id, name: l.name, role: l.dept, dept: '管理员 ' + l.lead,
+                     points: pts, verdict: SCORING.verdict(pts, 'lab') };
+          }).filter(r => r.points > 0).sort((a, b) => b.points - a.points)}
+          ceiling={SCORING.PERIOD_LIMITS.lab}
+          subjectKey="实验室"
+        />
+      </div>
+
+      {/* 5. Monthly report preview */}
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-h">
           <h3>4 月月报预览 · 一键生成</h3>

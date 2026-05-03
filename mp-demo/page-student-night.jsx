@@ -4,7 +4,7 @@
 // ============================================================
 
 const NIGHT_STATUS_MP = {
-  'advisor-review': { label: '导师审核中',     cls: 'orange' },
+  'advisor-review': { label: '教师审核中',     cls: 'orange' },
   'center-review':  { label: '实验中心复核中', cls: 'orange' },
   'dean-review':    { label: '学院终审中',     cls: 'orange' },
   approved:         { label: '已批准',         cls: 'blue' },
@@ -193,10 +193,10 @@ const StuNightFormPage = ({ onNav }) => {
         <div className="wx-card-title">同行人员 *（≥1 位）</div>
         <div style={{ padding: '4px 16px 16px' }}>
           <input value={accompany} onChange={e => setAccompany(e.target.value)}
-            placeholder="如：李思远（同组博三）、陈延松（夜班巡查员）"
+            placeholder="如：李思远（同组博三）、陈延松（夜班管理员）"
             style={{ width: '100%', border: '1px solid var(--line)', borderRadius: 8, padding: 10, fontSize: 14, outline: 'none' }} />
           <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 6, lineHeight: 1.6 }}>
-            过夜实验严禁单人操作；如同行人为非同实验室，须先在巡查员处登记。
+            过夜实验严禁单人操作；如同行人为非同实验室，须先在管理员处登记。
           </div>
         </div>
       </div>

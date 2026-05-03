@@ -87,7 +87,7 @@ function buildPeopleCompliance() {
     p05: { coursesDone: 4, coursesRequired: 5, expiring: 1, expired: 0, status: '即将到期' }, // 钱雨桐
     p06: { coursesDone: 6, coursesRequired: 6, expiring: 0, expired: 0, status: '合规' },     // 赵振华 导师
     p07: { coursesDone: 5, coursesRequired: 6, expiring: 1, expired: 0, status: '即将到期' }, // 周景明 导师
-    p08: { coursesDone: 6, coursesRequired: 6, expiring: 0, expired: 0, status: '合规' },     // 王玉鸿 巡查
+    p08: { coursesDone: 6, coursesRequired: 6, expiring: 0, expired: 0, status: '合规' },     // 王玉鸿 实验室管理员
   };
   return MOCK.people.map(p => ({ ...p, ...(map[p.id] || {}) }));
 }

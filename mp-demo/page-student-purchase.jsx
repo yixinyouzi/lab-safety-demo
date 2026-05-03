@@ -4,7 +4,7 @@
 // ============================================================
 
 const PURCHASE_STATUS_MP = {
-  'advisor-review': { label: '导师审核中',     cls: 'orange' },
+  'advisor-review': { label: '教师审核中',     cls: 'orange' },
   'college-review': { label: '学院终审中',     cls: 'orange' },
   approved:         { label: '已批准 · 待下单', cls: 'blue' },
   delivered:        { label: '已到货',         cls: 'green' },

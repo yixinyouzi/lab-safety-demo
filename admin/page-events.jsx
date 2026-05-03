@@ -15,7 +15,7 @@ function EventsPage({ onOpenEvent }) {
       <div className="page-h">
         <div>
           <div className="page-title">事件中心</div>
-          <div className="page-sub">实时告警 · 重大违规 · 检查扣分 · 巡查记录 · 整改跟进 · 无人值守 — 统一时间流，所有处理动作留痕。</div>
+          <div className="page-sub">实时告警 · 重大违规 · 检查扣分 · 管理记录 · 整改跟进 · 无人值守 — 统一时间流，所有处理动作留痕。</div>
         </div>
         <div className="row">
           <button className="btn">批量导出</button>

@@ -126,7 +126,7 @@ function HazardPanel({ hz, onClose }) {
               <div style={{ fontSize: 14, fontWeight: 600 }}>
                 <span className="mono">{hz.labId}</span> · {hz.labName}
               </div>
-              <div className="meta" style={{ marginTop: 4 }}>{hz.labDept} · 负责人 {hz.labLead}</div>
+              <div className="meta" style={{ marginTop: 4 }}>{hz.labDept} · 管理员 {hz.labLead}</div>
             </div>
           </div>
 

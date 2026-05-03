@@ -14,7 +14,7 @@ const StuProjectListPage = ({ onNav }) => {
     <MiniProgram navTitle="我的实验项目" showBack onBack={() => onNav('home')} hideTabBar>
       <div style={{ padding: '12px 16px 4px', background: '#fff' }}>
         <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>
-          高风险项目须经 导师 / 实验中心 / 学院 三级审批；中/低风险走快速通道。
+          高风险项目须经 教师 / 实验中心 / 学院 三级审批；中/低风险走快速通道。
           每个项目登记后，门牌会自动同步状态。
         </div>
       </div>
@@ -257,7 +257,7 @@ const StuProjectSentPage = ({ onNav }) => {
           系统已根据风险等级分配审批链
         </div>
         <div style={{ marginTop: 16, padding: 12, background: '#f7f7f7', borderRadius: 8, textAlign: 'left', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.7 }}>
-          ① 导师审核（24h 内响应）<br/>
+          ① 教师审核（24h 内响应）<br/>
           ② 中/高风险 → 实验中心备案<br/>
           ③ 高风险 → 学院安全副院长终审<br/>
           ④ 通过后立项 · 门牌自动同步项目状态<br/>

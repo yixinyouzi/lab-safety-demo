@@ -30,7 +30,11 @@
 // ============================================================
 
 window.MP = {
-  // 当前用户（学生视角）
+  // 三端时间基准 · 与 admin/mock.js 的 MOCK.today 对齐（2026 春周期）
+  today: '2026-04-21',
+
+  // 当前用户（学生视角）· 累积扣分制（PDF 试行版）
+  // permLimited / yellowCard 由 SCORING.verdict(SCORING.tally(personalViolations), 'person').tier === 'rectifying' 派生，不再显式存
   student: {
     id: 'S2021013',
     name: '张一凡',
@@ -38,22 +42,25 @@ window.MP = {
     role: '学生',
     dept: '材料学院',
     grade: '研究生 · 材料工程',
-    advisor: '李建国',
-    score: 78,
-    scoreTrend: -2,
-    yellowCard: true, // 挂黄牌中
-    permLimited: true,
+    advisor: '赵振华',
     trainingPending: 1,
+    // 本周期累积扣分 → 12 分（已挂牌，权限暂停）
+    // 3 条违规都是"学生个人行为"语义（避免 mgmt-3 这类实验室管理责任落到学生头上）
+    personalViolations: [
+      { ruleIds: ['elec-6'], time: '2026-03-12' },                              // 3 分 · 早期：小型电器使用完毕未关闭开关
+      { ruleIds: ['ppe-1'],  time: '2026-03-25' },                              // 3 分 · 早期：未穿戴防护
+      { ruleIds: ['hazard-5'], time: '2026-04-15', eventId: 'V20260415-018' }, // 6 分 · 当前：危险实验无人值守
+    ], // = 12 分 → rectifying（挂牌 / 准入证扣留 / 48 学时学习 + 考试）
     pendingSteps: [
-      { id: 'study', label: '完成安全培训', done: false },
-      { id: 'quiz', label: '通过考试', done: false },
-      { id: 'rectify', label: '整改拍照上传', done: false },
+      { id: 'study', label: '完成 48 学时安全学习', done: false },
+      { id: 'quiz',  label: '通过安全知识考试',     done: false },
+      { id: 'rectify', label: '整改拍照上传',       done: false },
     ],
   },
 
   teacher: {
     id: 'T2018001',
-    name: '李建国',
+    name: '赵振华',
     avatar: '李',
     role: '教师',
     dept: '材料学院',
@@ -61,20 +68,23 @@ window.MP = {
     labs: 3,
     myLabIds: ['302', '312', '410'],   // 反馈 4 · 教师 home 实时看板列表
     students: 12,
-    score: 92,
+    personalViolations: [],            // 0 分 → normal
     pending: 1,
   },
 
+  // 实验室管理员（学院级 HSE，分管 4 间核心实验室 · 此前称"巡查员"，已合并）
+  // 三角色重构（反馈）：学生 / 教师 / 实验室管理员（合并原"巡查员"+"管理员"）
   patrol: {
     id: 'P2020007',
     name: '王玉鸿',
     avatar: '王',
-    role: '巡查员',
-    dept: '材料学院 · 安全办',
+    role: '实验室管理员',
+    dept: '材料学院 · 实验中心',
     months: 18,
     totalLogs: 142,
     thisMonth: 12,
     rank: 2,
+    myLabIds: ['302', '410', 'A208', '312'],   // 实时看板：管辖的核心实验室
   },
 
   // 今日预约 / 课表
@@ -96,8 +106,8 @@ window.MP = {
       id: 'MSG001',
       type: 'violation',
       title: '违规通知',
-      preview: '您于 3月7日 22:40 在材料楼 303 被登记违规，扣 2 分。请查看详情并根据指引完成整改。',
-      time: '3月8日 09:12',
+      preview: '您于 4月15日 22:40 在材料楼 303 被登记违规（危险源管控 四-5），扣 6 分，累积达 12 分挂牌。请按指引完成 48 学时学习 + 考试。',
+      time: '4月16日 09:12',
       unread: true,
       icon: 'warn',
       iconColor: '#d4453a',
@@ -108,7 +118,7 @@ window.MP = {
       type: 'training',
       title: '安全培训提醒',
       preview: '您的账号已触发培训要求：请在 3 天内完成《实验室基础安全》课程并通过考试，未完成将持续暂停门禁权限。',
-      time: '3月8日 09:13',
+      time: '4月16日 09:13',
       unread: true,
       icon: 'book',
       iconColor: '#c9a961',
@@ -119,7 +129,7 @@ window.MP = {
       type: 'system',
       title: '系统通知',
       preview: '您的门禁权限已暂停。完成培训 + 考试 + 整改拍照后自动恢复。',
-      time: '3月8日 09:13',
+      time: '4月16日 09:13',
       unread: false,
       icon: 'info',
       iconColor: '#4a6fa5',
@@ -128,9 +138,9 @@ window.MP = {
     {
       id: 'MSG004',
       type: 'lab',
-      title: '李建国 老师',
-      preview: '[预约审核] 你的 3月10日 高温烧结实验预约已通过审核，请按时到达。',
-      time: '3月6日 16:40',
+      title: '赵振华 老师',
+      preview: '[预约审核] 你的 4月23日 高温烧结实验预约已通过审核，请按时到达。',
+      time: '4月20日 16:40',
       unread: false,
       icon: 'mentor',
       iconColor: '#003f88',
@@ -139,35 +149,38 @@ window.MP = {
   ],
 
   // 当前违规详情
-  // timeline 是动态切片：当前是「学生已申诉 · 导师待补充事实」
-  // 实际生产中 current 由后端按节点推进，本 demo 静态展示
+  // timeline 是动态切片：当前是「学生已申诉 · 实验室管理员待复核」
+  // 反馈重构：教师不再参与违规流程任何环节；驳回权全在实验室管理员
+  // 扣分由 ruleIds + multiplier 反算（SCORING.tally）；不再写死 deducted
   violation: {
-    id: 'V20250307-018',
-    title: '夜间单人作业超时 · 未报备',
-    type: '人员行为',
-    severity: '中',
+    id: 'V20260415-018',
+    title: '夜间单人作业 · 高温实验无人值守',
     lab: '材料楼 303 · 高温烧结实验室',
-    time: '2025-03-07 22:40',
+    time: '2026-04-15 22:40',
     inspector: '王玉鸿',
-    deducted: 2,
+    ruleIds: ['hazard-5'],   // 危险源管控 四-5：实验操作过程无人值守，特别是危险实验（高温高压等）
+    multiplier: 1,
+    waived: false,
     description:
-      '2025-03-07 22:40，管道内人脸识别超出 20:00 单人作业上限，且未提交夜间加班报备。现场照片显示 1 人独自操作烧结炉，违反《实验室夜间作业管理规定》第 4.2 条。',
+      '2026-04-15 22:40，门禁人脸识别记录显示当事人独自在烧结炉前操作，超出 20:00 单人作业上限且未提交夜间报备。' +
+      '现场照片确认 1 人独立监视高温烧结炉，符合《实验室违规扣分细则》危险源管控类第 5 条情形。',
     photos: [
       { label: '现场 · 单人作业' },
       { label: '门禁日志截图' },
       { label: '设备状态照片' },
     ],
     studentAppeal: '当晚 22:00 后实验已基本结束，仅在等待样品冷却期间取出过一次。同组同学 21:55 离开前已确认设备状态，未感觉存在风险，未及时申报夜间作业。',
-    advisorClarify: '李建国 · 经核实学生当晚确为单人作业，但实验性质（烧结炉冷却阶段）并非高温危险，建议综合考虑情节从轻处理。',
     timeline: [
-      { time: '03-07 22:40', title: '系统告警',     desc: '门禁识别：单人作业超时 2h40min', done: true },
-      { time: '03-07 22:55', title: '巡查员到场',   desc: '王玉鸿 现场核实、拍照取证', done: true },
-      { time: '03-08 09:12', title: '违规登记',     desc: '评定扣 2 分 · 挂黄牌 · 暂停门禁权限', done: true },
-      { time: '03-08 10:05', title: '学生申诉',     desc: '张一凡 已提交申诉理由及证据（48h 内）', done: true },
-      { time: '—',           title: '导师事实补充', desc: '李建国 老师 · 仅核实事实 / 补充情况，不判决', current: true },
-      { time: '—',           title: '巡查员复核',   desc: '实验中心王玉鸿 · 终审：支持申诉 / 驳回申诉' },
-      { time: '—',           title: '终审结论',     desc: '支持 → 撤销违规；驳回 → 进入整改' },
-      { time: '—',           title: '完成整改 + 培训', desc: '触发权限恢复' },
+      { time: '04-15 22:40', title: '系统告警',         desc: '门禁识别：单人作业超时 2h40min', done: true },
+      { time: '04-15 22:55', title: '管理员到场',       desc: '王玉鸿 现场核实、拍照取证', done: true },
+      { time: '04-16 09:12', title: '违规登记',         desc: '危险源管控 四-5 · 单条扣 6 分 · 累积达 12 → 挂牌、暂停门禁', done: true },
+      { time: '04-16 10:05', title: '学生申诉',         desc: '张一凡 已提交申诉理由及证据（48h 内）', done: true },
+      { time: '—',           title: '实验室管理员复核', desc: '实验中心王玉鸿 · 终审：支持申诉 / 驳回申诉', current: true },
+      { time: '—',           title: '终审结论',         desc: '支持 → 撤销违规、解封门禁、本案归档；驳回 → 进入下方 3 步整改流程' },
+      // —— 以下为「驳回」分支 ——
+      { time: '—',           title: '完成学习 + 考试',   desc: '48 学时安全学习 · 通过考试' },
+      { time: '—',           title: '上传整改证据',     desc: '现场整改照片 ≥ 3 张 + 同组签字' },
+      { time: '—',           title: '管理员验收 + 恢复门禁', desc: '王玉鸿 复检通过 → 清零本周期累积分、发还准入证' },
     ],
   },
 
@@ -251,7 +264,7 @@ window.MP = {
       q: '发现同学在实验室独自进行高温实验且未报备，应如何处理？',
       options: [
         '不管，让他自己处理',
-        '立即劝阻并报告导师或巡查员',
+        '立即劝阻并报告教师或实验室管理员',
         '帮他一起做，避免出事',
         '等他做完再私下提醒',
       ],
@@ -293,44 +306,68 @@ window.MP = {
       type: 'normal',
       title: '整改复检 · 王磊案',
       lab: '材料楼 402',
-      desc: '复核 3月5日 登记的废液标签缺失整改结果',
+      desc: '复核 4月12日 登记的废液标签缺失整改结果',
       time: '17:30',
       tags: ['复检'],
     },
   ],
 
-  // 巡查员历史记录
-  patrolHistory: [
-    { id: 'V20250307-018', title: '夜间单人作业超时', who: '张一凡', lab: '材料楼 303', time: '3月7日', score: -2, status: 'appealed' },
-    { id: 'V20250305-014', title: '废液标签缺失', who: '王磊', lab: '材料楼 402', time: '3月5日', score: -1, status: 'rectifying' },
-    { id: 'V20250303-009', title: '未佩戴护目镜', who: '刘梓萱', lab: '材料楼 207', time: '3月3日', score: -1, status: 'closed' },
-    { id: 'V20250301-005', title: '危化品柜未落锁', who: '—', lab: '材料楼 305', time: '3月1日', score: -3, status: 'rectifying' },
+  // 实验室管理员待审工作台 · 三类下放事项（appeal / rectify / waste）
+  // 这部分原在教师 TEA_PENDING，按权责重构挪到管理员端
+  patrolPending: [
+    {
+      id: 'AP-V20260415-018',
+      kind: 'appeal',
+      title: '张一凡 · 夜间单人作业申诉',
+      sub: '扣 6 分 · 4月15日 22:40 · 材料楼 303 · 累积 12 分挂牌',
+      time: '8 分钟前',
+      tag: '申诉复核',
+      tagCls: 'red',
+      urgent: true,
+    },
+    {
+      id: 'AP-RECT-011',
+      kind: 'rectify',
+      title: '王磊 · 废液标签整改复核',
+      sub: '已上传 4 张照片 · 等待现场签字',
+      time: '昨天 16:20',
+      tag: '整改验收',
+      tagCls: 'gold',
+    },
+    {
+      id: 'AP-WR-2026-02',
+      kind: 'waste',
+      title: '张一凡 · 剧毒废液 (含氟) 0.5 L',
+      sub: 'A208 · 硅基底刻蚀剩余 HF · 须双人交接',
+      time: '20 分钟前',
+      tag: '废液接收',
+      tagCls: 'green',
+      wasteId: 'wr-2026-02',
+    },
   ],
 
-  // 常见违规类型（登记时多选）
-  violationTypes: [
-    { id: 'late-alone', label: '夜间单人作业' },
-    { id: 'no-ppe', label: '未佩戴 PPE' },
-    { id: 'unreported', label: '未报备操作' },
-    { id: 'chem-open', label: '试剂瓶敞开' },
-    { id: 'chem-nolock', label: '危化柜未落锁' },
-    { id: 'waste-label', label: '废液标签缺失' },
-    { id: 'eat-drink', label: '实验区饮食' },
-    { id: 'gas-unfixed', label: '气瓶未固定' },
-    { id: 'hot-unattended', label: '加热设备无人值守' },
-    { id: 'messy', label: '台面凌乱' },
-    { id: 'door-open', label: '安全门长开' },
-    { id: 'other', label: '其他' },
+  // 巡查员历史记录 · 每条挂 ruleIds，扣分由 SCORING.tally 反算（不再写死 score）
+  patrolHistory: [
+    { id: 'V20260415-018', title: '夜间单人作业 · 无人值守', who: '张一凡', lab: '材料楼 303', time: '4月15日', ruleIds: ['hazard-5'], status: 'appealed' },
+    { id: 'V20260412-014', title: '废液标签缺失',           who: '王磊',   lab: '材料楼 402', time: '4月12日', ruleIds: ['hazard-4'], status: 'rectifying' },
+    { id: 'V20260410-009', title: '未佩戴护目镜',           who: '刘梓萱', lab: '材料楼 207', time: '4月10日', ruleIds: ['ppe-1'],    status: 'closed' },
+    { id: 'V20260408-005', title: '危化品摆放未按规定',     who: '—',      lab: '材料楼 305', time: '4月8日',  ruleIds: ['mgmt-4'],   status: 'rectifying' },
   ],
 
   // 实验室精简版（仅学生只读视图字段；与 admin/labs 字段子集一致）
   // 反馈 4 · 实时看板：inRoom / temp / contacts / camHue（视频缩略图色相）
   labs: [
-    { id: '302', name: '电化学与储能材料实验室', dept: '材料化学系', lead: '赵振华',
+    { id: '302', name: '电化学与储能材料实验室', dept: '材料化学系', lead: '周建国',
       inRoom: 3, temp: 22.2, camHue: 210,
       contacts: [
-        { role: 'lead', name: '赵振华', phone: '135-1206-6602' },
+        { role: 'lead', name: '周建国', phone: '135-1206-6602' },
         { role: 'inspector', name: '王玉鸿', phone: '135-1206-6688' },
+      ],
+      // 当前在室的工作人员 · 巡查员/导师远程"☎ 呼叫现场"目标
+      currentOccupants: [
+        { name: '王语嫣', role: '研24', phone: '138-0801-1001' },
+        { name: '林嘉树', role: '研23', phone: '138-0801-1002' },
+        { name: '周明远', role: '研24', phone: '138-0801-1003' },
       ],
       hazards: ['腐蚀','火灾','爆炸','中毒','高压'],
       hazardSources: [
@@ -338,56 +375,65 @@ window.MP = {
         { id: 'hs-302-02', kind: 'chemical', name: '锂金属箔 50 g', severity: 'critical', ppe: ['防护眼镜','阻燃实验服'] },
         { id: 'hs-302-03', kind: 'electrical', name: '电化学工作站 CHI760E', severity: 'warning', ppe: ['绝缘鞋'] },
       ] },
-    { id: '410', name: '功能材料合成实验室', dept: '材料物理系', lead: '周景明',
+    { id: '410', name: '功能材料合成实验室', dept: '材料物理系', lead: '刘卫平',
       inRoom: 0, temp: 24.1, camHue: 0,
       contacts: [
-        { role: 'lead', name: '周景明', phone: '135-1206-7301' },
+        { role: 'lead', name: '刘卫平', phone: '135-1206-7301' },
         { role: 'inspector', name: '王玉鸿', phone: '135-1206-6688' },
       ],
+      currentOccupants: [],   // 整改中关停 · 0 人在室
       hazards: ['火灾','爆炸','高温','中毒'],
       hazardSources: [
         { id: 'hs-410-01', kind: 'physical', name: '管式炉 GSL-1700X', severity: 'critical', ppe: ['耐高温手套','防护面屏'] },
         { id: 'hs-410-02', kind: 'gas', name: '氢气钢瓶 40 L', severity: 'critical', ppe: ['静电手环'] },
         { id: 'hs-410-03', kind: 'chemical', name: '三氯化磷 500 mL', severity: 'critical', ppe: ['全面型防毒面具'] },
       ] },
-    { id: 'A208', name: '色质联用与有机分析室', dept: '测试中心', lead: '钱雨桐',
+    { id: 'A208', name: '色质联用与有机分析室', dept: '测试中心', lead: '黄文明',
       inRoom: 2, temp: 26.8, camHue: 25,
       contacts: [
-        { role: 'lead', name: '钱雨桐', phone: '135-1206-8403' },
+        { role: 'lead', name: '黄文明', phone: '135-1206-8403' },
         { role: 'inspector', name: '王玉鸿', phone: '135-1206-6688' },
+      ],
+      currentOccupants: [
+        { name: '孙静怡', role: '研23', phone: '138-0801-2001' },
+        { name: '林炳辉', role: '研24', phone: '138-0801-2002' },
       ],
       hazards: ['火灾','中毒','高温'],
       hazardSources: [
         { id: 'hs-A208-01', kind: 'chemical', name: '氢氟酸 500 mL', severity: 'critical', ppe: ['HF 专用手套','全面型防毒面具'] },
         { id: 'hs-A208-02', kind: 'chemical', name: '乙腈 4 L', severity: 'warning', ppe: ['丁腈手套'] },
       ] },
-    { id: '105', name: 'X 射线衍射分析室', dept: '测试中心', lead: '孙学明',
+    { id: '105', name: 'X 射线衍射分析室', dept: '测试中心', lead: '黄文明',
       hazards: ['辐射','高压'],
       hazardSources: [
         { id: 'hs-105-01', kind: 'radiation', name: 'X 射线源 (Cu Kα)', severity: 'critical', ppe: ['辐射剂量计'] },
       ] },
-    { id: '207', name: '扫描电镜测试室', dept: '测试中心', lead: '李雪茹',
+    { id: '207', name: '扫描电镜测试室', dept: '测试中心', lead: '黄文明',
       hazards: ['高压','辐射'],
       hazardSources: [
         { id: 'hs-207-01', kind: 'electrical', name: 'SEM 加速电压 30 kV', severity: 'warning', ppe: ['绝缘鞋'] },
       ] },
-    { id: '312', name: '手套箱与惰性气氛实验室', dept: '材料化学系', lead: '赵振华',
+    { id: '312', name: '手套箱与惰性气氛实验室', dept: '材料化学系', lead: '周建国',
       inRoom: 2, temp: 23.5, camHue: 270,
       contacts: [
-        { role: 'lead', name: '赵振华', phone: '135-1206-6602' },
+        { role: 'lead', name: '周建国', phone: '135-1206-6602' },
         { role: 'inspector', name: '王玉鸿', phone: '135-1206-6688' },
+      ],
+      currentOccupants: [
+        { name: '张子轩', role: '研24', phone: '138-0801-3001' },
+        { name: '刘梓萱', role: '研22', phone: '138-0801-3002' },
       ],
       hazards: ['爆炸','低温','缺氧'],
       hazardSources: [
         { id: 'hs-312-01', kind: 'chemical', name: '锂金属（手套箱内）', severity: 'critical', ppe: ['丁腈手套'] },
         { id: 'hs-312-02', kind: 'physical', name: '液氮杜瓦瓶 50 L', severity: 'warning', ppe: ['低温手套','防护面屏'] },
       ] },
-    { id: '216', name: '材料力学性能测试室', dept: '材料工程系', lead: '黄志刚',
+    { id: '216', name: '材料力学性能测试室', dept: '材料工程系', lead: '王宝华',
       hazards: ['机械','噪声','高压'],
       hazardSources: [
         { id: 'hs-216-01', kind: 'mechanical', name: '万能试验机 100 kN', severity: 'warning', ppe: ['防护眼镜','安全鞋'] },
       ] },
-    { id: 'B105', name: '生物材料细胞培养室', dept: '材料化学系', lead: '周明',
+    { id: 'B105', name: '生物材料细胞培养室', dept: '材料化学系', lead: '周建国',
       hazards: ['生物','腐蚀'],
       hazardSources: [
         { id: 'hs-B105-01', kind: 'biological', name: '大肠杆菌 K-12（BSL-1）', severity: 'warning', ppe: ['一次性手套','实验服','口罩'] },
@@ -435,7 +481,7 @@ window.MP = {
       status: 'college-review', currentStep: 2,
       timeline: [
         { time: '04-22 10:00', title: '学生申请', desc: '张一凡 提交采购清单 + 用途说明', done: true },
-        { time: '04-22 14:30', title: '导师审核', desc: '赵振华 审核通过 · 备注「分批领用」', done: true },
+        { time: '04-22 14:30', title: '教师审核', desc: '赵振华 审核通过 · 备注「分批领用」', done: true },
         { time: '—',           title: '学院安全负责人终审', desc: '李雪茹 待审核 · 浓硫酸 ≥ 1 L 须学院签字', current: true },
         { time: '—',           title: '采购下单',     desc: '通过后 24h 内挂学院招采系统' },
         { time: '—',           title: '到货入库',     desc: 'HSE 验收 + 双锁柜入账' },
@@ -449,7 +495,7 @@ window.MP = {
       status: 'approved', currentStep: 4,
       timeline: [
         { time: '04-15 09:30', title: '学生申请',   desc: '张一凡 提交采购清单', done: true },
-        { time: '04-15 11:00', title: '导师审核',   desc: '赵振华 审核通过', done: true },
+        { time: '04-15 11:00', title: '教师审核',   desc: '赵振华 审核通过', done: true },
         { time: '04-15 16:00', title: '学院终审',   desc: '常规耗材免学院审 · 自动通过', done: true },
         { time: '04-16 10:00', title: '采购下单',   desc: '已对接学院招采系统', done: true },
         { time: '04-19 14:00', title: '到货入库',   desc: 'HSE 验收 · A208 易燃柜入账', done: true },
@@ -466,12 +512,12 @@ window.MP = {
       mode: 'weekday',
       scope: '高温烧结后样品需在 800°C 下持续 6h 后自然降温至 50°C 以下方可取出',
       sop: '工艺已通过项目 proj-2026-01 学院终审 · 此次仅延长无人值守时段 · 现场配双人值班',
-      accompanies: ['李思远（同组博三）', '陈延松（夜班巡查员）'],
+      accompanies: ['李思远（同组博三）', '陈延松（夜班实验室管理员）'],
       emergency: '炉温异常报警 → 联系赵振华（135-1206-6602）+ 王玉鸿（135-1206-6688）',
       status: 'dean-review', currentStep: 3,
       timeline: [
         { time: '04-25 14:00', title: '学生申请',         desc: '张一凡 提交过夜申请 + SOP + 应急预案', done: true },
-        { time: '04-25 16:30', title: '导师审核',         desc: '赵振华 已签字 · 双人值班已落实', done: true },
+        { time: '04-25 16:30', title: '教师审核',         desc: '赵振华 已签字 · 双人值班已落实', done: true },
         { time: '04-26 10:00', title: '实验中心复核',     desc: '王玉鸿 现场核对消防器材 + 通风', done: true },
         { time: '—',           title: '学院安全副院长终审', desc: '李雪茹 待审 · 高风险过夜须院级签字', current: true },
         { time: '—',           title: '准予立项 · 自动同步门禁', desc: '门牌切「高风险作业」状态' },
@@ -489,7 +535,7 @@ window.MP = {
       status: 'advisor-review', currentStep: 1,
       timeline: [
         { time: '04-27 11:00', title: '学生申请',     desc: '张一凡 提交周末过夜 + SOP', done: true },
-        { time: '—',           title: '导师审核',     desc: '赵振华 待签字（剩 36h）', current: true },
+        { time: '—',           title: '教师审核',     desc: '赵振华 待签字（剩 36h）', current: true },
         { time: '—',           title: '实验中心复核', desc: '周末节假日仅 3 级 · 中风险通常自动通过' },
         { time: '—',           title: '准予立项',     desc: '通过后自动同步门禁' },
       ],
@@ -511,7 +557,7 @@ window.MP = {
       estimatedEnd: '2026-04-28 16:30',
       timeline: [
         { time: '03-15 09:00', title: '学生申请',     desc: '已提交项目申请书 + SOP v3.2', done: true },
-        { time: '03-16 11:20', title: '导师审核',     desc: '赵振华 已签字 · 危险源核实通过', done: true },
+        { time: '03-16 11:20', title: '教师审核',     desc: '赵振华 已签字 · 危险源核实通过', done: true },
         { time: '03-18 14:30', title: '实验中心审核', desc: '王玉鸿 现场核对危化品库存与 PPE', done: true },
         { time: '03-20 10:00', title: '学院终审',     desc: '安全副院长签字 · 准予立项', done: true },
         { time: '04-21 14:00', title: '项目进行中',   desc: '当前在 302 · 实验阶段 4/6', current: true },
@@ -530,7 +576,7 @@ window.MP = {
       rejectReason: 'SOP 中未说明氟系添加剂应急处置流程，请补充后重新提交。',
       timeline: [
         { time: '04-10 14:30', title: '学生申请',     desc: '提交申请书 v0.9', done: true },
-        { time: '04-11 09:00', title: '导师审核 · 驳回', desc: '赵振华 · SOP 缺少氟系应急处置', done: true },
+        { time: '04-11 09:00', title: '教师审核 · 驳回', desc: '赵振华 · SOP 缺少氟系应急处置', done: true },
         { time: '—',           title: '修订重提',     desc: '请补充 SOP 后重新发起', current: true },
       ],
     },

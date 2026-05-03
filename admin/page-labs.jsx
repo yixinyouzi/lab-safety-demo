@@ -9,7 +9,7 @@ function LabsPage({ onOpenLab }) {
       <div className="page-h">
         <div>
           <div className="page-title">实验室台账</div>
-          <div className="page-sub">全院 {MOCK.labs.length} 间实验室 · 每间有完整的危险类别、设备、负责人与培训要求档案</div>
+          <div className="page-sub">全院 {MOCK.labs.length} 间实验室 · 每间有完整的危险类别、设备、管理员与培训要求档案</div>
         </div>
         <div className="row">
           <button className="btn">导出 Excel</button>
@@ -41,7 +41,7 @@ function LabsPage({ onOpenLab }) {
                   <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.01em' }}>
                     <span className="mono">{l.id}</span> · {l.name}
                   </div>
-                  <div className="meta" style={{ marginTop: 2 }}>{l.dept} · 负责人 {l.lead}</div>
+                  <div className="meta" style={{ marginTop: 2 }}>{l.dept} · 管理员 {l.lead}</div>
                 </div>
                 {statusChip(l.status)}
               </div>
@@ -55,9 +55,9 @@ function LabsPage({ onOpenLab }) {
                   <span>👥 在室 <strong className="num">{l.inRoom}</strong> · 今日 {l.today} 人次</span>
                 </div>
                 <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="meta">安全积分</span>
-                  <span style={{ fontWeight: 700, color: l.score >= 85 ? 'var(--green)' : l.score >= 60 ? 'var(--amber)' : 'var(--red)' }}>
-                    <span className="num">{l.score}</span> / 100
+                  <span className="meta">周期累积扣分</span>
+                  <span style={{ fontWeight: 700, color: SCORING.verdict(SCORING.tally(l.labViolations), 'lab').color }}>
+                    <span className="num">{SCORING.tally(l.labViolations)}</span> / {SCORING.PERIOD_LIMITS.lab}
                   </span>
                 </div>
                 {l.note && <div style={{ marginTop: 8, padding: '6px 10px', background: 'var(--bg)', borderRadius: 4, fontSize: 11, color: 'var(--ink-2)' }}>💬 {l.note}</div>}
@@ -72,25 +72,28 @@ function LabsPage({ onOpenLab }) {
               <tr>
                 <th style={{ width: 80 }}>编号</th>
                 <th>实验室</th>
-                <th>负责人</th>
+                <th>管理员</th>
                 <th>危险类别</th>
                 <th>状态</th>
-                <th>积分</th>
+                <th>累积扣分</th>
                 <th>在室</th>
               </tr>
             </thead>
             <tbody>
-              {labs.map(l => (
+              {labs.map(l => {
+                const pts = SCORING.tally(l.labViolations);
+                return (
                 <tr key={l.id} onClick={() => onOpenLab(l)}>
                   <td className="mono"><strong>{l.id}</strong></td>
                   <td><strong>{l.name}</strong><div className="meta">{l.dept}</div></td>
                   <td>{l.lead}</td>
                   <td><div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>{l.hazards.slice(0,3).map(h => <span key={h} className="chip chip-gray">{h}</span>)}</div></td>
                   <td>{statusChip(l.status)}</td>
-                  <td className="num">{l.score}</td>
+                  <td className="num" style={{ color: SCORING.verdict(pts, 'lab').color, fontWeight: 600 }}>{pts}<span className="meta"> / {SCORING.PERIOD_LIMITS.lab}</span></td>
                   <td className="num">{l.inRoom}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

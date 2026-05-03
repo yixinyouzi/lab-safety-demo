@@ -37,6 +37,11 @@ function EventRow({ ev, onClick }) {
       <div>
         <div className="ev-title">
           <span className="chip chip-gray" style={{ marginRight: 6 }}>{ev.lab}</span>
+          {ev.ruleIds && (
+            <span className="chip chip-amber" style={{ marginRight: 6 }}>
+              扣 {SCORING.tally([{ ruleIds: ev.ruleIds, multiplier: ev.multiplier }])} 分
+            </span>
+          )}
           {ev.title}
         </div>
         <div className="ev-detail">{ev.detail}</div>
@@ -78,7 +83,7 @@ function InboxPage({ onOpenEvent, onOpenLab }) {
         </div>
         <div className="row">
           <button className="btn">导出日报</button>
-          <button className="btn btn-primary">+ 新建巡查记录</button>
+          <button className="btn btn-primary">+ 新建管理记录</button>
         </div>
       </div>
 

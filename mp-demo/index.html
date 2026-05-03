@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="stylesheet" href="styles.css?v=30">
 <style>
   /* —— 单机模式下的舞台 —— */
   .solo-stage {
@@ -85,17 +85,18 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-<script src="mock.js?v=15"></script>
-<script type="text/babel" src="components.jsx?v=15"></script>
-<script type="text/babel" src="page-login.jsx?v=15"></script>
-<script type="text/babel" src="page-student.jsx?v=15"></script>
-<script type="text/babel" src="page-student-detail.jsx?v=15"></script>
-<script type="text/babel" src="page-student-project.jsx?v=15"></script>
-<script type="text/babel" src="page-student-waste.jsx?v=15"></script>
-<script type="text/babel" src="page-student-purchase.jsx?v=15"></script>
-<script type="text/babel" src="page-student-night.jsx?v=15"></script>
-<script type="text/babel" src="page-teacher.jsx?v=15"></script>
-<script type="text/babel" src="page-patrol.jsx?v=15"></script>
+<script src="../lib/scoring-rules.js?v=30"></script>
+<script src="mock.js?v=30"></script>
+<script type="text/babel" src="components.jsx?v=30"></script>
+<script type="text/babel" src="page-login.jsx?v=30"></script>
+<script type="text/babel" src="page-student.jsx?v=30"></script>
+<script type="text/babel" src="page-student-detail.jsx?v=30"></script>
+<script type="text/babel" src="page-student-project.jsx?v=30"></script>
+<script type="text/babel" src="page-student-waste.jsx?v=30"></script>
+<script type="text/babel" src="page-student-purchase.jsx?v=30"></script>
+<script type="text/babel" src="page-student-night.jsx?v=30"></script>
+<script type="text/babel" src="page-teacher.jsx?v=30"></script>
+<script type="text/babel" src="page-patrol.jsx?v=30"></script>
 
 <script type="text/babel">
 // ============================================================
@@ -115,7 +116,7 @@ const ROLE_DEFAULT_PAGE = {
 const ROLE_LABEL = {
   student: { cn: '学生', icon: '👤' },
   teacher: { cn: '教师 / 导师', icon: '🎓' },
-  patrol:  { cn: '巡查员', icon: '📋' },
+  patrol:  { cn: '实验室管理员', icon: '📋' },
 };
 
 function SoloPhone() {
@@ -157,10 +158,13 @@ function SoloPhone() {
   };
 
   // 教师 → 审批项传递（按 kind 路由）
+  // 教师只审 5 类「学生实验申请」：booking/chem/project/purchase/night
+  // 申诉(appeal)/整改(rectify)/废液(waste) 已下放实验室管理员，不在教师路由
+  // booking/chem 暂无专门审批页 → fallback 到 t-pending 让教师在列表里点开详情
   const goPending = (item) => {
     setPendingItem(item);
-    const KIND_TO_PAGE = { project: 't-project', waste: 't-waste', purchase: 't-purchase', night: 't-night' };
-    setPage(KIND_TO_PAGE[item?.kind] || 't-review');
+    const KIND_TO_PAGE = { project: 't-project', purchase: 't-purchase', night: 't-night' };
+    setPage(KIND_TO_PAGE[item?.kind] || 't-pending');
   };
 
   // ========== 渲染当前页 ==========
@@ -203,32 +207,41 @@ function SoloPhone() {
       <>
         {page === 't-home' && <TeaHomePage onNav={nav} goPending={goPending} />}
         {page === 't-pending' && <TeaPendingListPage onNav={nav} goPending={goPending} />}
-        {page === 't-review' && <TeaReviewPage onNav={nav} item={pendingItem} />}
         {page === 't-project' && <TeaProjectPage onNav={nav} item={pendingItem} />}
-        {page === 't-waste' && <TeaWastePage onNav={nav} item={pendingItem} />}
+        {/* 废液接收(t-waste) 已下放实验室管理员 · 教师路由移除；TeaWastePage 函数代码暂留待迁移 */}
         {page === 't-purchase' && <TeaPurchasePage onNav={nav} item={pendingItem} />}
         {page === 't-night' && <TeaNightPage onNav={nav} item={pendingItem} />}
         {page === 't-students' && <TeaStudentsPage onNav={nav} />}
         {page === 't-msg' && <TeaMsgPage onNav={nav} goPending={goPending} />}
         {page === 't-me' && <TeaMePage onNav={nav} />}
-        {/* 教师复用学生的 book / scan / train */}
-        {page === 'book' && <StuBookPage onNav={nav} />}
-        {page === 'scan' && <StuScanPage onNav={nav} />}
-        {page === 'scan-result' && <StuScanResultPage onNav={nav} />}
-        {page === 'train' && <StuTrainPage onNav={nav} />}
-        {page === 'course-detail' && <StuCourseDetailPage onNav={nav} />}
+        {/* 教师复用学生的 book / scan · 跨角色 prop：tabItems / homePage / showStudentCta */}
+        {page === 'book' && <StuBookPage onNav={nav} tabItems={TEA_TABS} />}
+        {page === 'scan' && <StuScanPage onNav={nav} homePage="t-home" />}
+        {page === 'scan-result' && <StuScanResultPage onNav={nav} showStudentCta={false} />}
+        {/* train / course-detail 是学生专属（教师 tabbar 无此入口），路由删除避免误访问 */}
       </>
     );
   } else if (role === 'patrol') {
+    // 实验室管理员路由 · 待审三类下放：appeal / rectify / waste
+    // waste 复用教师文件里 TeaWastePage 函数（已 export 到 window，等迁移到 patrol 文件再独立）
+    const goPatPending = (item) => {
+      setPendingItem(item);
+      setPage(PAT_KIND_TO_PAGE[item?.kind] || 'p-tasks');
+    };
     phone = (
       <>
-        {page === 'p-tasks' && <PatTasksPage onNav={nav} />}
+        {page === 'p-tasks' && <PatTasksPage onNav={nav} goPending={goPatPending} />}
+        {page === 'p-pending' && <PatPendingListPage onNav={nav} goPending={goPatPending} />}
         {page === 'p-log' && <PatLogPage onNav={nav} />}
         {page === 'p-log-done' && <PatLogDonePage onNav={nav} />}
         {page === 'p-history' && <PatHistoryPage onNav={nav} />}
         {page === 'p-appeal' && <PatAppealPage onNav={nav} />}
+        {page === 'p-rectify' && <PatRectifyPage onNav={nav} item={pendingItem} />}
+        {/* 复用 TeaWastePage · 传 p-tasks/p-pending 让管理员返回不会跳到教师页 */}
+        {page === 'p-waste' && <TeaWastePage onNav={nav} item={pendingItem} homePage="p-tasks" pendingPage="p-pending" />}
         {page === 'p-me' && <PatMePage onNav={nav} />}
-        {page === 'violation' && <StuViolationPage onNav={nav} />}
+        {/* 复用 StuViolationPage · readOnly 隐藏学生动作按钮，homePage 返回管理员历史记录 */}
+        {page === 'violation' && <StuViolationPage onNav={nav} readOnly homePage="p-history" />}
       </>
     );
   }
@@ -255,7 +268,7 @@ function MultiPreview({ onExit }) {
     const [page, setPage] = React.useState(initial);
     const [pendingItem, setPendingItem] = React.useState(null);
     const nav = (p) => setPage(p);
-    const goPending = (item) => { setPendingItem(item); const KP = { project: 't-project', waste: 't-waste', purchase: 't-purchase', night: 't-night' }; setPage(KP[item?.kind] || 't-review'); };
+    const goPending = (item) => { setPendingItem(item); const KP = { project: 't-project', purchase: 't-purchase', night: 't-night' }; setPage(KP[item?.kind] || 't-pending'); };
     let body;
     if (page === 'login') body = <LoginPage onLogin={() => {}} />;
     else if (role === 'student') body = (
@@ -292,9 +305,8 @@ function MultiPreview({ onExit }) {
       <>
         {page === 't-home' && <TeaHomePage onNav={nav} goPending={goPending} />}
         {page === 't-pending' && <TeaPendingListPage onNav={nav} goPending={goPending} />}
-        {page === 't-review' && <TeaReviewPage onNav={nav} item={pendingItem} />}
         {page === 't-project' && <TeaProjectPage onNav={nav} item={pendingItem} />}
-        {page === 't-waste' && <TeaWastePage onNav={nav} item={pendingItem} />}
+        {/* 废液接收(t-waste) 已下放实验室管理员 · 教师路由移除；TeaWastePage 函数代码暂留待迁移 */}
         {page === 't-purchase' && <TeaPurchasePage onNav={nav} item={pendingItem} />}
         {page === 't-night' && <TeaNightPage onNav={nav} item={pendingItem} />}
         {page === 't-students' && <TeaStudentsPage onNav={nav} />}
@@ -328,7 +340,6 @@ function MultiPreview({ onExit }) {
       { initial: 'msg', role: 'student', label: '③ 消息中心 · 违规通知' },
       { initial: 'violation', role: 'student', label: '④ 违规详情 + 申诉入口' },
       { initial: 't-home', role: 'teacher', label: '⑤ 导师首页 · 待审工作台' },
-      { initial: 't-review', role: 'teacher', label: '⑥ 导师复核申诉 · 驳回' },
       { initial: 'course-detail', role: 'student', label: '⑦ 安全培训 · 课程详情' },
       { initial: 'quiz', role: 'student', label: '⑧ 课后考试' },
       { initial: 'rectify', role: 'student', label: '⑨ 整改拍照上传' },
@@ -345,7 +356,6 @@ function MultiPreview({ onExit }) {
     teacher: [
       { initial: 't-home', role: 'teacher', label: '教师首页' },
       { initial: 't-pending', role: 'teacher', label: '待审工作台' },
-      { initial: 't-review', role: 'teacher', label: '复核申诉' },
       { initial: 't-students', role: 'teacher', label: '我的学生' },
       { initial: 't-msg', role: 'teacher', label: '消息中心' },
       { initial: 't-me', role: 'teacher', label: '我的' },

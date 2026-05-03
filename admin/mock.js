@@ -2,18 +2,23 @@
 
 /* === Schema 同构 · admin / mp-demo / doorplate 三端共享语义 ==================
  * labs[i]:   { id, name, dept, lead, status, level, nextInspection,
- *              temp, humidity, score, inRoom, today, hazards, note?, deadline?,
- *              hazardSources[], vacationAuth?[] }
+ *              temp, humidity, inRoom, today, hazards, note?, deadline?,
+ *              hazardSources[], vacationAuth?[], labViolations[] }
  *   status:  'normal' | 'warning' | 'rectifying'   （三档，仅此三档）
  *   level:   1 | 2                                  （一级周检 / 二级月检）
+ *   labViolations[i]: { ruleIds, time, eventId?, personId?, multiplier?, waived? }
+ *     由 SCORING.tally(lab.labViolations) 反算累积扣分；状态由 verdict() 派生。
+ *     废弃旧 lab.score 字段（100 分制），新口径见 lib/scoring-rules.js。
  *   vacationAuth[i]: { studentId, studentName, fromDate, toDate, dayOnly,
  *                      grantedBy, grantedAt }
  *     寒暑假白名单（反馈 11）· 仅日间 dayOnly=true 表示禁止夜间进入
  * events[i]: { id, kind, severity, lab, time, title, detail, status,
- *              actors?, counter?, progress? }
+ *              actors?, counter?, progress?, ruleIds?, multiplier?, subjectPersonId? }
  *   kind:    见下方 EVENT_KIND_META（单一真相源）
  *   severity:'critical' | 'warning' | 'info'
  *   status:  'active' | 'pending' | 'rectifying' | 'handled' | 'done'
+ *   ruleIds: 触发的扣分规则 id 数组（仅 EVENT_KIND_META[kind].scoring=true 必填）
+ *           UI 拼"扣 X 分"由 SCORING.tally() 反算，title 不写死分值。
  * hazardSources[i]: { id, kind, name, location, severity, ppe[], emergency, lastCheck }
  *   kind:    见下方 HAZARD_KIND_META
  *   severity:'critical' | 'warning' | 'info'
@@ -54,7 +59,7 @@ const HAZARD_KINDS_ORDER = ['chemical', 'physical', 'biological', 'radiation', '
 /* === PROJECT_STATUS_META / PROJECT_RISK_META · 实验项目元数据 ============== */
 const PROJECT_STATUS_META = {
   draft:           { label: '草稿',     color: 'var(--ink-3)', chipCls: 'chip-gray' },
-  'advisor-review':{ label: '导师审核', color: 'var(--amber)', chipCls: 'chip-amber' },
+  'advisor-review':{ label: '教师审核', color: 'var(--amber)', chipCls: 'chip-amber' },
   'center-review': { label: '实验中心', color: 'var(--amber)', chipCls: 'chip-amber' },
   'dean-review':   { label: '学院终审', color: 'var(--amber)', chipCls: 'chip-amber' },
   active:          { label: '进行中',   color: 'var(--brand)', chipCls: 'chip-brand' },
@@ -73,10 +78,11 @@ const MOCK = {
   me: { name: '李雪茹', role: '管理员 · 学院 HSE', dept: '材料科学与工程学院', avatar: '李' },
   labs: [
     {
-      id: '302', name: '电化学与储能材料实验室', dept: '材料化学系', lead: '赵振华',
+      id: '302', name: '电化学与储能材料实验室', dept: '材料化学系', lead: '周建国',
       status: 'normal', level: 1, nextInspection: '2026-04-28',
-      temp: 22.2, humidity: 59, score: 92, inRoom: 3, today: 14,
+      temp: 22.2, humidity: 59, inRoom: 3, today: 14,
       hazards: ['腐蚀','火灾','爆炸','中毒','高压'], note: '',
+      labViolations: [], // 0 分 → normal
       hazardSources: [
         { id: 'hs-302-01', kind: 'chemical', name: '浓硫酸 1 L', location: '302 · 危化柜 #1',
           severity: 'critical', ppe: ['丁腈手套', '防护面屏', '耐酸围裙'],
@@ -94,11 +100,21 @@ const MOCK = {
       ],
     },
     {
-      id: '410', name: '功能材料合成实验室', dept: '材料物理系', lead: '周景明',
+      id: '410', name: '功能材料合成实验室', dept: '材料物理系', lead: '刘卫平',
       status: 'rectifying', level: 1, nextInspection: '2026-04-28',
-      temp: 24.1, humidity: 52, score: 48, inRoom: 0, today: 2,
+      temp: 24.1, humidity: 52, inRoom: 0, today: 2,
       hazards: ['火灾','爆炸','高温','中毒'],
       note: '违规积分触发关闭门禁，整改至 04-28', deadline: '2026-04-28',
+      labViolations: [
+        { ruleIds: ['hazard-7'], time: '2026-03-20' },                             // 12 分（私改实验室布局）
+        { ruleIds: ['hazard-9'], time: '2026-04-01' },                             // 12 分（管式炉无操作规程）
+        { ruleIds: ['hazard-1'], time: '2026-04-05' },                             // 6 分（不按规定使用危险设备）
+        { ruleIds: ['mgmt-3'],   time: '2026-03-12' },                             // 3 分（缺管理台账）
+        { ruleIds: ['env-2'],    time: '2026-03-15', personId: 'p03' },            // 6 分（往下水道排废液）
+        { ruleIds: ['hazard-5'], time: '2026-04-10' },                             // 6 分（高温实验无人值守）
+        { ruleIds: ['ppe-4'],    time: '2026-03-25', personId: 'p03' },            // 9 分（机械类无防护）
+        { ruleIds: ['hazard-6'], time: '2026-04-21', personId: 'p01', eventId: 'ev-02' }, // 6 分（炉周易燃物）
+      ], // = 60 分 → rectifying（关停整改）· 注：避免 mgmt-9「拒不整改」与 status=rectifying 自相矛盾
       hazardSources: [
         { id: 'hs-410-01', kind: 'physical', name: '管式炉 GSL-1700X', location: '410 · 工位 1',
           severity: 'critical', ppe: ['耐高温手套', '防护面屏', '阻燃实验服'],
@@ -112,11 +128,18 @@ const MOCK = {
       ],
     },
     {
-      id: 'A208', name: '色质联用与有机分析室', dept: '测试中心', lead: '钱雨桐',
+      id: 'A208', name: '色质联用与有机分析室', dept: '测试中心', lead: '黄文明',
       status: 'warning', level: 2, nextInspection: '2026-05-21',
-      temp: 26.8, humidity: 65.4, score: 78, inRoom: 2, today: 6,
+      temp: 26.8, humidity: 65.4, inRoom: 2, today: 6,
       hazards: ['火灾','中毒','高温'],
       note: '挥发性气体浓度偏高，通风已加强',
+      labViolations: [
+        { ruleIds: ['hazard-9'], time: '2026-04-05' },              // 12 分（GC-MS 无规程）
+        { ruleIds: ['hazard-4'], time: '2026-04-10' },              // 6 分（化学品标签不清）
+        { ruleIds: ['hazard-1'], time: '2026-04-12' },              // 6 分（设备使用隐患）
+        { ruleIds: ['env-4'],    time: '2026-04-15' },              // 3 分（通风延迟开启）
+        { ruleIds: ['mgmt-3'],   time: '2026-03-20' },              // 3 分（无台账）
+      ], // = 30 分 → warning（黄区）
       hazardSources: [
         { id: 'hs-A208-01', kind: 'chemical', name: '氢氟酸 500 mL', location: 'A208 · 剧毒柜（双锁）',
           severity: 'critical', ppe: ['HF 专用手套', '全面型防毒面具', '耐酸围裙'],
@@ -130,11 +153,18 @@ const MOCK = {
       ],
     },
     {
-      id: '105', name: 'X 射线衍射分析室', dept: '测试中心', lead: '孙学明',
+      id: '105', name: 'X 射线衍射分析室', dept: '测试中心', lead: '黄文明',
       status: 'warning', level: 2, nextInspection: '2026-05-21',
-      temp: 21.5, humidity: 48, score: 80, inRoom: 1, today: 3,
+      temp: 21.5, humidity: 48, inRoom: 1, today: 3,
       hazards: ['辐射','高压'],
       note: '单人操作告警 · 已通知',
+      labViolations: [
+        { ruleIds: ['hazard-9'], time: '2026-04-01' },              // 12 分（XRD 高压无规程）
+        { ruleIds: ['mgmt-9'],   time: '2026-04-05' },              // 12 分（未按期整改）
+        { ruleIds: ['hazard-5'], time: '2026-04-15' },              // 6 分（无人值守）
+        { ruleIds: ['ppe-5'],    time: '2026-03-20' },              // 3 分（高压设备未穿绝缘鞋）
+        { ruleIds: ['mgmt-3'],   time: '2026-03-15' },              // 3 分（无台账）
+      ], // = 36 分 → warning（黄区）
       hazardSources: [
         { id: 'hs-105-01', kind: 'radiation', name: 'X 射线源 (Cu Kα)', location: '105 · XRD 主仓',
           severity: 'critical', ppe: ['辐射剂量计', '铅围裙（备用）'],
@@ -145,10 +175,11 @@ const MOCK = {
       ],
     },
     {
-      id: '207', name: '扫描电镜测试室', dept: '测试中心', lead: '李雪茹',
+      id: '207', name: '扫描电镜测试室', dept: '测试中心', lead: '黄文明',
       status: 'normal', level: 2, nextInspection: '2026-05-21',
-      temp: 22.0, humidity: 45, score: 96, inRoom: 1, today: 2,
+      temp: 22.0, humidity: 45, inRoom: 1, today: 2,
       hazards: ['高压','辐射'],
+      labViolations: [], // 0 分 → normal
       hazardSources: [
         { id: 'hs-207-01', kind: 'electrical', name: 'SEM 加速电压 30 kV', location: '207 · 主机',
           severity: 'warning', ppe: ['绝缘鞋'],
@@ -159,10 +190,11 @@ const MOCK = {
       ],
     },
     {
-      id: '312', name: '手套箱与惰性气氛实验室', dept: '材料化学系', lead: '赵振华',
+      id: '312', name: '手套箱与惰性气氛实验室', dept: '材料化学系', lead: '周建国',
       status: 'normal', level: 2, nextInspection: '2026-05-21',
-      temp: 23.5, humidity: 30, score: 94, inRoom: 2, today: 8,
+      temp: 23.5, humidity: 30, inRoom: 2, today: 8,
       hazards: ['爆炸','低温','缺氧'],
+      labViolations: [], // 0 分 → normal
       hazardSources: [
         { id: 'hs-312-01', kind: 'chemical', name: '锂金属（手套箱内）', location: '312 · 手套箱 A',
           severity: 'critical', ppe: ['丁腈手套（手套箱）', '防护眼镜'],
@@ -182,10 +214,11 @@ const MOCK = {
       ],
     },
     {
-      id: '216', name: '材料力学性能测试室', dept: '材料工程系', lead: '黄志刚',
+      id: '216', name: '材料力学性能测试室', dept: '材料工程系', lead: '王宝华',
       status: 'normal', level: 2, nextInspection: '2026-05-21',
-      temp: 24.0, humidity: 50, score: 90, inRoom: 1, today: 4,
+      temp: 24.0, humidity: 50, inRoom: 1, today: 4,
       hazards: ['机械','噪声','高压'],
+      labViolations: [], // 0 分 → normal
       hazardSources: [
         { id: 'hs-216-01', kind: 'mechanical', name: '万能试验机 100 kN', location: '216 · 工位 1',
           severity: 'warning', ppe: ['防护眼镜', '安全鞋'],
@@ -196,10 +229,11 @@ const MOCK = {
       ],
     },
     {
-      id: 'B105', name: '生物材料细胞培养室', dept: '材料化学系', lead: '周明',
+      id: 'B105', name: '生物材料细胞培养室', dept: '材料化学系', lead: '周建国',
       status: 'normal', level: 2, nextInspection: '2026-05-21',
-      temp: 25.0, humidity: 55, score: 88, inRoom: 2, today: 5,
+      temp: 25.0, humidity: 55, inRoom: 2, today: 5,
       hazards: ['生物','腐蚀'],
+      labViolations: [], // 0 分 → normal
       hazardSources: [
         { id: 'hs-B105-01', kind: 'biological', name: '大肠杆菌 K-12（BSL-1）', location: 'B105 · 生物安全柜',
           severity: 'warning', ppe: ['一次性手套', '实验服', '口罩'],
@@ -211,17 +245,17 @@ const MOCK = {
     },
   ],
   events: [
-    { id: 'ev-01', kind: 'alert',      severity: 'critical', lab: 'A208', time: '今日 14:32', title: '长时驻留 10 小时', detail: '孙静怡 · 进入时间 04:30 · 单人连续工作', actors: ['已通知 导师', '未通知 HSE'], status: 'active', counter: '升级倒计时 07:12' },
-    { id: 'ev-02', kind: 'inspection', severity: 'warning',  lab: '410',  time: '今日 10:23', title: '管式炉周围堆放可燃试剂 · 周检扣 5 分', detail: '违规者 李浩然（累计 -12 分 黄牌）· 检查人 王玉鸿（一级周检发现）', status: 'pending', counter: '申诉期剩 59h' },
-    { id: 'ev-03', kind: 'rectify',    severity: 'info',     lab: '410',  time: '04-19',     title: '整改期 · 剩 3 天', detail: '周景明已提交整改报告（8 张照片）· 待你现场签字', progress: 80, status: 'pending', counter: '04-28 截止' },
-    { id: 'ev-04', kind: 'inspection', severity: 'warning',  lab: '302',  time: '昨日 16:08', title: '未戴护目镜操作酸液 · 季检扣 3 分', detail: '违规者 王语嫣 · 检查人 王玉鸿（学校季度检查发现）', status: 'rectifying' },
-    { id: 'ev-05', kind: 'alert',      severity: 'warning',  lab: '105',  time: '昨日 22:15', title: '单人夜间操作（禁止独自）', detail: '孙学明 · 已远程语音提醒', status: 'handled' },
-    { id: 'ev-06', kind: 'alert',      severity: 'info',     lab: '207',  time: '04-19 12:05', title: '烟感报警（焊接作业误报）', detail: '3 分钟内确认处置', status: 'handled' },
-    { id: 'ev-07', kind: 'patrol',     severity: 'info',     lab: 'A208', time: '04-18',     title: '废液桶未分类 · 巡查记录', detail: '钱雨桐已现场重新分类 · 不扣分（日常巡查仅留痕）', status: 'done' },
-    { id: 'ev-08', kind: 'rectify',    severity: 'info',     lab: '302',  time: '04-10',     title: '电化学工作站接地线松动 整改完成', detail: '赵振华签字 · 复检合格', status: 'done' },
-    { id: 'ev-09', kind: 'unattended', severity: 'critical', lab: '410',  time: '今日 13:42', title: '反应炉运行中 · 0 人在室', detail: '李浩然 13:24 离开 · 实验「催化合成 #3」未停止 · 已 18 分钟', actors: ['已通知 周景明', '已通知 王玉鸿'], status: 'active', counter: '升级倒计时 02:00' },
-    { id: 'ev-10', kind: 'inspection', severity: 'info',     lab: '302',  time: '04-28',     title: '一级实验室 · 周检即将到达（剩 7 天）', detail: '检查人 王玉鸿 · 重点：危化柜双锁 / 管式炉周边 / 通风柜负载', status: 'pending', counter: '04-28 09:00 截止' },
-    { id: 'ev-11', kind: 'patrol',     severity: 'info',     lab: 'A208', time: '昨日 11:20', title: '试剂瓶标签褪色 · 巡查记录', detail: '已现场提醒钱雨桐重新标注 · 不扣分', status: 'handled' },
+    { id: 'ev-01', kind: 'alert',      severity: 'critical', lab: 'A208', time: '今日 14:32', title: '长时驻留 10 小时', detail: '孙静怡 · 进入时间 04:30 · 单人连续工作', actors: ['已通知 黄文明（A208 管理员）', '未通知 HSE'], status: 'active', counter: '升级倒计时 07:12' },
+    { id: 'ev-02', kind: 'inspection', severity: 'warning',  lab: '410',  time: '今日 10:23', title: '管式炉周围堆放可燃试剂',     detail: '违规者 李浩然 · 检查人 王玉鸿（一级周检发现）',                       ruleIds: ['hazard-6'],         subjectPersonId: 'p01', status: 'pending', counter: '申诉期剩 59h' },
+    { id: 'ev-03', kind: 'rectify',    severity: 'info',     lab: '410',  time: '04-19',     title: '整改期 · 剩 3 天',           detail: '周景明已提交整改报告（8 张照片）· 待你现场签字',                  progress: 80, status: 'pending', counter: '04-28 截止' },
+    { id: 'ev-04', kind: 'inspection', severity: 'warning',  lab: '302',  time: '昨日 16:08', title: '未戴护目镜操作酸液',         detail: '违规者 王语嫣 · 检查人 王玉鸿（学校季度检查发现）',                  ruleIds: ['ppe-1'],            subjectPersonId: 'p02', status: 'rectifying' },
+    { id: 'ev-05', kind: 'alert',      severity: 'warning',  lab: '105',  time: '昨日 22:15', title: '单人夜间操作（禁止独自）',     detail: '孙学明 · 已远程语音提醒',                                            status: 'handled' },
+    { id: 'ev-06', kind: 'alert',      severity: 'info',     lab: '207',  time: '04-19 12:05', title: '烟感报警（焊接作业误报）',    detail: '3 分钟内确认处置',                                                   status: 'handled' },
+    { id: 'ev-07', kind: 'patrol',     severity: 'info',     lab: 'A208', time: '04-18',     title: '废液桶未分类 · 巡查记录',     detail: '钱雨桐已现场重新分类 · 不扣分（日常巡查仅留痕）',                    status: 'done' },
+    { id: 'ev-08', kind: 'rectify',    severity: 'info',     lab: '302',  time: '04-10',     title: '电化学工作站接地线松动 整改完成', detail: '赵振华签字 · 复检合格',                                              status: 'done' },
+    { id: 'ev-09', kind: 'unattended', severity: 'critical', lab: '410',  time: '今日 13:42', title: '反应炉运行中 · 0 人在室',      detail: '李浩然 13:24 离开 · 实验「催化合成 #3」未停止 · 已 18 分钟',         actors: ['已通知 周景明', '已通知 王玉鸿'], status: 'active', counter: '升级倒计时 02:00' },
+    { id: 'ev-10', kind: 'inspection', severity: 'info',     lab: '302',  time: '04-28',     title: '一级实验室 · 周检即将到达（剩 7 天）', detail: '检查人 王玉鸿 · 重点：危化柜双锁 / 管式炉周边 / 通风柜负载',         status: 'pending', counter: '04-28 09:00 截止' },
+    { id: 'ev-11', kind: 'patrol',     severity: 'info',     lab: 'A208', time: '昨日 11:20', title: '试剂瓶标签褪色 · 巡查记录',     detail: '已现场提醒钱雨桐重新标注 · 不扣分',                                  status: 'handled' },
   ],
   projects: [
     {
@@ -233,7 +267,7 @@ const MOCK = {
       estimatedEnd: '2026-04-28 16:30',
       timeline: [
         { time: '03-15 09:00', title: '学生申请',     desc: '张一凡 提交项目申请书 + SOP v3.2', done: true },
-        { time: '03-16 11:20', title: '导师审核',     desc: '赵振华 已签字 · 危险源核实通过', done: true },
+        { time: '03-16 11:20', title: '教师审核',     desc: '赵振华 已签字 · 危险源核实通过', done: true },
         { time: '03-18 14:30', title: '实验中心审核', desc: '王玉鸿 现场核对危化品库存与 PPE 配置', done: true },
         { time: '03-20 10:00', title: '学院终审',     desc: '安全副院长签字 · 准予立项', done: true },
         { time: '04-21 14:00', title: '项目进行中',   desc: '当前在 302 · 实验阶段 4/6 · 双人在场', current: true },
@@ -249,9 +283,9 @@ const MOCK = {
       estimatedEnd: '2026-05-30',
       timeline: [
         { time: '04-19 16:00', title: '学生申请', desc: '王语嫣 提交申请书 + SOP v1.0', done: true },
-        { time: '—',           title: '导师审核', desc: '赵振华 待签字（剩 22h）', current: true },
+        { time: '—',           title: '教师审核', desc: '赵振华 待签字（剩 22h）', current: true },
         { time: '—',           title: '实验中心备案', desc: '中风险项目 · 仅备案不需现场核验' },
-        { time: '—',           title: '准予立项',   desc: '导师审核通过即生效' },
+        { time: '—',           title: '准予立项',   desc: '教师审核通过即生效' },
       ],
     },
     {
@@ -263,21 +297,53 @@ const MOCK = {
       estimatedEnd: '2026-04-10',
       timeline: [
         { time: '03-25 10:00', title: '学生申请', desc: '孙静怡 提交常规测试申请', done: true },
-        { time: '03-25 11:30', title: '导师审核', desc: '李雪茹 当日签字（低风险走快速通道）', done: true },
+        { time: '03-25 11:30', title: '教师审核', desc: '李雪茹 当日签字（低风险走快速通道）', done: true },
         { time: '04-08 09:00', title: '项目进行中', desc: '完成 12 个样品测试', done: true },
         { time: '04-10 17:00', title: '结案归档',   desc: '数据已提交 · 项目关闭', done: true },
       ],
     },
   ],
+  // people[i]: { id, name, role, dept, labs, training, personalViolations[] }
+  //   personalViolations[i]: { ruleIds, time, eventId?, multiplier?, waived? }
+  //   累积扣分由 SCORING.tally(p.personalViolations) 反算；status/黄牌等档位由 verdict() 派生。
+  //   废弃旧 score / status / violations 三字段（100 分制）。
   people: [
-    { id: 'p01', name: '李浩然', role: '学生',   dept: '材料研24',  labs: ['410'],       score: 78,  status: '黄牌', violations: 2, training: 'valid' },
-    { id: 'p02', name: '王语嫣', role: '学生',   dept: '材料研24',  labs: ['302'],       score: 89,  status: '正常', violations: 1, training: 'valid' },
-    { id: 'p03', name: '赵梓豪', role: '学生',   dept: '材料研23',  labs: ['410'],       score: 72,  status: '黄牌', violations: 3, training: 'expiring' },
-    { id: 'p04', name: '孙静怡', role: '学生',   dept: '测试中心',  labs: ['A208'],      score: 95,  status: '正常', violations: 0, training: 'valid' },
-    { id: 'p05', name: '钱雨桐', role: '学生',   dept: '测试中心',  labs: ['A208'],      score: 72,  status: '黄牌', violations: 3, training: 'valid' },
-    { id: 'p06', name: '赵振华', role: '导师',   dept: '材料化学系', labs: ['302','312'], score: 100, status: '正常', violations: 0, training: 'valid' },
-    { id: 'p07', name: '周景明', role: '导师',   dept: '材料物理系', labs: ['410'],       score: 88,  status: '正常', violations: 1, training: 'valid' },
-    { id: 'p08', name: '王玉鸿', role: '巡查员', dept: '学院 HSE',   labs: ['*'],         score: 100, status: '正常', violations: 0, training: 'valid' },
+    // 李浩然 · 410 整改实验室核心违规者：12+6=18 分 → 挂牌
+    { id: 'p01', name: '李浩然', role: '学生', dept: '材料研24', labs: ['410'], training: 'valid',
+      personalViolations: [
+        { ruleIds: ['mgmt-6'],   time: '2026-03-15' }, // 12 分（实验室饮食）
+        { ruleIds: ['hazard-6'], time: '2026-04-21', eventId: 'ev-02' }, // 6 分（炉周易燃物）
+      ] },
+    // 王语嫣 · 302 普通违规：3 分 → 正常
+    { id: 'p02', name: '王语嫣', role: '学生', dept: '材料研24', labs: ['302'], training: 'valid',
+      personalViolations: [
+        { ruleIds: ['ppe-1'], time: '2026-04-20', eventId: 'ev-04' }, // 3 分（未戴护目镜）
+      ] },
+    // 赵梓豪 · 410 多次违规：6+6+1=13 分 → 挂牌
+    { id: 'p03', name: '赵梓豪', role: '学生', dept: '材料研23', labs: ['410'], training: 'expiring',
+      personalViolations: [
+        { ruleIds: ['env-2'],  time: '2026-03-10' }, // 6 分（往下水道排废液）
+        { ruleIds: ['ppe-2'],  time: '2026-03-20' }, // 6 分（凉拖鞋做实验）
+        { ruleIds: ['mgmt-2'], time: '2026-04-05' }, // 1 分（卫生差）
+      ] },
+    // 孙静怡 · 测试中心 0 违规
+    { id: 'p04', name: '孙静怡', role: '学生', dept: '测试中心', labs: ['A208'], training: 'valid', personalViolations: [] },
+    // 钱雨桐 · 测试中心 3 次小违规：3+3+3=9 分 → 警示
+    { id: 'p05', name: '钱雨桐', role: '学生', dept: '测试中心', labs: ['A208'], training: 'valid',
+      personalViolations: [
+        { ruleIds: ['mgmt-3'], time: '2026-03-15' }, // 3 分（无台账）
+        { ruleIds: ['env-1'],  time: '2026-04-01' }, // 3 分（垃圾未分类）
+        { ruleIds: ['ppe-3'],  time: '2026-04-10' }, // 3 分（戴手套接外物）
+      ] },
+    // 赵振华 · 导师 0 违规
+    { id: 'p06', name: '赵振华', role: '教师', dept: '材料化学系', labs: ['302','312'], training: 'valid', personalViolations: [] },
+    // 周景明 · 410 导师轻微：3 分 → 正常
+    { id: 'p07', name: '周景明', role: '教师', dept: '材料物理系', labs: ['410'], training: 'valid',
+      personalViolations: [
+        { ruleIds: ['mgmt-3'], time: '2026-03-05' }, // 3 分（值日 / 检查记录登记不全）
+      ] },
+    // 王玉鸿 · 实验室管理员 0 违规
+    { id: 'p08', name: '王玉鸿', role: '实验室管理员', dept: '学院 HSE', labs: ['*'], training: 'valid', personalViolations: [] },
   ],
   accessFlow: [
     { t: '14:45', who: '赵振华', action: '进入', lab: '302', via: '人脸' },

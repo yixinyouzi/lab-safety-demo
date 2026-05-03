@@ -36,7 +36,7 @@ function ProjectsKpi() {
       <div className="kpi">
         <div className="kpi-label">待审</div>
         <div className="kpi-value" style={{ color: 'var(--amber)' }}>{pending}</div>
-        <div className="kpi-meta">导师 / 实验中心 / 学院 三级</div>
+        <div className="kpi-meta">教师 / 实验中心 / 学院 三级</div>
       </div>
       <div className="kpi">
         <div className="kpi-label">本年已结案</div>
