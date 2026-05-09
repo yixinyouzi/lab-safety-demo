@@ -13,12 +13,13 @@
 
 | 路径 | 端 | 入口文件 |
 |---|---|---|
-| `/` | **Portal 导航页**（三端入口） | `index.html`（纯 HTML/CSS，无 JS，~200 行 inline style，按 `.impeccable.md` 调性） |
+| `/` | **Portal 导航页**（三端入口） | `index.html`（纯 HTML/CSS，无 JS，~240 行 inline style，按 `.impeccable.md` 调性） |
 | `/admin/` | Web 管理控制台 | `admin/index.html` + `admin/page-*.jsx` + `admin/shell.jsx` + `admin/styles.css` + `admin/mock.js` |
-| `/mp-demo/` | 微信小程序（H5 模拟，不上微信审核） | `mp-demo/index.html` + `mp-demo/page-*.jsx` + `mp-demo/styles.css` |
-| `/doorplate/` | 电子门牌（1080×1920 竖屏 kiosk） | `doorplate/index.html` + `doorplate/door-display.css`（独立目录，9 状态切换） |
+| `/mp-demo/` | 微信小程序（H5 模拟，不上微信审核） | `mp-demo/index.html` + `mp-demo/page-*.jsx` + `mp-demo/components.jsx` + `mp-demo/styles.css` |
+| `/doorplate/` | 电子门牌（1080×1920 竖屏 kiosk） | `doorplate/index.html` + `doorplate/door-display.css`（独立目录，10 状态切换 · 含 `?mode=inspect`） |
+| `/lib/` | **三端共享单一来源** | `lib/scoring-rules.js`（IIFE 暴露 `window.SCORING`：5 类 40 条规则 + tally/verdict/currentPeriod 等纯函数 + localStorage 持久化） |
 
-`admin/mock.js` 是 admin 唯一数据源；`mp-demo/mock.js` 是小程序自己的；门牌的 LAB/SCENES 内联在 `doorplate/index.html` 里。
+`admin/mock.js` 是 admin 唯一数据源；`mp-demo/mock.js` 是小程序自己的；门牌的 LAB/SCENES 内联在 `doorplate/index.html` 里。三端 `today` 必须同步到 `'2026-04-21'`（已是当前基准）。
 
 > Portal 存在的原因：EdgeOne 国内默认域名是 3 小时 token 预览链接，给甲方一个唯一入口最干净。Cookie 落到 `*.edgeone.cool` 域名后，三端在 3 小时内任意切换都不用重新认证。
 
@@ -26,13 +27,14 @@
 
 1. **不要改字体栈** — admin 用 Inter+PingFang，mp 和门牌用 system PingFang，已经定调。`--font` / `--font-num` 是 CSS 变量，沿用就行。
 2. **数据全部反算自 MOCK，不许 hardcode 字符串数值**（如 "98%"/"60%"/"响应中" 这种）。每个数字都要能从 `MOCK.labs/events/people/accessFlow` 推出来。
-3. **状态三档**：正常 / 关注 / 预警。不要 高危/中危/低危/严重隐患/需关注异常 这套。
-   - 正常 = `rectifying === 0 && warnCount === 0`
-   - 关注 = `warnCount > 0 && rectifying === 0`
-   - 预警 = `rectifying > 0`
-4. **大屏指挥页（`page-bigscreen.jsx`）的「安全实时监控」必须保留 `conic-gradient` 旋转扫描臂**（动态雷达 sweep）— 这是用户领导喜欢的视觉锚点。不要换成静态分层仪表。
-5. **系名只用 4 个**（中国地大材料学院实际结构）：材料化学系 / 材料物理系 / 材料工程系 / 测试中心。教师姓名保留虚构（赵振华/周景明/钱雨桐/王玉鸿/李雪茹 等）。
-6. **改样式文件后 bump cache 版本号**：`index.html` 里 `?v=N` 全部 +1，否则浏览器读旧版（甲方没 hard refresh 习惯）。
+3. **扣分相关数字必须从 `lib/scoring-rules.js` 反算** — 不许 UI 内 hardcode "扣 X 分"。事件/违规只存 `ruleIds`，UI 拼分值走 `SCORING.tally()`；档位走 `SCORING.verdict(pts, 'person'|'lab')`；当前周期走 `SCORING.currentPeriod(MOCK.today)`。规则即数据，新增/调档只改 `lib/scoring-rules.js`。
+4. **状态三档**：正常 / 关注 / 预警（lab.status: `'normal'|'warning'|'rectifying'`）。不要 高危/中危/低危/严重隐患/需关注异常 这套。聚合统计沿用 `rectifying>0 → 预警；warnCount>0 → 关注；其余 → 正常` 的口径。
+5. **大屏指挥页（`page-bigscreen.jsx`）的「安全实时监控」必须保留 `conic-gradient` 旋转扫描臂**（动态雷达 sweep）— 这是用户领导喜欢的视觉锚点。不要换成静态分层仪表。
+6. **系名只用 4 个**（中国地大材料学院实际结构）：材料化学系 / 材料物理系 / 材料工程系 / 测试中心。
+   - **教师姓名**保留虚构：赵振华 / 周景明 / 钱雨桐 / 王玉鸿 / 李雪茹 等。
+   - **`lab.lead` 是系级实验室管理员**（不是教师）：周建国 / 刘卫平 / 黄文明 / 王宝华。两套人名各司其职，不要混用。
+7. **角色术语**：「巡查员」一律改为「实验室管理员」；流程角色叫「教师审核」（不是"导师审核"）；学生关联字段 `student.advisor` 仍叫"导师"。
+8. **改样式文件后 bump cache 版本号**：`index.html` 里 `?v=N` 全部 +1（admin/mp-demo/doorplate 各自一组），否则浏览器读旧版（甲方没 hard refresh 习惯）。
 
 ## 部署
 
