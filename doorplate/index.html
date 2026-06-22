@@ -2,77 +2,48 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>实验室电子门牌 · 1080×1920</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="door-display.css?v=8">
+<link rel="stylesheet" href="door-display.css?v=10">
 <style>
+  html,
   body {
     margin: 0;
     background: #0b1428;
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-    min-height: 100vh;
-    color: rgba(255, 255, 255, 0.78);
-  }
-  .dd-stage { display: flex; flex-direction: column; align-items: center; padding: 18px 16px 60px; gap: 18px; }
-  .dd-toolbar {
-    width: 100%; max-width: 1040px;
-    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-    padding: 14px 18px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-  }
-  .dd-toolbar h1 { font-size: 16px; margin: 0; color: #fff; font-weight: 600; }
-  .dd-toolbar .sub { font-size: 13px; color: rgba(255, 255, 255, 0.55); }
-  .dd-toolbar .sub .mono { font-family: "JetBrains Mono", monospace; letter-spacing: 0.08em; text-transform: uppercase; }
-  .dd-scene-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
-  .dd-scene-chips button {
-    padding: 7px 14px; border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.78);
-    border-radius: 6px; font-size: 12.5px; cursor: pointer;
-    font-family: inherit; transition: all 0.15s;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .dd-scene-chips button:hover { border-color: rgba(255, 255, 255, 0.4); color: #fff; }
-  .dd-scene-chips button.active { background: #fff; color: #0b1428; border-color: #fff; font-weight: 600; }
-  .dd-scene-chips .chip-dot { width: 10px; height: 10px; border-radius: 3px; }
-  .dd-toggle {
-    padding: 7px 12px; border: 1px solid rgba(255, 255, 255, 0.18);
-    background: rgba(255, 255, 255, 0.04); color: rgba(255, 255, 255, 0.78);
-    border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit;
-  }
-  .dd-toggle.on { background: rgba(201, 169, 97, 0.18); color: #c9a961; border-color: rgba(201, 169, 97, 0.55); }
-  /* device frame */
-  .dd-frame {
-    width: calc(1080px * var(--dd-scale, 0.45));
-    height: calc(1920px * var(--dd-scale, 0.45));
-    position: relative;
-    border-radius: 24px;
-    box-shadow:
-      0 30px 80px -10px rgba(0, 0, 0, 0.7),
-      0 0 0 5px #0b2348,
-      0 0 0 7px #1e293b;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
   }
-  .dd-frame .dd-root { transform: scale(var(--dd-scale, 0.45)); transform-origin: top left; }
-  .dd-frame::after {
-    content: ""; position: absolute; bottom: -3px; left: 50%;
-    width: 5px; height: 5px; border-radius: 50%;
-    background: #4ade80;
-    box-shadow: 0 0 6px rgba(74, 222, 128, 0.7);
-    transform: translateX(-50%);
+  #root {
+    width: 100%;
+    height: 100%;
+  }
+  .dd-stage {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .dd-frame {
+    position: relative;
+    overflow: hidden;
+  }
+  .dd-frame .dd-root {
+    transform: scale(var(--dd-scale, 1));
+    transform-origin: top left;
   }
 </style>
 </head>
 <body>
 <div id="root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-<script src="../lib/scoring-rules.js?v=8"></script>
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="vendor/babel.min.js"></script>
+<script src="scoring-rules.js?v=9"></script>
 
 <script type="text/babel">
 // ============================================================
@@ -634,70 +605,27 @@ function DoorDisplay({ scene }) {
 // APP / TOOLBAR / SCALE
 // ============================================================
 function App() {
-  // URL ?mode=inspect 优先（巡查员卡刷/扫码进入检查模式）
-  // URL 触发的会话不写 localStorage，避免巡查模式「粘住」下次访问
+  // 门牌默认固定展示空闲开放；检查人员可通过 ?mode=inspect 查看危险源台账。
   const urlInspect = new URLSearchParams(location.search).get('mode') === 'inspect';
-  const [sceneKey, setSceneKey] = React.useState(() =>
-    urlInspect ? 'inspect' : (localStorage.getItem('dd-scene') || 'busy')
-  );
-  const [autoplay, setAutoplay] = React.useState(false);
-  const [scale, setScale] = React.useState(0.45);
-
-  React.useEffect(() => {
-    // URL 触发的 inspect 会话不持久化（避免巡查员离开后下次访问仍停在巡查模式）
-    if (urlInspect && sceneKey === 'inspect') return;
-    localStorage.setItem('dd-scene', sceneKey);
-  }, [sceneKey]);
+  const scene = SCENES.find(s => s.k === (urlInspect ? 'inspect' : 'free')) || SCENES[0];
+  const [scale, setScale] = React.useState(1);
 
   React.useEffect(() => {
     const fit = () => {
-      const avail = window.innerHeight - 200;
-      const byH = avail / 1920;
-      const byW = (window.innerWidth - 60) / 1080;
-      const s = Math.max(0.28, Math.min(0.6, Math.min(byH, byW)));
-      setScale(s);
+      setScale(Math.min(window.innerWidth / 1080, window.innerHeight / 1920));
     };
     fit();
     window.addEventListener('resize', fit);
     return () => window.removeEventListener('resize', fit);
   }, []);
 
-  React.useEffect(() => {
-    if (!autoplay) return;
-    // 自动轮播仅在前 9 个状态间循环，inspect（第 10 个）需手动触发
-    const cycleScenes = SCENES.filter(s => !s.inspectMode);
-    const id = setInterval(() => {
-      setSceneKey(k => {
-        const i = cycleScenes.findIndex(s => s.k === k);
-        if (i === -1) return cycleScenes[0].k;
-        return cycleScenes[(i + 1) % cycleScenes.length].k;
-      });
-    }, 5000);
-    return () => clearInterval(id);
-  }, [autoplay]);
-
-  const scene = SCENES.find(s => s.k === sceneKey) || SCENES[0];
-
   return (
-    <div className="dd-stage" style={{ '--dd-scale': scale }}>
-      <div className="dd-toolbar">
-        <h1>实验室电子门牌</h1>
-        <span className="sub">Android 一体机 · <span className="mono">1080×1920 · {Math.round(scale * 100)}%</span></span>
-        <div className="dd-scene-chips">
-          {SCENES.map(s => (
-            <button key={s.k}
-              className={s.k === sceneKey ? 'active' : ''}
-              onClick={() => { setAutoplay(false); setSceneKey(s.k); }}>
-              <span className="chip-dot" style={{ background: s.chipDot }}></span>
-              {s.label}
-            </button>
-          ))}
-        </div>
-        <button className={'dd-toggle' + (autoplay ? ' on' : '')} onClick={() => setAutoplay(v => !v)}>
-          {autoplay ? '⏸ 暂停轮播' : '▶ 自动轮播 5s'}
-        </button>
-      </div>
-      <div className="dd-frame">
+    <div className="dd-stage">
+      <div className="dd-frame" style={{
+        '--dd-scale': scale,
+        width: `${1080 * scale}px`,
+        height: `${1920 * scale}px`,
+      }}>
         <DoorDisplay scene={scene} />
       </div>
     </div>

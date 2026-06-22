@@ -62,7 +62,7 @@
    ============================================================ */
 .dd-header {
   flex-shrink: 0;
-  padding: 56px 72px 48px;
+  padding: 16px 72px 48px;
   background: var(--brand-dark);
   color: #fff;
   position: relative;

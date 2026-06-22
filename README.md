@@ -42,11 +42,28 @@
 
 ### 电子门牌（`/doorplate/`）
 
-1080×1920 竖屏 Android 一体机，10 个状态切换：
-
-空闲 / 使用中 / 高风险作业 / 整改中（停用）/ 关闭维护 / 扫码识别中 / 识别成功 / 识别失败 / 紧急事件 / **检查模式**（URL `?mode=inspect` 触发，展开危险源完整台账）
+面向 1080×1920 竖屏 Android 一体机，页面打开后直接全屏展示电子门牌，不再显示状态选择、自动轮播或预览工具栏。默认状态固定为**空闲开放**，刷新后不读取旧的 `localStorage` 状态；URL `?mode=inspect` 可进入**检查模式**并展开危险源完整台账。
 
 含实验室名 + 状态徽章 + 责任人电话 + 危险类别 + 在场人员 + 实时危化品台账 + QR 扫码 + 人脸识别取景框 + 底部 PERIOD POINTS 仪表带（当前 6 月记分周期累积扣分）。
+
+门牌内部采用 1080×1920 逻辑画布，在其他尺寸的 WebView 中等比缩放。React、ReactDOM 与 Babel 均从 `doorplate/vendor/` 本地加载，不依赖设备联网；`doorplate/scoring-rules.js` 是 `lib/scoring-rules.js` 的 APK 打包副本。
+
+#### Capacitor Android 调试
+
+当前使用 Capacitor 6，应用 ID 为 `cugb.labsafety.doorplate`，`webDir` 直接指向 `doorplate`。页面更新后，在项目根目录执行：
+
+```powershell
+# 先同步计分规则的打包副本
+Copy-Item .\lib\scoring-rules.js .\doorplate\scoring-rules.js -Force
+
+# 将 doorplate 资源同步到 Android 工程
+npx cap sync android
+
+# 用 Android Studio 打开并自行 Run
+npx cap open android
+```
+
+`flatDir` 的提示是 Capacitor 生成工程的 Gradle 仓库警告，不影响页面运行。若 APK 仅显示深蓝背景，应检查 `doorplate/vendor/` 下的三个本地运行库是否已随 `cap sync` 复制到 `android/app/src/main/assets/public/vendor/`。
 
 ## 数据基准与单一来源
 
@@ -56,4 +73,4 @@
 
 ## 技术栈
 
-React 18 UMD + Babel standalone + 单一 styles.css，无构建工具。Portal 是纯 HTML/CSS，无 JS。三端共享 `lib/scoring-rules.js`。
+Admin 与小程序使用 React 18 UMD + Babel standalone + 单一 styles.css，无前端构建工具；Portal 是纯 HTML/CSS，无 JS。电子门牌使用本地 React 18 UMD、Babel standalone，并通过 Capacitor 6 封装为 Android 应用。三端计分规则的源文件统一为 `lib/scoring-rules.js`，门牌目录保留一份供 APK 打包的同步副本。
