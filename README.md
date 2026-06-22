@@ -65,6 +65,46 @@ npx cap open android
 
 `flatDir` 的提示是 Capacitor 生成工程的 Gradle 仓库警告，不影响页面运行。若 APK 仅显示深蓝背景，应检查 `doorplate/vendor/` 下的三个本地运行库是否已随 `cap sync` 复制到 `android/app/src/main/assets/public/vendor/`。
 
+#### 海康人脸录入与核验
+
+**本次改进汇总**
+
+- 接入海康 `HikSDK_V1.2.3`，通过 Capacitor 本地插件 `HikFace` 桥接设备能力。
+- 增加全屏原生取景流程，可采集人脸、创建或更新设备人员记录，并将人脸绑定到虚构工号。
+- 门牌右下角人脸区支持两种操作：单击启动核验，长按约 2 秒进入录入；长按时显示进度反馈，并抑制随后产生的单击事件。
+- 核验固定使用 `VerifyType.verify`，只返回通过、失败、取消或超时结果，不驱动物理门锁。
+- 移除 `android.uid.system` 以解决特权进程无法加载 Capacitor WebView 的冲突，同时继续使用设备匹配的平台证书签名访问 HEOP 能力。
+- 人脸图片 URL、建模数据和采集结果图片只在 Android 原生层处理，不进入 WebView、日志或 `localStorage`。
+
+Android 工程已接入 `HikSDK_V1.2.3`，通过本地 Capacitor 插件 `HikFace` 向门牌提供三个接口：
+
+- `isAvailable()`：检查 SDK 初始化及门禁、人员管理器是否就绪。
+- `verify()`：以 `FLAG_FACE + VerifyType.verify` 启动设备人脸核验，只返回通过/失败，不执行开门。
+- `enroll({ employeeNo, name })`：全屏采集人脸，创建或更新人员后绑定设备人脸数据。
+
+日常门牌单击右下角「人脸核验」进入全屏原生核验；长按该取景区约 2 秒进入虚构演示人员录入页（内部地址为 `/doorplate/?mode=enroll`）。普通浏览器没有海康设备能力时，两处入口会运行 mock 降级流程，不写入任何设备数据。
+
+设备端测试流程：长按「人脸核验」→ 输入虚构工号与姓名（如 `TEST001 / 林知远`）→「进入人脸采集」→ 在全屏原生取景页点击「采集并录入」→ 返回日常门牌后单击「人脸核验」验证。核验模式仍为 `VerifyType.verify`，不会执行开门。
+
+人脸图片 URL、建模数据和采集结果图片只在 Android 原生层使用，不返回 WebView、不写日志或 `localStorage`。WebView 只会收到状态、虚构工号、姓名与事件时间。
+
+海康 AAR 默认从仓库同级资料目录读取：
+
+```text
+../03_集成组件/HikSDK_V1.2.3.aar
+```
+
+如果资料目录位置不同，在 Gradle 属性或环境变量中设置 `HIK_SDK_AAR` 为 AAR 的绝对路径。
+
+该应用需要使用设备匹配的平台证书签名，但不声明 `android.uid.system`。平台签名用于获取设备授予的签名级能力；系统共享 UID 则会让应用进入特权进程，而 Android 出于安全限制不允许该进程加载 WebView，因此两者不能混为一谈。编译前将 `android/hik-signing.properties.example` 复制为 `android/hik-signing.properties`，填写平台签名路径与口令；真实配置和 `.jks` 已被 `.gitignore` 排除，不应提交到公开仓库。
+
+```powershell
+Copy-Item .\android\hik-signing.properties.example .\android\hik-signing.properties
+# 编辑 hik-signing.properties 后，再执行你自己的 cap sync / Gradle 构建流程
+```
+
+若设备上已安装过带 `android.uid.system` 的版本，必须先卸载旧 APK，再安装移除共享 UID 后的新版本，不能直接覆盖升级；这会清除该 demo 的本地应用数据。普通调试签名切换为平台签名时同样通常需要卸载旧包。实机验收至少覆盖：门牌 WebView 正常显示、录入成功、已录入人员核验通过、陌生人失败、20 秒超时、取消/切后台后摄像头与认证监听正常释放。
+
 ## 数据基准与单一来源
 
 - 三端 mock 同步到 `today: '2026-04-21'`（admin/mp-demo/doorplate）。

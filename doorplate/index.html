@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>实验室电子门牌 · 1080×1920</title>
-<link rel="stylesheet" href="door-display.css?v=10">
+<link rel="stylesheet" href="door-display.css?v=12">
 <style>
   html,
   body {
@@ -452,10 +452,50 @@ function FaceMesh() {
   );
 }
 
-function Camera({ state }) {
-  const cls = 'dd-cam' + (state === 'scanning' ? ' scanning' : state === 'err' ? ' err' : '');
+function Camera({ state, onActivate, onEnroll }) {
+  const holdTimer = React.useRef(null);
+  const longPressTriggered = React.useRef(false);
+  const [holding, setHolding] = React.useState(false);
+  const cls = 'dd-cam' + (state === 'scanning' ? ' scanning' : state === 'err' ? ' err' : '') + (holding ? ' holding' : '');
+
+  const cancelHold = () => {
+    window.clearTimeout(holdTimer.current);
+    holdTimer.current = null;
+    setHolding(false);
+  };
+
+  const startHold = () => {
+    if (state === 'scanning') return;
+    cancelHold();
+    longPressTriggered.current = false;
+    setHolding(true);
+    holdTimer.current = window.setTimeout(() => {
+      holdTimer.current = null;
+      longPressTriggered.current = true;
+      setHolding(false);
+      onEnroll();
+    }, 2000);
+  };
+
+  const activate = () => {
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
+    onActivate();
+  };
+
+  React.useEffect(() => () => window.clearTimeout(holdTimer.current), []);
+
   return (
-    <div className={cls}>
+    <div className={cls} role="button" tabIndex="0" aria-label="启动人脸核验"
+         onPointerDown={startHold}
+         onPointerUp={cancelHold}
+         onPointerLeave={cancelHold}
+         onPointerCancel={cancelHold}
+         onContextMenu={e => e.preventDefault()}
+         onClick={activate}
+         onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && activate()}>
       <svg className="feed" viewBox="0 0 100 100" preserveAspectRatio="none">
         <defs>
           <radialGradient id="camBg" cx="50%" cy="40%" r="65%">
@@ -474,6 +514,7 @@ function Camera({ state }) {
       <span className="dd-cam-bracket br"></span>
       {state === 'scanning' && <FaceMesh />}
       {state === 'scanning' && <div className="dd-cam-scan" />}
+      {holding && <span className="dd-cam-hold" aria-hidden="true" />}
     </div>
   );
 }
@@ -481,7 +522,7 @@ function Camera({ state }) {
 // ============================================================
 // FOOTER
 // ============================================================
-function Footer({ scene }) {
+function Footer({ scene, onFaceVerify, onFaceEnroll }) {
   // 本周期累积扣分 + PDF 6 月周期 label · 由 SCORING 派生（与三端共享 lib）
   const pts = SCORING.tally(scene.labViolations);
   const v = SCORING.verdict(pts, 'lab');
@@ -510,8 +551,8 @@ function Footer({ scene }) {
             <div className="cap">{scene.qr === 'disabled' ? '门禁已锁' : '扫码进门'}</div>
           </div>
           <div className="dd-entry-tile">
-            <Camera state={scene.cam} />
-            <div className="cap">{scene.cam === 'scanning' ? '识别中' : scene.cam === 'err' ? '识别失败' : '人脸核验'}</div>
+            <Camera state={scene.cam} onActivate={onFaceVerify} onEnroll={onFaceEnroll} />
+            <div className="cap face-cap">{scene.cam === 'scanning' ? '识别中' : scene.cam === 'err' ? '识别失败' : '人脸核验 · 长按录入'}</div>
           </div>
         </div>
       </div>
@@ -522,7 +563,10 @@ function Footer({ scene }) {
 // ============================================================
 // OVERLAYS
 // ============================================================
-function SuccessOverlay() {
+function SuccessOverlay({ result }) {
+  const name = result && result.name ? result.name : '演示人员';
+  const employeeNo = result && result.employeeNo ? result.employeeNo : '未返回';
+  const eventTime = result && result.eventTime ? result.eventTime : '本次会话';
   return (
     <div className="dd-overlay success">
       <div className="ring">
@@ -530,20 +574,21 @@ function SuccessOverlay() {
           <path d="M5 12.5 L 10 17.5 L 19 7.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-      <div className="title">欢迎，张一凡</div>
-      <div className="sub">门禁已开启 · 实验时段 14:00 - 17:00 · 请佩戴防护装备</div>
+      <div className="title">{result && result.mock ? '演示核验通过' : `核验通过 · ${name}`}</div>
+      <div className="sub">身份已核验 · 本次未执行开门 · 请按实验室管理流程进入</div>
       <div className="checks">
-        <div><div className="k">IDENTITY</div><div className="v">学生 · 材料研24</div></div>
-        <div><div className="k">RESERVATION</div><div className="v">通风柜 1 · ✓</div></div>
-        <div><div className="k">TRAINING</div><div className="v">有效 · ✓</div></div>
-        <div><div className="k">LIVENESS</div><div className="v">通过 · ✓</div></div>
+        <div><div className="k">IDENTITY</div><div className="v">{name}</div></div>
+        <div><div className="k">EMPLOYEE NO.</div><div className="v">{employeeNo}</div></div>
+        <div><div className="k">VERIFY MODE</div><div className="v">仅核验 · 未开门</div></div>
+        <div><div className="k">EVENT TIME</div><div className="v">{eventTime}</div></div>
       </div>
       <div className="countdown">3 SEC · AUTO RETURN</div>
     </div>
   );
 }
 
-function FailOverlay() {
+function FailOverlay({ result }) {
+  const timedOut = result && result.status === 'timeout';
   return (
     <div className="dd-overlay fail">
       <div className="ring">
@@ -551,12 +596,12 @@ function FailOverlay() {
           <path d="M6 6 L 18 18 M 18 6 L 6 18" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
         </svg>
       </div>
-      <div className="title">身份核验未通过</div>
-      <div className="sub">人脸与已扫码身份不匹配 · 请联系实验室管理员或安全员</div>
+      <div className="title">{timedOut ? '人脸核验超时' : '身份核验未通过'}</div>
+      <div className="sub">{result && result.message ? result.message : '请重新正对摄像头，或联系实验室管理员'}</div>
       <div className="checks">
-        <div><div className="k">SCAN ID</div><div className="v">张一凡 · 材料研24</div></div>
-        <div><div className="k">FACE MATCH</div><div className="v">41% · BELOW 75%</div></div>
-        <div><div className="k">ATTEMPTS</div><div className="v">3 / 3</div></div>
+        <div><div className="k">RESULT</div><div className="v">{timedOut ? 'TIMEOUT' : 'NOT VERIFIED'}</div></div>
+        <div><div className="k">DOOR ACTION</div><div className="v">未执行</div></div>
+        <div><div className="k">RETRY</div><div className="v">返回门牌后可重试</div></div>
         <div><div className="k">CONTACT</div><div className="v">王玉鸿 ·· 6688</div></div>
       </div>
       <div className="countdown">5 SEC · AUTO RETURN · LOGGED</div>
@@ -567,7 +612,7 @@ function FailOverlay() {
 // ============================================================
 // MAIN COMPOSITION
 // ============================================================
-function DoorDisplay({ scene }) {
+function DoorDisplay({ scene, faceState, faceResult, onFaceVerify, onFaceEnroll }) {
   const [t, setT] = React.useState(new Date());
   React.useEffect(() => {
     const id = setInterval(() => setT(new Date()), 1000);
@@ -593,10 +638,90 @@ function DoorDisplay({ scene }) {
           </>
         )}
       </main>
-      <Footer scene={scene} />
+      <Footer scene={scene} onFaceVerify={onFaceVerify} onFaceEnroll={onFaceEnroll} />
       {scene.haztape && <div className={'dd-haztape' + (scene.alert ? ' flash' : '')} />}
-      {scene.overlay === 'success' && <SuccessOverlay />}
-      {scene.overlay === 'fail' && <FailOverlay />}
+      {faceState === 'passed' && <SuccessOverlay result={faceResult} />}
+      {(faceState === 'failed' || faceState === 'timeout') && <FailOverlay result={faceResult} />}
+    </div>
+  );
+}
+
+function getHikFacePlugin() {
+  return window.Capacitor && window.Capacitor.Plugins
+    ? window.Capacitor.Plugins.HikFace
+    : null;
+}
+
+function EnrollPanel({ capability }) {
+  const [employeeNo, setEmployeeNo] = React.useState('');
+  const [name, setName] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+
+  const submit = async e => {
+    e.preventDefault();
+    const normalizedEmployeeNo = employeeNo.trim();
+    const normalizedName = name.trim();
+    if (!/^[A-Za-z0-9]{1,32}$/.test(normalizedEmployeeNo)) {
+      setResult({ ok: false, message: '工号必须为 1–32 位字母或数字' });
+      return;
+    }
+    if (!normalizedName || normalizedName.length > 64) {
+      setResult({ ok: false, message: '姓名必须为 1–64 个字符' });
+      return;
+    }
+    setBusy(true);
+    setResult(null);
+    const plugin = getHikFacePlugin();
+    if (!plugin || !capability.available) {
+      window.setTimeout(() => {
+        setBusy(false);
+        setResult({ ok: true, message: '浏览器 mock 录入完成 · 未写入设备' });
+      }, 900);
+      return;
+    }
+    try {
+      const response = await plugin.enroll({ employeeNo: normalizedEmployeeNo, name: normalizedName });
+      setResult({
+        ok: response.status === 'enrolled',
+        message: response.message || (response.status === 'cancelled' ? '录入已取消' : '录入未完成'),
+      });
+    } catch (error) {
+      setResult({ ok: false, message: error && error.message ? error.message : '设备录入调用失败' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="dd-enroll">
+      <div className="dd-enroll-kicker">DEVICE FACE DATABASE · DEMO ONLY</div>
+      <h1>人员与人脸录入</h1>
+      <p className="dd-enroll-lead">仅录入虚构演示人员。提交后将进入海康设备的全屏原生取景页。</p>
+      <div className={'dd-enroll-cap ' + (capability.available ? 'ready' : 'mock')}>
+        <span className="dot" />
+        {capability.available ? '海康设备能力已就绪' : '浏览器 mock 模式 · 不写入设备'}
+      </div>
+      <form onSubmit={submit}>
+        <label>
+          <span>EMPLOYEE NO. · 虚构工号</span>
+          <input value={employeeNo} maxLength="32" autoComplete="off"
+                 onChange={e => setEmployeeNo(e.target.value)} placeholder="例如 DEMO24001" />
+        </label>
+        <label>
+          <span>NAME · 虚构姓名</span>
+          <input value={name} maxLength="64" autoComplete="off"
+                 onChange={e => setName(e.target.value)} placeholder="例如 林知远" />
+        </label>
+        <button type="submit" disabled={busy || !capability.checked}>
+          {!capability.checked ? '正在检测设备能力…' : busy ? '等待设备采集…' : '进入人脸采集'}
+        </button>
+      </form>
+      {result && <div className={'dd-enroll-result ' + (result.ok ? 'ok' : 'err')}>{result.message}</div>}
+      <button className="dd-enroll-back" type="button" onClick={() => { location.href = location.pathname; }}>
+        返回日常门牌
+      </button>
+      <div className="dd-enroll-note">人脸图片、URL 与模型数据仅在 Android 原生层处理，不进入 WebView 或 localStorage。</div>
     </div>
   );
 }
@@ -605,10 +730,27 @@ function DoorDisplay({ scene }) {
 // APP / TOOLBAR / SCALE
 // ============================================================
 function App() {
-  // 门牌默认固定展示空闲开放；检查人员可通过 ?mode=inspect 查看危险源台账。
-  const urlInspect = new URLSearchParams(location.search).get('mode') === 'inspect';
+  // 门牌默认固定展示空闲开放；?mode=inspect 检查，?mode=enroll 录入演示人员。
+  const urlMode = new URLSearchParams(location.search).get('mode');
+  const urlInspect = urlMode === 'inspect';
+  const urlEnroll = urlMode === 'enroll';
   const scene = SCENES.find(s => s.k === (urlInspect ? 'inspect' : 'free')) || SCENES[0];
   const [scale, setScale] = React.useState(1);
+  const [capability, setCapability] = React.useState({ checked: false, available: false });
+  const [faceState, setFaceState] = React.useState('idle');
+  const [faceResult, setFaceResult] = React.useState(null);
+  const returnTimer = React.useRef(null);
+
+  React.useEffect(() => {
+    const plugin = getHikFacePlugin();
+    if (!plugin) {
+      setCapability({ checked: true, available: false });
+      return;
+    }
+    plugin.isAvailable()
+      .then(value => setCapability({ checked: true, ...value }))
+      .catch(error => setCapability({ checked: true, available: false, reason: error && error.message }));
+  }, []);
 
   React.useEffect(() => {
     const fit = () => {
@@ -619,6 +761,60 @@ function App() {
     return () => window.removeEventListener('resize', fit);
   }, []);
 
+  React.useEffect(() => () => window.clearTimeout(returnTimer.current), []);
+
+  const scheduleReturn = delay => {
+    window.clearTimeout(returnTimer.current);
+    returnTimer.current = window.setTimeout(() => {
+      setFaceState('idle');
+      setFaceResult(null);
+    }, delay);
+  };
+
+  const verifyFace = async () => {
+    if (faceState === 'scanning') return;
+    setFaceState('scanning');
+    setFaceResult(null);
+    const plugin = getHikFacePlugin();
+    if (!plugin || !capability.available) {
+      window.setTimeout(() => {
+        const mock = { status: 'passed', name: '张一凡', employeeNo: 'DEMO24001', mock: true };
+        setFaceResult(mock);
+        setFaceState('passed');
+        scheduleReturn(3000);
+      }, 1200);
+      return;
+    }
+    try {
+      const result = await plugin.verify();
+      if (result.status === 'cancelled') {
+        setFaceState('idle');
+        return;
+      }
+      setFaceResult(result);
+      setFaceState(result.status === 'passed' ? 'passed' : result.status === 'timeout' ? 'timeout' : 'failed');
+      scheduleReturn(result.status === 'passed' ? 3000 : 5000);
+    } catch (error) {
+      const result = { status: 'failed', message: error && error.message ? error.message : '设备核验调用失败' };
+      setFaceResult(result);
+      setFaceState('failed');
+      scheduleReturn(5000);
+    }
+  };
+
+  const enterEnrollment = () => {
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('mode', 'enroll');
+    window.location.href = url.toString();
+  };
+
+  const displayScene = faceState === 'scanning'
+    ? { ...scene, cam: 'scanning', notice: { tone: 'amber', ico: '?', text: '设备人脸核验中 · 请正对摄像头' } }
+    : faceState === 'failed' || faceState === 'timeout'
+      ? { ...scene, cam: 'err' }
+      : scene;
+
   return (
     <div className="dd-stage">
       <div className="dd-frame" style={{
@@ -626,7 +822,10 @@ function App() {
         width: `${1080 * scale}px`,
         height: `${1920 * scale}px`,
       }}>
-        <DoorDisplay scene={scene} />
+        {urlEnroll
+          ? <div className="dd-root"><EnrollPanel capability={capability} /></div>
+          : <DoorDisplay scene={displayScene} faceState={faceState} faceResult={faceResult}
+                         onFaceVerify={verifyFace} onFaceEnroll={enterEnrollment} />}
       </div>
     </div>
   );

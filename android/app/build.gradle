@@ -1,11 +1,36 @@
 apply plugin: 'com.android.application'
 
+def hikSdkAar = providers.gradleProperty('HIK_SDK_AAR')
+        .orElse(providers.environmentVariable('HIK_SDK_AAR'))
+        .getOrElse("${rootProject.projectDir}/../../03_集成组件/HikSDK_V1.2.3.aar")
+
+def hikSigningProperties = new Properties()
+def hikSigningFile = rootProject.file('hik-signing.properties')
+if (!hikSigningFile.exists()) {
+    throw new GradleException(
+            "缺少 android/hik-signing.properties：HEOP 设备能力构建必须使用设备匹配的平台证书签名。" +
+            "请从 hik-signing.properties.example 复制并填写。")
+}
+hikSigningFile.withInputStream { hikSigningProperties.load(it) }
+
+['KEYSTORE_FILE', 'KEYSTORE_PASSWORD', 'KEY_ALIAS', 'KEY_PASSWORD'].each { key ->
+    if (!hikSigningProperties[key]) {
+        throw new GradleException("android/hik-signing.properties 缺少 ${key}")
+    }
+}
+
+def hikKeystoreFile = file(hikSigningProperties['KEYSTORE_FILE'])
+if (!hikKeystoreFile.exists()) {
+    throw new GradleException("系统签名文件不存在：${hikKeystoreFile}")
+}
+
 android {
     namespace "cugb.labsafety.doorplate"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
         applicationId "cugb.labsafety.doorplate"
-        minSdkVersion rootProject.ext.minSdkVersion
+        // 海康 Demo 的门禁事件接口要求 API 25+。
+        minSdkVersion 25
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
@@ -16,10 +41,22 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        hikSystem {
+            storeFile hikKeystoreFile
+            storePassword hikSigningProperties['KEYSTORE_PASSWORD']
+            keyAlias hikSigningProperties['KEY_ALIAS']
+            keyPassword hikSigningProperties['KEY_PASSWORD']
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.hikSystem
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.hikSystem
         }
     }
 }
@@ -32,6 +69,12 @@ repositories {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation files(hikSdkAar)
+    implementation 'androidx.annotation:annotation:1.7.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation('com.thoughtworks.xstream:xstream:1.4.20') {
+        exclude group: 'xmlpull', module: 'xmlpull'
+    }
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"

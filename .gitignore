@@ -3,6 +3,8 @@ node_modules/
 doorplate/*.backup.*
 .playwright-mcp/
 *.log
+*.jks
+android/hik-signing.properties
 .tmp/
 .claude/
 .tmp/

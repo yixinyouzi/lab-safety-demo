@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:name=".HikDoorplateApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -23,6 +24,12 @@
             </intent-filter>
 
         </activity>
+
+        <activity
+            android:name=".HikFaceActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.HikFace" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

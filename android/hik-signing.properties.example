@@ -1,0 +1,6 @@
+# Copy this file to hik-signing.properties and keep the real values local.
+# Relative paths are resolved from android/app.
+KEYSTORE_FILE=../../../04_\u7cfb\u7edf\u7b7e\u540d/system_key.jks
+KEYSTORE_PASSWORD=replace-me
+KEY_ALIAS=system_key
+KEY_PASSWORD=replace-me
