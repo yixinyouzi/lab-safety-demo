@@ -11,7 +11,13 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.hik.vis.module_base.IHikCallback;
+import com.hik.vis.module_base.beans.ResponseStatus;
+import com.hik.vis.module_sdk.IHikManager;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -60,6 +66,34 @@ public class HikFacePlugin extends Plugin {
         startActivityForResult(call, intent, "handleFaceResult");
     }
 
+    @PluginMethod
+    public void openDoor(PluginCall call) {
+        if (!requireSdk(call) || !beginOperation(call)) return;
+        try {
+            IHikManager.getAccessManager().openDoor(new IHikCallback<ResponseStatus>() {
+                @Override
+                public void onSuccess(ResponseStatus responseStatus) {
+                    inFlight.set(false);
+                    JSObject result = new JSObject();
+                    result.put("status", "opened");
+                    result.put("doorNo", 1);
+                    result.put("eventTime", now());
+                    result.put("message", "门禁已打开");
+                    call.resolve(result);
+                }
+
+                @Override
+                public void onFailure(ResponseStatus responseStatus) {
+                    inFlight.set(false);
+                    call.reject(sdkFailure("门禁打开失败", responseStatus), "HIK_DOOR_OPEN_FAILED");
+                }
+            });
+        } catch (Throwable error) {
+            inFlight.set(false);
+            call.reject("门禁打开失败：" + error.getClass().getSimpleName(), "HIK_DOOR_OPEN_FAILED");
+        }
+    }
+
     private boolean requireSdk(PluginCall call) {
         if (HikDoorplateApplication.isSdkAvailable()) return true;
         call.reject(HikDoorplateApplication.getSdkUnavailableReason(), "HIK_SDK_UNAVAILABLE");
@@ -68,7 +102,7 @@ public class HikFacePlugin extends Plugin {
 
     private boolean beginOperation(PluginCall call) {
         if (inFlight.compareAndSet(false, true)) return true;
-        call.reject("已有一项人脸操作正在进行", "FACE_OPERATION_BUSY");
+        call.reject("已有一项设备操作正在进行", "HIK_DEVICE_BUSY");
         return false;
     }
 
@@ -99,5 +133,16 @@ public class HikFacePlugin extends Plugin {
 
     private static String trimmed(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private static String now() {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.CHINA).format(new Date());
+    }
+
+    private static String sdkFailure(String prefix, ResponseStatus error) {
+        if (error == null) return prefix;
+        int code = error.getErrorCode();
+        if (code == -1) code = error.getStatusCode();
+        return code == -1 ? prefix : prefix + "（错误码 " + code + "）";
     }
 }

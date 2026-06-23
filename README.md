@@ -72,19 +72,20 @@ npx cap open android
 - 接入海康 `HikSDK_V1.2.3`，通过 Capacitor 本地插件 `HikFace` 桥接设备能力。
 - 增加全屏原生取景流程，可采集人脸、创建或更新设备人员记录，并将人脸绑定到虚构工号。
 - 门牌右下角人脸区支持两种操作：单击启动核验，长按约 2 秒进入录入；长按时显示进度反馈，并抑制随后产生的单击事件。
-- 核验固定使用 `VerifyType.verify`，只返回通过、失败、取消或超时结果，不驱动物理门锁。
+- 核验固定使用 `VerifyType.verify`，先只返回通过、失败、取消或超时结果；WebView 再按 mock 预约与准入状态判断，满足「已审批预约 + 可进入 + 当前实验室匹配」才调用 `openDoor()` 打开门禁。
 - 移除 `android.uid.system` 以解决特权进程无法加载 Capacitor WebView 的冲突，同时继续使用设备匹配的平台证书签名访问 HEOP 能力。
 - 人脸图片 URL、建模数据和采集结果图片只在 Android 原生层处理，不进入 WebView、日志或 `localStorage`。
 
-Android 工程已接入 `HikSDK_V1.2.3`，通过本地 Capacitor 插件 `HikFace` 向门牌提供三个接口：
+Android 工程已接入 `HikSDK_V1.2.3`，通过本地 Capacitor 插件 `HikFace` 向门牌提供四个接口：
 
 - `isAvailable()`：检查 SDK 初始化及门禁、人员管理器是否就绪。
 - `verify()`：以 `FLAG_FACE + VerifyType.verify` 启动设备人脸核验，只返回通过/失败，不执行开门。
 - `enroll({ employeeNo, name })`：全屏采集人脸，创建或更新人员后绑定设备人脸数据。
+- `openDoor()`：在 WebView 已确认 mock 预约准入通过后，调用海康 `AccessManager.openDoor()` 打开默认 1 号门。
 
-日常门牌单击右下角「人脸核验」进入全屏原生核验；长按该取景区约 2 秒进入虚构演示人员录入页（内部地址为 `/doorplate/?mode=enroll`）。普通浏览器没有海康设备能力时，两处入口会运行 mock 降级流程，不写入任何设备数据。
+日常门牌单击右下角「人脸核验」进入全屏原生核验；核验通过后按 `employeeNo` 匹配门牌内联 mock 预约数据，通过才执行开门。长按该取景区约 2 秒进入虚构演示人员录入页（内部地址为 `/doorplate/?mode=enroll`）。普通浏览器没有海康设备能力时，两处入口会运行 mock 降级流程，不写入任何设备数据，开门也只显示浏览器 mock 结果。
 
-设备端测试流程：长按「人脸核验」→ 输入虚构工号与姓名（如 `TEST001 / 林知远`）→「进入人脸采集」→ 在全屏原生取景页点击「采集并录入」→ 返回日常门牌后单击「人脸核验」验证。核验模式仍为 `VerifyType.verify`，不会执行开门。
+设备端测试流程：长按「人脸核验」→ 输入虚构工号与姓名（如 `DEMO24002 / 林知远`）→「进入人脸采集」→ 在全屏原生取景页点击「采集并录入」→ 返回日常门牌后单击「人脸核验」验证。`DEMO24002` 有已审批且可进入的 mock 预约，应触发开门；`DEMO24001 / 张一凡` 保留为已预约但门禁暂停的拒绝样例。核验模式仍为 `VerifyType.verify`，不会使用 `verifyAndOpenDoor` 自动开门。
 
 人脸图片 URL、建模数据和采集结果图片只在 Android 原生层使用，不返回 WebView、不写日志或 `localStorage`。WebView 只会收到状态、虚构工号、姓名与事件时间。
 
